@@ -1,6 +1,5 @@
 package com.llmquality.faulty.exception;
 
-import com.llmquality.faulty.exception.BaselineProjectWebException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
