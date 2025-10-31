@@ -20,7 +20,7 @@ import java.io.Serializable;
  * @see ResourceNotFoundException
  * @see ResourceAlreadyExistsException
  */
-public abstract class BaselineProjectWebException extends Exception {
+public abstract class FaultyProjectWebException extends Exception {
 
     @Serial
     private static final long serialVersionUID = -2713300573235999908L;
@@ -36,7 +36,7 @@ public abstract class BaselineProjectWebException extends Exception {
      * @param fieldName    the name of the field
      * @param fieldValue   the value of the field
      */
-    protected BaselineProjectWebException(String msg, String resourceName, String fieldName, Serializable fieldValue) {
+    protected FaultyProjectWebException(String msg, String resourceName, String fieldName, Serializable fieldValue) {
         super(String.format("%s %s %s : '%s'", resourceName, msg, fieldName, fieldValue));
     }
 }

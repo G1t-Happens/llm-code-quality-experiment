@@ -21,7 +21,7 @@ import java.io.Serializable;
  * </pre>
  */
 @ResponseStatus(value = HttpStatus.NOT_FOUND)
-public class ResourceNotFoundException extends BaselineProjectWebException {
+public class ResourceNotFoundException extends FaultyProjectWebException {
 
     @Serial
     private static final long serialVersionUID = 4703052950035630239L;

@@ -21,7 +21,7 @@ import java.io.Serializable;
  * </pre>
  */
 @ResponseStatus(value = HttpStatus.CONFLICT)
-public class ResourceAlreadyExistsException extends BaselineProjectWebException {
+public class ResourceAlreadyExistsException extends FaultyProjectWebException {
 
     @Serial
     private static final long serialVersionUID = 2978506968943653610L;
