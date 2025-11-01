@@ -1,9 +1,11 @@
 package com.llmquality.baseline.service.interfaces;
 
 import com.llmquality.baseline.dto.LoginRequest;
+import com.llmquality.baseline.dto.LoginResponse;
 import com.llmquality.baseline.dto.UserRequest;
 import com.llmquality.baseline.dto.UserResponse;
 import com.llmquality.baseline.entity.User;
+import com.llmquality.baseline.exception.ResourceNotFoundException;
 
 
 /**
@@ -17,15 +19,11 @@ import com.llmquality.baseline.entity.User;
 public interface UserService extends CRUDable<UserRequest, UserResponse> {
 
     /**
-     * Validates the login credentials provided in the {@link LoginRequest}.
-     * <p>
-     * Checks if a user with the given username exists and whether the
-     * provided password matches the stored password.
-     * </p>
+     * Validates user credentials and returns the login result.
      *
-     * @param loginRequest the login request containing username and password; must not be {@code null}
-     * @return {@code true} if the login is successful (username exists and password matches),
-     * {@code false} otherwise
+     * @param loginRequest the login request containing username and password
+     * @return a {@link LoginResponse} indicating whether authentication was successful
+     * @throws ResourceNotFoundException if the user with the given name does not exist
      */
-    boolean checkLogin(LoginRequest loginRequest);
+    LoginResponse checkLogin(LoginRequest loginRequest) throws ResourceNotFoundException;
 }

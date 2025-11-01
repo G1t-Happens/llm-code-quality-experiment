@@ -7,6 +7,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 
+/**
+ * Data Transfer Object (DTO) for creating or updating a User.
+ * <p>
+ * Contains user input fields with validation annotations for create and update operations.
+ * </p>
+ */
 public class UserRequest {
 
     @NotBlank(groups = {UserValidationGroups.Create.class})
