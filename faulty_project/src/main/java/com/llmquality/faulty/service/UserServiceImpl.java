@@ -112,7 +112,6 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userRepository.delete(existingUserEntity);
         LOG.debug("<-- delete, user with id {} deleted", id);
     }
 
