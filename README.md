@@ -29,3 +29,15 @@ llm-code-quality-experiment/
 - Spring Boot
 - REST API
 - JUnit 5 for testing
+
+
+### 2. Performance Efficiency
+
+| Sub-characteristic       | Fault Idea                                                    | Code Location                        | Description                                                                                                                                  | ISO Justification                                                            |
+|--------------------------|---------------------------------------------------------------|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| **Time Behavior**        | Load all users first, and then apply pagination               | `listAll()` in `UserServiceImpl`     | Method loads all users from DB and paginates in memory → slow response for large data sets                                                   | Function is correct but response time is insufficient under load             |
+| **Resource Utilization** | PasswordEncoder instantiated per request instead of singleton | `save()`, `update()`, `checkLogin()` | Each method call creates a new `BCryptPasswordEncoder` → high CPU and memory usage                                                           | Unnecessary resource consumption reduces efficiency                          |
+| **Capacity**             | No limits on data processing / paging                         | `listAll()` in `UserServiceImpl`     | Loading all users into memory without limit → simulates memory/CPU stress; cannot fully embed as real capacity faults are resource-dependent | Application cannot handle unlimited resources → capacity constraint violated |
+
+![Performance efficiency - 1.png](docs/images/Performance%20efficiency%20-%201.png)
+![Performance efficiency - 2.png](docs/images/Performance%20efficiency%20-%202.png)

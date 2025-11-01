@@ -10,9 +10,13 @@ import com.llmquality.faulty.service.interfaces.UserService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -24,23 +28,25 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    private final PasswordEncoder passwordEncoder;
-
     private final UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
     }
 
     @Override
     public PagedResponse<UserResponse> listAll(Pageable pageable) {
         LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-        final Page<UserResponse> page = userRepository.findAll(
-                Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber())
-        ).map(userMapper::toUserResponse);
+
+        final List<User> users = userRepository.findAll();
+        final List<UserResponse> userResponses = users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
+
         LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
         return PagedResponse.fromPage(page);
     }
@@ -68,6 +74,7 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
         }
 
+        final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
         final User savedUserEntity = userRepository.save(userEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
@@ -89,6 +96,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
+            final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
 
@@ -123,6 +131,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "name", loginRequest.getName());
                 });
 
+        final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
