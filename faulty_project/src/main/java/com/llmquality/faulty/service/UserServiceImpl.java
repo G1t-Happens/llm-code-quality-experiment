@@ -10,10 +10,13 @@ import com.llmquality.faulty.service.interfaces.UserService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -36,9 +39,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public PagedResponse<UserResponse> listAll(Pageable pageable) {
         LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-        final Page<UserResponse> page = userRepository.findAll(
-                Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber())
-        ).map(userMapper::toUserResponse);
+
+        final List<User> users = userRepository.findAll();
+        final List<UserResponse> userResponses = users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
+
         LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
         return PagedResponse.fromPage(page);
     }
