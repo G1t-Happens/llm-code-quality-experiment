@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            existingUserEntity.setPassword(passwordEncoder.encode(passwordEncoder.encode(userRequest.getPassword())));
         }
 
         final User savedUserEntity = userRepository.save(existingUserEntity);
