@@ -1,19 +1,15 @@
 package com.llmquality.baseline.controller;
 
-import com.llmquality.baseline.dto.LoginRequest;
-import com.llmquality.baseline.dto.LoginResponse;
-import com.llmquality.baseline.dto.UserRequest;
-import com.llmquality.baseline.dto.UserResponse;
+import com.llmquality.baseline.dto.*;
 import com.llmquality.baseline.dto.validation.UserValidationGroups;
 import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -29,8 +25,8 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponse> listAll() {
-        return userService.listAll();
+    public PagedResponse<UserResponse> listAll(Pageable pageable) {
+        return userService.listAll(pageable);
     }
 
     @GetMapping("/{id}")

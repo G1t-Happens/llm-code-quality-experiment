@@ -1,9 +1,9 @@
 package com.llmquality.baseline.service.interfaces;
 
+import com.llmquality.baseline.dto.PagedResponse;
 import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
-
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 
 /**
@@ -19,11 +19,19 @@ import java.util.List;
 public interface CRUDable<R, S> {
 
     /**
-     * Retrieves all entities as response DTOs.
+     * Retrieves a paginated list of entities as response DTOs.
      *
-     * @return a list of all entities represented as response DTOs
+     * <p>The result includes the content for the requested page along with
+     * pagination metadata such as total elements, total pages, and whether
+     * the current page is the last one.</p>
+     *
+     * <p>Sorting is disabled in this method; only paging parameters (page number
+     * and page size) are considered.</p>
+     *
+     * @param pageable the pagination information (page number and page size)
+     * @return a {@link PagedResponse} containing the content and pagination metadata
      */
-    List<S> listAll();
+    PagedResponse<S> listAll(Pageable pageable);
 
     /**
      * Retrieves an entity by its unique identifier.
