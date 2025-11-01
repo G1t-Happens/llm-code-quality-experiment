@@ -126,7 +126,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "name", loginRequest.getName());
                 });
 
-        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
+        final boolean isPasswordCorrect = loginRequest.getPassword().equals(existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
