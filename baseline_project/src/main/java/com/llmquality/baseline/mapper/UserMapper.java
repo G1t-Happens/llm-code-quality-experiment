@@ -19,7 +19,7 @@ public interface UserMapper {
      * @return the mapped User entity
      */
     @Mapping(target = "id", ignore = true)
-    User toEntity(UserRequest dto);
+    User toUserEntity(UserRequest dto);
 
     /**
      * Maps a {@link User} entity to a {@link UserResponse}.
@@ -27,7 +27,7 @@ public interface UserMapper {
      * @param user the entity to map
      * @return the DTO representing the user without sensitive data
      */
-    UserResponse toDTO(User user);
+    UserResponse toUserResponse(User user);
 
 
     /**
@@ -48,5 +48,5 @@ public interface UserMapper {
     @Mapping(target = "email", source = "email", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "password", source = "password", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "admin", source = "admin", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntityFromDto(UserRequest dto, @MappingTarget User entity);
+    void updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity);
 }

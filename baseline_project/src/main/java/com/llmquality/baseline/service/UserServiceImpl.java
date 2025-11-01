@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
     public List<UserResponse> listAll() {
         LOG.debug("--> listAll");
         final List<UserResponse> userResponses = userRepository.findAll().stream()
-                .map(userMapper::toDTO)
+                .map(userMapper::toUserResponse)
                 .toList();
         LOG.debug("<-- listAll, total users found: {}", userResponses.size());
         return userResponses;
@@ -51,13 +51,13 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getById(final Long id) throws ResourceNotFoundException {
         LOG.debug("--> getById, id: {}", id);
-        final User user = userRepository.findById(id)
+        final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
                     LOG.error("<-- getById, User with ID {} not found", id);
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        final UserResponse userResponse = userMapper.toDTO(user);
+        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
         LOG.debug("<-- getById, user found: {}", userResponse.id());
         return userResponse;
     }
@@ -71,13 +71,13 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
         }
 
-        final User entity = userMapper.toEntity(userRequest);
-        entity.setPassword(passwordEncoder.encode(entity.getPassword()));
+        final User userEntity = userMapper.toUserEntity(userRequest);
+        userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
 
-        final User savedEntity = userRepository.save(entity);
-        final UserResponse userResponse = userMapper.toDTO(savedEntity);
+        final User savedUserEntity = userRepository.save(userEntity);
+        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
-        LOG.debug("<-- save, user saved with id: {}", savedEntity.getId());
+        LOG.debug("<-- save, user saved with id: {}", savedUserEntity.getId());
         return userResponse;
     }
 
@@ -85,20 +85,20 @@ public class UserServiceImpl implements UserService {
     public UserResponse update(final Long id, final UserRequest userRequest) throws ResourceNotFoundException {
         LOG.debug("--> update, user with id: {}", id);
 
-        final User existingEntity = userRepository.findById(id)
+        final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
                     LOG.error("<-- update, User with ID {} not found for update", id);
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userMapper.updateEntityFromDto(userRequest, existingEntity);
+        userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            existingEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
 
-        final User savedEntity = userRepository.save(existingEntity);
-        final UserResponse userResponse = userMapper.toDTO(savedEntity);
+        final User savedUserEntity = userRepository.save(existingUserEntity);
+        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
         LOG.debug("<-- update, user updated with id: {}", userResponse.id());
         return userResponse;
@@ -108,13 +108,13 @@ public class UserServiceImpl implements UserService {
     public void delete(final Long id) throws ResourceNotFoundException {
         LOG.debug("--> delete, id: {}", id);
 
-        final User user = userRepository.findById(id)
+        final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
                     LOG.error("<-- delete, User with ID {} not found for deletion", id);
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userRepository.delete(user);
+        userRepository.delete(existingUserEntity);
         LOG.debug("<-- delete, user with id {} deleted", id);
     }
 
@@ -122,15 +122,15 @@ public class UserServiceImpl implements UserService {
     public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
 
-        final User user = userRepository.findByName(loginRequest.getName())
+        final User existingUserEntity = userRepository.findByName(loginRequest.getName())
                 .orElseThrow(() -> {
                     LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getName());
                     return new ResourceNotFoundException(USER, "name", loginRequest.getName());
                 });
 
-        final boolean valid = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
+        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
 
-        final LoginResponse loginResponse = new LoginResponse(valid);
+        final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
         LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
         return loginResponse;
