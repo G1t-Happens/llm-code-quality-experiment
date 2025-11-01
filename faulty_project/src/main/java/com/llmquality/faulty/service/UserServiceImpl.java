@@ -1,6 +1,7 @@
 package com.llmquality.faulty.service;
 
 import com.llmquality.faulty.dto.LoginRequest;
+import com.llmquality.faulty.dto.LoginResponse;
 import com.llmquality.faulty.dto.UserRequest;
 import com.llmquality.faulty.dto.UserResponse;
 import com.llmquality.faulty.entity.User;
@@ -15,7 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
     public List<UserResponse> listAll() {
         LOG.debug("--> listAll");
         final List<UserResponse> userResponses = userRepository.findAll().stream()
-                .map(userMapper::toDTO)
+                .map(userMapper::toUserResponse)
                 .toList();
         LOG.debug("<-- listAll, total users found: {}", userResponses.size());
         return userResponses;
@@ -51,10 +51,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse getById(final Long id) throws ResourceNotFoundException {
         LOG.debug("--> getById, id: {}", id);
-        final User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(USER, "id", id));
-        final UserResponse userResponse = userMapper.toDTO(user);
-        LOG.debug("<-- getById, user found: {}", userResponse.getId());
+        final User existingUserEntity = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    LOG.error("<-- getById, User with ID {} not found", id);
+                    return new ResourceNotFoundException(USER, "id", id);
+                });
+
+        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
+        LOG.debug("<-- getById, user found: {}", userResponse.id());
         return userResponse;
     }
 
@@ -63,17 +67,15 @@ public class UserServiceImpl implements UserService {
         LOG.debug("--> save, user with name: {}", userRequest.getName());
 
         if (userRepository.existsByName(userRequest.getName())) {
-            LOG.debug("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getName());
+            LOG.error("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getName());
             throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
         }
 
-        final User entity = userMapper.toEntity(userRequest);
-        entity.setPassword(passwordEncoder.encode(entity.getPassword()));
+        final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
+        final User savedUserEntity = userRepository.save(userEntity);
+        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
-        final User savedEntity = userRepository.save(entity);
-        final UserResponse userResponse = userMapper.toDTO(savedEntity);
-
-        LOG.debug("<-- save, user saved with id: {}", savedEntity.getId());
+        LOG.debug("<-- save, user saved with id: {}", savedUserEntity.getId());
         return userResponse;
     }
 
@@ -81,19 +83,22 @@ public class UserServiceImpl implements UserService {
     public UserResponse update(final Long id, final UserRequest userRequest) throws ResourceNotFoundException {
         LOG.debug("--> update, user with id: {}", id);
 
-        final User existingEntity = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(USER, "id", id));
+        final User existingUserEntity = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    LOG.error("<-- update, User with ID {} not found for update", id);
+                    return new ResourceNotFoundException(USER, "id", id);
+                });
 
-        userMapper.updateEntityFromDto(userRequest, existingEntity);
+        userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            existingEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
 
-        final User savedEntity = userRepository.save(existingEntity);
-        final UserResponse userResponse = userMapper.toDTO(savedEntity);
+        final User savedUserEntity = userRepository.save(existingUserEntity);
+        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
-        LOG.debug("<-- update, user updated with id: {}", userResponse.getId());
+        LOG.debug("<-- update, user updated with id: {}", userResponse.id());
         return userResponse;
     }
 
@@ -101,61 +106,31 @@ public class UserServiceImpl implements UserService {
     public void delete(final Long id) throws ResourceNotFoundException {
         LOG.debug("--> delete, id: {}", id);
 
-        final User entity = userRepository.findById(id)
+        final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
-                    LOG.debug("<-- delete, User with ID {} not found for deletion", id);
+                    LOG.error("<-- delete, User with ID {} not found for deletion", id);
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userRepository.delete(entity);
+        userRepository.delete(existingUserEntity);
         LOG.debug("<-- delete, user with id {} deleted", id);
     }
 
     @Override
-    public boolean checkLogin(final LoginRequest loginRequest) {
+    public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
 
-        final Optional<User> userOptional = findUserByName(loginRequest.getName());
+        final User existingUserEntity = userRepository.findByName(loginRequest.getName())
+                .orElseThrow(() -> {
+                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getName());
+                    return new ResourceNotFoundException(USER, "name", loginRequest.getName());
+                });
 
-        if (userOptional.isEmpty()) {
-            LOG.debug("<-- checkLogin, user not found for name: {}", loginRequest.getName());
-            return false;
-        }
+        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
 
-        final User user = userOptional.get();
-        final boolean valid = validatePassword(loginRequest.getPassword(), user.getPassword());
+        final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
-        LOG.debug("<-- checkLogin, login result: {}", valid);
-        return valid;
-    }
-
-    /**
-     * Finds a user by their username.
-     * <p>
-     * This method searches for users with the specified username and returns the first
-     * user found, if any. Since usernames are expected to be unique, the result is
-     * typically either an empty {@link Optional} or contains a single user.
-     * </p>
-     *
-     * @param name the username to search for; must not be {@code null} or empty
-     * @return an {@link Optional} containing the found user, or an empty {@link Optional} if no user is found
-     */
-    private Optional<User> findUserByName(final String name) {
-        return userRepository.findByName(name).stream().findFirst();
-    }
-
-    /**
-     * Validates whether the provided plain text password matches the stored (encoded) password.
-     * <p>
-     * This method compares the raw password with the encoded password stored in the system
-     * to check for a match using the configured password encoder.
-     * </p>
-     *
-     * @param rawPassword     the plain text password to validate
-     * @param encodedPassword the encoded password stored in the system
-     * @return {@code true} if the raw password matches the encoded password, {@code false} otherwise
-     */
-    private boolean validatePassword(final String rawPassword, final String encodedPassword) {
-        return passwordEncoder.matches(rawPassword, encodedPassword);
+        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
+        return loginResponse;
     }
 }

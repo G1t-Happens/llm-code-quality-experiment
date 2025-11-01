@@ -1,6 +1,7 @@
 package com.llmquality.faulty.controller;
 
 import com.llmquality.faulty.dto.LoginRequest;
+import com.llmquality.faulty.dto.LoginResponse;
 import com.llmquality.faulty.dto.UserRequest;
 import com.llmquality.faulty.dto.UserResponse;
 import com.llmquality.faulty.dto.validation.UserValidationGroups;
@@ -55,7 +56,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public boolean login(@RequestBody @Valid LoginRequest loginRequest) {
+    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) throws ResourceNotFoundException {
         return userService.checkLogin(loginRequest);
     }
 }
