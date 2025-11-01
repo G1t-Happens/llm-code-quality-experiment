@@ -39,5 +39,6 @@ llm-code-quality-experiment/
 | **Functional Completeness**    | Repository delete call removed | `delete()` in `UserServiceImpl`      | Delete operation does not actually remove the entity → functionality incomplete                | Part of the required functionality is missing                                  |
 | **Functional Correctness**     | Plaintext password comparison  | `checkLogin()`  in `UserServiceImpl` | Login produces incorrect result due to comparing plaintext password instead of hashed password | Function produces incorrect outcomes                                           |
 | **Functional Appropriateness** | Double hashing of password     | `update()`   in `UserServiceImpl`    | Password is hashed twice, making update unnecessarily restrictive and potentially unusable     | Function not implemented in a way that effectively supports the intended tasks |
+
 ![Functional Suitability.png](docs/images/Functional%20Suitability.png)
 
