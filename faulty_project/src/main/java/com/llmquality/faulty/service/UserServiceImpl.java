@@ -1,9 +1,6 @@
 package com.llmquality.faulty.service;
 
-import com.llmquality.faulty.dto.LoginRequest;
-import com.llmquality.faulty.dto.LoginResponse;
-import com.llmquality.faulty.dto.UserRequest;
-import com.llmquality.faulty.dto.UserResponse;
+import com.llmquality.faulty.dto.*;
 import com.llmquality.faulty.entity.User;
 import com.llmquality.faulty.exception.ResourceAlreadyExistsException;
 import com.llmquality.faulty.exception.ResourceNotFoundException;
@@ -12,10 +9,10 @@ import com.llmquality.faulty.repository.UserRepository;
 import com.llmquality.faulty.service.interfaces.UserService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 
 @Service
@@ -39,13 +36,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponse> listAll() {
-        LOG.debug("--> listAll");
-        final List<UserResponse> userResponses = userRepository.findAll().stream()
-                .map(userMapper::toUserResponse)
-                .toList();
-        LOG.debug("<-- listAll, total users found: {}", userResponses.size());
-        return userResponses;
+    public PagedResponse<UserResponse> listAll(Pageable pageable) {
+        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        final Page<UserResponse> page = userRepository.findAll(
+                Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber())
+        ).map(userMapper::toUserResponse);
+        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+        return PagedResponse.fromPage(page);
     }
 
     @Override
