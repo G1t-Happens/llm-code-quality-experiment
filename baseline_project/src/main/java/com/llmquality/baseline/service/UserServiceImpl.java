@@ -71,9 +71,7 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
         }
 
-        final User userEntity = userMapper.toUserEntity(userRequest);
-        userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
-
+        final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
         final User savedUserEntity = userRepository.save(userEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
