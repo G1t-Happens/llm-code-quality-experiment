@@ -66,7 +66,7 @@ public class LoggingConfig {
         rollingPolicy.setParent(fileAppender);
         rollingPolicy.start();
 
-        Logger logger = (Logger) LoggerFactory.getLogger("com.llmquality.faulty");
+        Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
         logger.addAppender(fileAppender);
         logger.setLevel(LOG_LEVEL);
 
