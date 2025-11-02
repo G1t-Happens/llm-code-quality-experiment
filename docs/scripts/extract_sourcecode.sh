@@ -8,7 +8,7 @@ IFS=$'\n\t'
 PROJECT_PATH="."
 OUTPUT_FILE="extracted_sources.txt"
 EXTENSIONS=()
-EXCLUDE_DIRS=(".git" "node_modules" "target" "build" "gradle" ".idea" ".vscode" ".venv" "*/generated/*")
+EXCLUDE_DIRS=(".git" "node_modules" "target" "build" ".idea" ".vscode" ".venv" "*/generated/*" ".gradle")
 
 usage() {
     cat <<EOF
@@ -78,9 +78,15 @@ OUTPUT_FILE="$(realpath "$(dirname "$OUTPUT_FILE")")/$(basename "$OUTPUT_FILE")"
 
 # Exclude-Pfade normalisieren
 for i in "${!EXCLUDE_DIRS[@]}"; do
-    # Nur absolute Pfade normalisieren, glob Patterns wie */generated/* bleiben unverändert
+    # Glob-Muster unverändert lassen
     [[ "${EXCLUDE_DIRS[$i]}" == *"*"* ]] && continue
-    EXCLUDE_DIRS[$i]="$(realpath -m "${EXCLUDE_DIRS[$i]}")"
+
+    # Absolute Pfade unverändert lassen, relative Pfade an PROJECT_PATH anhängen
+    if [[ "${EXCLUDE_DIRS[$i]}" = /* ]]; then
+        EXCLUDE_DIRS[$i]="$(realpath -m "${EXCLUDE_DIRS[$i]}")"
+    else
+        EXCLUDE_DIRS[$i]="$(realpath -m "$PROJECT_PATH/${EXCLUDE_DIRS[$i]}")"
+    fi
 done
 
 printf "📂 Projekt: %s\n📝 Ausgabe: %s\n🔍 Endungen: %s\n🚫 Ausschlüsse: %s\n--------------------------------------\n" \
@@ -106,7 +112,7 @@ for ex in "${EXCLUDE_DIRS[@]}"; do
     if [[ "$ex" == *"*"* ]]; then
         find_args+=( -not -path "$ex" )
     else
-        find_args+=( -not -path "${ex}/*" )
+        find_args+=( -not -path "$ex" -a -not -path "$ex/*" )
     fi
 done
 
@@ -123,15 +129,15 @@ printf "📄 Gefundene Dateien: %d\n--------------------------------------\n" "$
 {
     for file in "${FILES[@]}"; do
         printf "\n===== FILE: %s =====\n\n" "$file"
-        # Binärdateien überspringen
-        if file --mime "$file" | grep -qE 'binary|image|application'; then
-            printf "[⚠️ Übersprungen (binär): %s]\n" "$file"
+
+        # Nur lesbare Textdateien extrahieren (UTF-8)
+        if ! iconv -f utf-8 -t utf-8 "$file" &>/dev/null; then
+            printf "[⚠️ Übersprungen (nicht UTF-8): %s]\n" "$file"
             continue
         fi
-        # UTF-8 konvertieren
-        if ! iconv -f utf-8 -t utf-8 -c "$file" 2>/dev/null; then
-            cat "$file" 2>/dev/null || printf "[⚠️ Fehler beim Lesen von %s]\n" "$file"
-        fi
+
+        # Inhalt in die Ausgabedatei schreiben
+        cat "$file"
     done
 } >> "$OUTPUT_FILE"
 
