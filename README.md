@@ -29,3 +29,10 @@ llm-code-quality-experiment/
 - Spring Boot
 - REST API
 - JUnit 5 for testing
+
+### 3. Compatibility
+
+| Sub-characteristic   | Fault Idea                            | Code Location                                                  | Description                                                                                                                                                 | ISO Justification                                                                       |
+|----------------------|---------------------------------------|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| **Co-existence**     | Root logger level and appender change | `LoggingConfig.java` in `logger()`                             | Appender and log level are set on `ROOT_LOGGER`, affecting all components and modules globally. May degrade performance or mix logs from unrelated modules. | Violates the ability to share environment without detrimental impact on other products. |
+| **Interoperability** | Incorrect MIME type in controller     | `UserController.java` in `@PostMapping(consumes="text/plain")` | The API expects JSON (`UserRequest`), but `text/plain` is declared. Clients sending JSON may fail.                                                          | System cannot correctly interpret exchanged information with other systems or clients.  |
