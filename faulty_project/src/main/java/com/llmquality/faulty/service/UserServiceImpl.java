@@ -127,7 +127,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
+    public LoginResponse checkLogin(final LoginRequest loginRequest) {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getX());
 
         final User existingUserEntity = userRepository.findByName(loginRequest.getX())
