@@ -127,8 +127,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
     public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getX());
 
