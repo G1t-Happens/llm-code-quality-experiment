@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.TimeZone;
@@ -21,10 +20,6 @@ import java.util.TimeZone;
 
 @Configuration
 public class LoggingConfig {
-
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoggingConfig.class);
-
-    private static final String DEFAULT_LOG_DIR = "logs";
 
     private static final String DEFAULT_LOG_FILE = "application.log";
 
@@ -43,7 +38,7 @@ public class LoggingConfig {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
         var loggerContext = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
-        Path logDir = initializeLogDirectory(logDirectoryPath);
+        Path logDir = Paths.get(logDirectoryPath);
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);
@@ -79,25 +74,5 @@ public class LoggingConfig {
         logger.setAdditive(false);
 
         return logger;
-    }
-
-    private Path initializeLogDirectory(String path) {
-        try {
-            Path logPath = Paths.get(path);
-            if (!Files.exists(logPath)) {
-                Files.createDirectories(logPath);
-            }
-            return logPath;
-        } catch (Exception e) {
-            LOG.error("Failed to initialize log directory '{}'. Using fallback '{}'", path, DEFAULT_LOG_DIR, e);
-            try {
-                Path fallback = Paths.get(DEFAULT_LOG_DIR);
-                Files.createDirectories(fallback);
-                return fallback;
-            } catch (Exception ex) {
-                LOG.error("Fallback log directory '{}' could not be created. Using current dir.", DEFAULT_LOG_DIR, ex);
-                return Paths.get(".");
-            }
-        }
     }
 }
