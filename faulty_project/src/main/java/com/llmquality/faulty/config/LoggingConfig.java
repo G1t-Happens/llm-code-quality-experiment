@@ -68,6 +68,7 @@ public class LoggingConfig {
         rollingFileAppender.start();
 
         AsyncAppender asyncAppender = new AsyncAppender();
+        asyncAppender.setQueueSize(1);
         asyncAppender.setContext(loggerContext);
         asyncAppender.addAppender(rollingFileAppender);
         asyncAppender.start();
