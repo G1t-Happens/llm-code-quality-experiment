@@ -1,79 +1,102 @@
 package com.llmquality.faulty.config;
 
+import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.core.FileAppender;
-import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import ch.qos.logback.core.util.FileSize;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.TimeZone;
 
 
-/**
- * Configuration class for setting up logging in the application.
- * It configures Logback with a file appender and a time-based rolling policy.
- * Logs will be stored in the "logs" directory under the application's working directory.
- * <p>
- * This configuration ensures logs are rotated daily, with a maximum of 30 days of history
- * and a total log size cap of 100MB.
- */
 @Configuration
 public class LoggingConfig {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoggingConfig.class);
 
-    //Log Level - DEBUG, ERROR, INFO, WARN,...
-    private static final Level LOG_LEVEL = Level.DEBUG;
+    private static final String DEFAULT_LOG_DIR = "logs";
 
-    /**
-     * Configures and returns a logger with file-based logging and rolling policies.
-     *
-     * @return Logger instance with custom logging configuration.
-     */
+    private static final String DEFAULT_LOG_FILE = "application.log";
+
+    @Value("${logging.file.path:#{systemProperties['user.dir'] + '/logs'}}")
+    private String logDirectoryPath;
+
+    @Value("${logging.file.name:" + DEFAULT_LOG_FILE + "}")
+    private String logFileName;
+
+    @Value("${logging.level.root:DEBUG}")
+    private String rootLogLevel;
+
     @Bean
     public Logger logger() {
         System.setProperty("user.timezone", "UTC");
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
         var loggerContext = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
-
-        String logDirectoryPath = System.getProperty("user.dir") + File.separator + "logs";
-        File logDirectory = new File(logDirectoryPath);
-        if (!logDirectory.exists()) {
-            boolean dirCreated = logDirectory.mkdirs();
-            if (!dirCreated) {
-                LOG.warn("Log directory could not be created: {}", logDirectoryPath);
-            }
-        }
+        Path logDir = initializeLogDirectory(logDirectoryPath);
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);
-        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss} - %msg%n");
+        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n");
         encoder.start();
 
-        FileAppender<ch.qos.logback.classic.spi.ILoggingEvent> fileAppender = new FileAppender<>();
-        fileAppender.setContext(loggerContext);
-        fileAppender.setFile(logDirectoryPath + File.separator + "application.log");
-        fileAppender.setEncoder(encoder);
-        fileAppender.start();
+        RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
+        rollingFileAppender.setContext(loggerContext);
+        rollingFileAppender.setFile(logDir.resolve(logFileName).toString());
 
-        TimeBasedRollingPolicy<ch.qos.logback.classic.spi.ILoggingEvent> rollingPolicy = new TimeBasedRollingPolicy<>();
+        SizeAndTimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new SizeAndTimeBasedRollingPolicy<>();
         rollingPolicy.setContext(loggerContext);
-        rollingPolicy.setFileNamePattern(logDirectoryPath + File.separator + "application-%d{yyyy-MM-dd}.log");
+        rollingPolicy.setParent(rollingFileAppender);
+        rollingPolicy.setFileNamePattern(logDir.resolve("application-%d{yyyy-MM-dd}.%i.log").toString());
+        rollingPolicy.setMaxFileSize(FileSize.valueOf("10MB"));
         rollingPolicy.setMaxHistory(30);
         rollingPolicy.setTotalSizeCap(FileSize.valueOf("100MB"));
-        rollingPolicy.setParent(fileAppender);
         rollingPolicy.start();
 
+        rollingFileAppender.setRollingPolicy(rollingPolicy);
+        rollingFileAppender.setEncoder(encoder);
+        rollingFileAppender.start();
+
+        AsyncAppender asyncAppender = new AsyncAppender();
+        asyncAppender.setContext(loggerContext);
+        asyncAppender.addAppender(rollingFileAppender);
+        asyncAppender.start();
+
         Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-        logger.addAppender(fileAppender);
-        logger.setLevel(LOG_LEVEL);
+        logger.setLevel(Level.toLevel(rootLogLevel, Level.DEBUG));
+        logger.addAppender(asyncAppender);
+        logger.setAdditive(false);
 
         return logger;
+    }
+
+    private Path initializeLogDirectory(String path) {
+        try {
+            Path logPath = Paths.get(path);
+            if (!Files.exists(logPath)) {
+                Files.createDirectories(logPath);
+            }
+            return logPath;
+        } catch (Exception e) {
+            LOG.error("Failed to initialize log directory '{}'. Using fallback '{}'", path, DEFAULT_LOG_DIR, e);
+            try {
+                Path fallback = Paths.get(DEFAULT_LOG_DIR);
+                Files.createDirectories(fallback);
+                return fallback;
+            } catch (Exception ex) {
+                LOG.error("Fallback log directory '{}' could not be created. Using current dir.", DEFAULT_LOG_DIR, ex);
+                return Paths.get(".");
+            }
+        }
     }
 }
