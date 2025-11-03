@@ -35,8 +35,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse create(@RequestBody UserRequest user)
-            throws ResourceAlreadyExistsException {
+    public UserResponse create(@RequestBody UserRequest user) throws ResourceAlreadyExistsException {
         return userService.save(user);
     }
 
