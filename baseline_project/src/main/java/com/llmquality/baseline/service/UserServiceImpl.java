@@ -114,7 +114,7 @@ public class UserServiceImpl implements UserService {
                 });
 
         userRepository.delete(existingUserEntity);
-        LOG.debug("<-- delete, user with id {} deleted", id);
+        LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
     }
 
     @Override

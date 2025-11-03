@@ -33,11 +33,11 @@ public class UserController {
     }
 
     @PostMapping(consumes = "text/plain")
-    public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user) {
+    public UserResponse create(@RequestBody UserRequest user) {
         return userService.save(user);
     }
 
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public UserResponse update(@PathVariable Long id, @RequestBody @Validated(UserValidationGroups.Update.class) UserRequest user) {
         return userService.update(id, user);
     }

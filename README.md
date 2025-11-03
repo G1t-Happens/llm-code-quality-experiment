@@ -67,3 +67,17 @@ llm-code-quality-experiment/
 
 
 ![Compatibility.png](docs/images/Compatibility.png)
+
+
+
+### 4. Usability
+
+| Sub-characteristic                                | Fault Idea                                          | Code Location             | Description                                                                                                                                                                                    | ISO Justification                                                                                                |
+|---------------------------------------------------|-----------------------------------------------------|---------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| **User error protection**                         | Missing `@Valid` / `@Validated` on create endpoint  | `UserController.create()` | The `create()` endpoint does not validate the `UserRequest` DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error. | Violates ISO 25010 by failing to protect the user from errors; clients cannot easily recover from invalid input. |
+| **Appropriateness recognizability**               | LoginRequest DTO field names changed to `x` and `y` | `LoginRequest.java`       | The username and password fields are renamed to `x` and `y`. Clients cannot intuitively know which value corresponds to username or password, making the API confusing to use.                 | Violates ISO 25010 because clients cannot recognize the expected input, reducing API usability and clarity.      |
+| **Operability / Appropriateness recognizability** | `PUT` used instead of `PATCH` for partial updates   | `UserController.update()` | The `update()` endpoint uses `PUT`, but partial fields are updated. Clients expecting full replacement may unintentionally behave incorrectly.                                                 | Violates ISO 25010: API is hard to use correctly and does not convey the intended behavior clearly to clients.   |
+
+![Usability -1.png](docs/images/Usability%20-1.png)
+![Usability - 2.png](docs/images/Usability%20-%202.png)
+![Usability - 3.png](docs/images/Usability%20-%203.png)

@@ -123,24 +123,24 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        LOG.debug("<-- delete, user with id {} deleted", id);
+        LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
     }
 
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
+        LOG.debug("--> checkLogin, name: {}", loginRequest.getX());
 
-        final User existingUserEntity = userRepository.findByName(loginRequest.getName())
+        final User existingUserEntity = userRepository.findByName(loginRequest.getX())
                 .orElseThrow(() -> {
-                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getName());
-                    return new ResourceNotFoundException(USER, "name", loginRequest.getName());
+                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getX());
+                    return new ResourceNotFoundException(USER, "name", loginRequest.getX());
                 });
 
-        final boolean isPasswordCorrect = loginRequest.getPassword().equals(existingUserEntity.getPassword());
+        final boolean isPasswordCorrect = loginRequest.getY().equals(existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
-        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
+        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getX(), loginResponse.success());
         return loginResponse;
     }
 }
