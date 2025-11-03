@@ -81,3 +81,13 @@ llm-code-quality-experiment/
 ![Usability -1.png](docs/images/Usability%20-1.png)
 ![Usability - 2.png](docs/images/Usability%20-%202.png)
 ![Usability - 3.png](docs/images/Usability%20-%203.png)
+
+
+
+### 5. Reliability
+
+| Sub-characteristic  | Fault Idea                       | Code Location                   | Description                                                                                     | ISO Justification                                                                    |
+|---------------------|----------------------------------|---------------------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| **Fault Tolerance** | Duplicate username check removed | `update()` in `UserServiceImpl` | Removing the check allows DB unique constraint violation → results in 500 Internal Server Error | Application cannot handle known invalid input gracefully, violating fault tolerance. |
+| **TODO**            | TODO                             | TODO                            | TODO                                                                                            | TODO                                                                                 |
+| **TODO**            | TODO                             | TODO                            | TODO                                                                                            | TODO                                                                                 |
