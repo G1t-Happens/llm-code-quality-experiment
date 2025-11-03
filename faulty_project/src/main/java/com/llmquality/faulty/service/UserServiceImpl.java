@@ -10,9 +10,13 @@ import com.llmquality.faulty.service.interfaces.UserService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -24,29 +28,31 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    private final PasswordEncoder passwordEncoder;
-
     private final UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
     }
 
     @Override
     public PagedResponse<UserResponse> listAll(Pageable pageable) {
         LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-        final Page<UserResponse> page = userRepository.findAll(
-                Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber())
-        ).map(userMapper::toUserResponse);
+
+        final List<User> users = userRepository.findAll();
+        final List<UserResponse> userResponses = users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
+
         LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
         return PagedResponse.fromPage(page);
     }
 
     @Override
-    public UserResponse getById(final Long id) throws ResourceNotFoundException {
+    public UserResponse getById(final Long id) {
         LOG.debug("--> getById, id: {}", id);
         final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
@@ -60,7 +66,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse save(final UserRequest userRequest) throws ResourceAlreadyExistsException {
+    public UserResponse save(final UserRequest userRequest) {
         LOG.debug("--> save, user with name: {}", userRequest.getName());
 
         if (userRepository.existsByName(userRequest.getName())) {
@@ -68,7 +74,8 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
         }
 
-        final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User userEntity = userMapper.toUserEntity(userRequest, localPasswordEncoder);
         final User savedUserEntity = userRepository.save(userEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
@@ -77,7 +84,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse update(final Long id, final UserRequest userRequest) throws ResourceNotFoundException {
+    public UserResponse update(final Long id, final UserRequest userRequest) {
         LOG.debug("--> update, user with id: {}", id);
 
         final User existingUserEntity = userRepository.findById(id)
@@ -86,10 +93,17 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
+        final String newName = userRequest.getName();
+        if (newName != null && !newName.equals(existingUserEntity.getName()) && userRepository.existsByName(newName)) {
+            LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
+            throw new ResourceAlreadyExistsException(USER, "name", newName);
+        }
+
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+            existingUserEntity.setPassword(localPasswordEncoder.encode(localPasswordEncoder.encode(userRequest.getPassword())));
         }
 
         final User savedUserEntity = userRepository.save(existingUserEntity);
@@ -100,7 +114,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(final Long id) throws ResourceNotFoundException {
+    public void delete(final Long id) {
         LOG.debug("--> delete, id: {}", id);
 
         final User existingUserEntity = userRepository.findById(id)
@@ -109,11 +123,12 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userRepository.delete(existingUserEntity);
         LOG.debug("<-- delete, user with id {} deleted", id);
     }
 
     @Override
+    public LoginResponse checkLogin(final LoginRequest loginRequest) {
+        LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
     public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getX());
 
@@ -123,7 +138,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "name", loginRequest.getX());
                 });
 
-        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getY(), existingUserEntity.getPassword());
+        final boolean isPasswordCorrect = loginRequest.getY().equals(existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 

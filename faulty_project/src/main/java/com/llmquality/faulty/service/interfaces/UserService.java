@@ -5,7 +5,6 @@ import com.llmquality.faulty.dto.LoginResponse;
 import com.llmquality.faulty.dto.UserRequest;
 import com.llmquality.faulty.dto.UserResponse;
 import com.llmquality.faulty.entity.User;
-import com.llmquality.faulty.exception.ResourceNotFoundException;
 
 
 /**
@@ -23,7 +22,6 @@ public interface UserService extends CRUDable<UserRequest, UserResponse> {
      *
      * @param loginRequest the login request containing username and password
      * @return a {@link LoginResponse} indicating whether authentication was successful
-     * @throws ResourceNotFoundException if the user with the given name does not exist
      */
-    LoginResponse checkLogin(LoginRequest loginRequest) throws ResourceNotFoundException;
+    LoginResponse checkLogin(LoginRequest loginRequest);
 }

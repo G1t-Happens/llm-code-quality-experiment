@@ -37,4 +37,3 @@ public class LoginRequest {
         this.y = y;
     }
 }
-

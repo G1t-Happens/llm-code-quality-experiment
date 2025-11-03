@@ -30,6 +30,46 @@ llm-code-quality-experiment/
 - REST API
 - JUnit 5 for testing
 
+## Built-in error categorized according to the ISO 25010 quality model
+
+### 1. Functional Suitability
+
+| Sub-characteristic             | Fault Idea                     | Code Location                        | Description                                                                                    | ISO Justification                                                              |
+|--------------------------------|--------------------------------|--------------------------------------|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| **Functional Completeness**    | Repository delete call removed | `delete()` in `UserServiceImpl`      | Delete operation does not actually remove the entity → functionality incomplete                | Part of the required functionality is missing                                  |
+| **Functional Correctness**     | Plaintext password comparison  | `checkLogin()`  in `UserServiceImpl` | Login produces incorrect result due to comparing plaintext password instead of hashed password | Function produces incorrect outcomes                                           |
+| **Functional Appropriateness** | Double hashing of password     | `update()`   in `UserServiceImpl`    | Password is hashed twice, making update unnecessarily restrictive and potentially unusable     | Function not implemented in a way that effectively supports the intended tasks |
+
+![Functional Suitability.png](docs/images/Functional%20Suitability.png)
+
+
+
+### 2. Performance Efficiency
+
+| Sub-characteristic       | Fault Idea                                                    | Code Location                    | Description                                                                                | ISO Justification                                                |
+|--------------------------|---------------------------------------------------------------|----------------------------------|--------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| **Time Behavior**        | Load all users first, and then apply pagination               | `listAll()` in `UserServiceImpl` | Method loads all users from DB and paginates in memory → slow response for large data sets | Function is correct but response time is insufficient under load |
+| **Resource Utilization** | PasswordEncoder instantiated per request instead of singleton | `save()` in `UserServiceImpl`    | Each method call creates a new `BCryptPasswordEncoder` → high CPU and memory usage         | Unnecessary resource consumption reduces efficiency              |
+| **Resource Utilization** | PasswordEncoder instantiated per request instead of singleton | `update()` in `UserServiceImpl`  | Each method call creates a new `BCryptPasswordEncoder` → high CPU and memory usage         | Unnecessary resource consumption reduces efficiency              |
+
+![Performance efficiency - 1.png](docs/images/Performance%20efficiency%20-%201.png)
+![Performance efficiency - 2.png](docs/images/Performance%20efficiency%20-%202.png)
+
+
+
+### 3. Compatibility
+
+| Sub-characteristic   | Fault Idea                                                           | Code Location                                                  | Description                                                                                                                                                 | ISO Justification                                                                                                         |
+|----------------------|----------------------------------------------------------------------|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| **Co-existence**     | Root logger level and appender change                                | `LoggingConfig.java` in `logger()`                             | Appender and log level are set on `ROOT_LOGGER`, affecting all components and modules globally. May degrade performance or mix logs from unrelated modules. | Violates ability to share environment without detrimental impact; other products/components are unintentionally affected. |
+| **Co-existence**     | Global JVM timezone set via System.setProperty & TimeZone.setDefault | `LoggingConfig.java` in `logger()`                             | Sets the timezone globally for the entire JVM instead of only for the logger, potentially affecting other modules, libraries, and scheduling operations.    | Violates ability to share environment without detrimental impact; other products/components are unintentionally affected. |
+| **Interoperability** | Incorrect MIME type in controller                                    | `UserController.java` in `@PostMapping(consumes="text/plain")` | The API expects JSON (`UserRequest`), but `text/plain` is declared. Clients sending JSON may fail.                                                          | System cannot correctly interpret exchanged information with other systems or clients.                                    |
+
+
+![Compatibility.png](docs/images/Compatibility.png)
+
+
+
 ### 4. Usability
 
 | Sub-characteristic                                | Fault Idea                                          | Code Location             | Description                                                                                                                                                                                    | ISO Justification                                                                                                |
