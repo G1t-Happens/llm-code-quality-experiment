@@ -93,12 +93,6 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        final String newName = userRequest.getName();
-        if (newName != null && !newName.equals(existingUserEntity.getName()) && userRepository.existsByName(newName)) {
-            LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
-            throw new ResourceAlreadyExistsException(USER, "name", newName);
-        }
-
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
