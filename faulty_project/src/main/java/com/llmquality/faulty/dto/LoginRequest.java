@@ -13,28 +13,28 @@ import jakarta.validation.constraints.Size;
  */
 public class LoginRequest {
 
-    @NotBlank(message = "Name must not be blank")
-    @Size(max = 255, message = "Name must be at most 255 characters long")
-    private String name;
+    @NotBlank(message = "X must not be blank")
+    @Size(max = 255, message = "X must be at most 255 characters long")
+    private String x;
 
-    @NotBlank(message = "Password must not be blank")
-    @Size(max = 255, message = "Password must be at most 255 characters long")
-    private String password;
+    @NotBlank(message = "Y must not be blank")
+    @Size(max = 255, message = "Y must be at most 255 characters long")
+    private String y;
 
-    public String getName() {
-        return name;
+    public String getX() {
+        return x;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setX(String x) {
+        this.x = x;
     }
 
-    public String getPassword() {
-        return password;
+    public String getY() {
+        return y;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setY(String y) {
+        this.y = y;
     }
 }
 

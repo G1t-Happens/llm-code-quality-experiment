@@ -115,19 +115,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
-        LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
+        LOG.debug("--> checkLogin, name: {}", loginRequest.getX());
 
-        final User existingUserEntity = userRepository.findByName(loginRequest.getName())
+        final User existingUserEntity = userRepository.findByName(loginRequest.getX())
                 .orElseThrow(() -> {
-                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getName());
-                    return new ResourceNotFoundException(USER, "name", loginRequest.getName());
+                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getX());
+                    return new ResourceNotFoundException(USER, "name", loginRequest.getX());
                 });
 
-        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
+        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getY(), existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
-        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
+        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getX(), loginResponse.success());
         return loginResponse;
     }
 }
