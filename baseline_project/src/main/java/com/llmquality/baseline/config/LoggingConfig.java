@@ -49,7 +49,7 @@ public class LoggingConfig {
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);
-        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss} - %msg%n");
+        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss,UTC} - %msg%n");
         encoder.start();
 
         FileAppender<ch.qos.logback.classic.spi.ILoggingEvent> fileAppender = new FileAppender<>();
