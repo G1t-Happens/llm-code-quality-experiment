@@ -123,7 +123,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        LOG.debug("<-- delete, user with id {} deleted", id);
+        LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
     }
 
     @Override
