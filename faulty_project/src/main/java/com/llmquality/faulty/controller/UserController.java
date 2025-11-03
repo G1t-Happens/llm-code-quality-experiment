@@ -39,7 +39,7 @@ public class UserController {
         return userService.save(user);
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public UserResponse update(@PathVariable Long id, @RequestBody @Validated(UserValidationGroups.Update.class) UserRequest user)
             throws ResourceNotFoundException {
         return userService.update(id, user);
