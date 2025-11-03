@@ -20,7 +20,7 @@ import java.io.Serializable;
  * @see ResourceNotFoundException
  * @see ResourceAlreadyExistsException
  */
-public abstract class BaselineProjectWebException extends Exception {
+public abstract class BaselineProjectWebException extends RuntimeException {
 
     @Serial
     private static final long serialVersionUID = -2713300573235999908L;

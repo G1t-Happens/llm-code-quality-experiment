@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 @Service
@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getById(final Long id) throws ResourceNotFoundException {
+    public UserResponse getById(final Long id) {
         LOG.debug("--> getById, id: {}", id);
         final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse save(final UserRequest userRequest) throws ResourceAlreadyExistsException {
+    public UserResponse save(final UserRequest userRequest) {
         LOG.debug("--> save, user with name: {}", userRequest.getName());
 
         if (userRepository.existsByName(userRequest.getName())) {
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse update(final Long id, final UserRequest userRequest) throws ResourceNotFoundException {
+    public UserResponse update(final Long id, final UserRequest userRequest) {
         LOG.debug("--> update, user with id: {}", id);
 
         final User existingUserEntity = userRepository.findById(id)
@@ -83,6 +83,12 @@ public class UserServiceImpl implements UserService {
                     LOG.error("<-- update, User with ID {} not found for update", id);
                     return new ResourceNotFoundException(USER, "id", id);
                 });
+
+        final String newName = userRequest.getName();
+        if (newName != null && !newName.equals(existingUserEntity.getName()) && userRepository.existsByName(newName)) {
+            LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
+            throw new ResourceAlreadyExistsException(USER, "name", newName);
+        }
 
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
@@ -98,7 +104,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(final Long id) throws ResourceNotFoundException {
+    public void delete(final Long id) {
         LOG.debug("--> delete, id: {}", id);
 
         final User existingUserEntity = userRepository.findById(id)
@@ -112,7 +118,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResponse checkLogin(final LoginRequest loginRequest) throws ResourceNotFoundException {
+    public LoginResponse checkLogin(final LoginRequest loginRequest) {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
 
         final User existingUserEntity = userRepository.findByName(loginRequest.getName())
