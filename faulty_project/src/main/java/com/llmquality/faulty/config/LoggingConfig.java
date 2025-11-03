@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
+import java.util.TimeZone;
 
 
 /**
@@ -36,6 +37,9 @@ public class LoggingConfig {
      */
     @Bean
     public Logger logger() {
+        System.setProperty("user.timezone", "UTC");
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
         var loggerContext = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
 
         String logDirectoryPath = System.getProperty("user.dir") + File.separator + "logs";
@@ -49,7 +53,7 @@ public class LoggingConfig {
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);
-        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss,UTC} - %msg%n");
+        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss} - %msg%n");
         encoder.start();
 
         FileAppender<ch.qos.logback.classic.spi.ILoggingEvent> fileAppender = new FileAppender<>();
@@ -66,7 +70,7 @@ public class LoggingConfig {
         rollingPolicy.setParent(fileAppender);
         rollingPolicy.start();
 
-        Logger logger = (Logger) LoggerFactory.getLogger("com.llmquality.faulty");
+        Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
         logger.addAppender(fileAppender);
         logger.setLevel(LOG_LEVEL);
 

@@ -32,7 +32,7 @@ public class UserController {
         return userService.getById(id);
     }
 
-    @PostMapping
+    @PostMapping(consumes = "text/plain")
     public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user) {
         return userService.save(user);
     }
