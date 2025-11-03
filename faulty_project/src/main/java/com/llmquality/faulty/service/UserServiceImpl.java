@@ -28,14 +28,11 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    private final PasswordEncoder passwordEncoder;
-
     private final UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
     }
 
@@ -77,7 +74,8 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
         }
 
-        final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User userEntity = userMapper.toUserEntity(userRequest, localPasswordEncoder);
         final User savedUserEntity = userRepository.save(userEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
