@@ -105,6 +105,7 @@ public class UserServiceImpl implements UserService {
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
             final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+            existingUserEntity.setPassword(localPasswordEncoder.encode(localPasswordEncoder.encode(userRequest.getPassword())));
             existingUserEntity.setPassword(localPasswordEncoder.encode(userRequest.getPassword()));
         }
 
@@ -125,7 +126,6 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userRepository.delete(existingUserEntity);
         LOG.debug("<-- delete, user with id {} deleted", id);
     }
 
@@ -139,8 +139,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "name", loginRequest.getName());
                 });
 
-        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
-        final boolean isPasswordCorrect = localPasswordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
+        final boolean isPasswordCorrect = loginRequest.getPassword().equals(existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
