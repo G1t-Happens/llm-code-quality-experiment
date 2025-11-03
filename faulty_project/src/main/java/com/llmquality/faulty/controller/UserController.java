@@ -35,7 +35,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user)
+    public UserResponse create(@RequestBody UserRequest user)
             throws ResourceAlreadyExistsException {
         return userService.save(user);
     }
