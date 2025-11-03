@@ -37,4 +37,3 @@ public class LoginRequest {
         this.password = password;
     }
 }
-

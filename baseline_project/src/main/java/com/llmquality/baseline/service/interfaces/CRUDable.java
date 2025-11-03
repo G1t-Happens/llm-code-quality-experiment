@@ -1,8 +1,6 @@
 package com.llmquality.baseline.service.interfaces;
 
 import com.llmquality.baseline.dto.PagedResponse;
-import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
-import com.llmquality.baseline.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Pageable;
 
 
@@ -38,18 +36,16 @@ public interface CRUDable<R, S> {
      *
      * @param id the ID of the entity to retrieve
      * @return the entity represented as a response DTO
-     * @throws ResourceNotFoundException if no entity with the specified ID is found
      */
-    S getById(Long id) throws ResourceNotFoundException;
+    S getById(Long id);
 
     /**
      * Saves a new entity from a request DTO.
      *
      * @param requestDTO the DTO containing data to create the entity
      * @return the saved entity represented as a response DTO
-     * @throws ResourceAlreadyExistsException if an entity with the same unique identifier already exists
      */
-    S save(R requestDTO) throws ResourceAlreadyExistsException;
+    S save(R requestDTO);
 
     /**
      * Updates an existing entity by ID using a request DTO.
@@ -57,15 +53,13 @@ public interface CRUDable<R, S> {
      * @param id         the ID of the entity to update
      * @param requestDTO the DTO containing updated data
      * @return the updated entity represented as a response DTO
-     * @throws ResourceNotFoundException if the entity with the given ID does not exist
      */
-    S update(Long id, R requestDTO) throws ResourceNotFoundException;
+    S update(Long id, R requestDTO);
 
     /**
      * Deletes an entity by its unique identifier.
      *
      * @param id the ID of the entity to delete
-     * @throws ResourceNotFoundException if no entity with the specified ID exists
      */
-    void delete(Long id) throws ResourceNotFoundException;
+    void delete(Long id);
 }
