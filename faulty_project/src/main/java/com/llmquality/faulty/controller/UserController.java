@@ -2,8 +2,6 @@ package com.llmquality.faulty.controller;
 
 import com.llmquality.faulty.dto.*;
 import com.llmquality.faulty.dto.validation.UserValidationGroups;
-import com.llmquality.faulty.exception.ResourceAlreadyExistsException;
-import com.llmquality.faulty.exception.ResourceNotFoundException;
 import com.llmquality.faulty.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,29 +28,27 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserResponse getById(@PathVariable Long id) throws ResourceNotFoundException {
+    public UserResponse getById(@PathVariable Long id) {
         return userService.getById(id);
     }
 
     @PostMapping(consumes = "text/plain")
-    public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user)
-            throws ResourceAlreadyExistsException {
+    public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user) {
         return userService.save(user);
     }
 
-    @PutMapping("/{id}")
-    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(UserValidationGroups.Update.class) UserRequest user)
-            throws ResourceNotFoundException {
+    @PatchMapping("/{id}")
+    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(UserValidationGroups.Update.class) UserRequest user) {
         return userService.update(id, user);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) throws ResourceNotFoundException {
+    public void delete(@PathVariable Long id) {
         userService.delete(id);
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) throws ResourceNotFoundException {
+    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
         return userService.checkLogin(loginRequest);
     }
 }
