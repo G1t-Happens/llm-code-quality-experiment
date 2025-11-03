@@ -104,7 +104,6 @@ public class UserServiceImpl implements UserService {
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
             final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
             existingUserEntity.setPassword(localPasswordEncoder.encode(localPasswordEncoder.encode(userRequest.getPassword())));
-            existingUserEntity.setPassword(localPasswordEncoder.encode(userRequest.getPassword()));
         }
 
         final User savedUserEntity = userRepository.save(existingUserEntity);
