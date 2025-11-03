@@ -38,9 +38,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public PagedResponse<UserResponse> listAll(Pageable pageable) {
         LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-        final Page<UserResponse> page = userRepository.findAll(
-                Pageable.ofSize(pageable.getPageSize()).withPage(pageable.getPageNumber())
-        ).map(userMapper::toUserResponse);
+        final Page<UserResponse> page = userRepository.findAll(pageable).map(userMapper::toUserResponse);
         LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
         return PagedResponse.fromPage(page);
     }
