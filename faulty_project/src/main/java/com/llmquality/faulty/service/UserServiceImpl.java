@@ -28,11 +28,14 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     private final UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
     }
 
@@ -101,8 +104,8 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+            existingUserEntity.setPassword(localPasswordEncoder.encode(userRequest.getPassword()));
         }
 
         final User savedUserEntity = userRepository.save(existingUserEntity);
@@ -136,8 +139,8 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "name", loginRequest.getName());
                 });
 
-        final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final boolean isPasswordCorrect = localPasswordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
