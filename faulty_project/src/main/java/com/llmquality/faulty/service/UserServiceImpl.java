@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
 
         if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+            existingUserEntity.setPassword(passwordEncoder.encode(passwordEncoder.encode(userRequest.getPassword())));
         }
 
         final User savedUserEntity = userRepository.save(existingUserEntity);
@@ -113,7 +113,6 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        userRepository.delete(existingUserEntity);
         LOG.debug("<-- delete, user with id {} deleted", id);
     }
 
@@ -127,7 +126,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "name", loginRequest.getName());
                 });
 
-        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
+        final boolean isPasswordCorrect = loginRequest.getPassword().equals(existingUserEntity.getPassword());
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
