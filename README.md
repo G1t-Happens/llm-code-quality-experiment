@@ -91,3 +91,7 @@ llm-code-quality-experiment/
 | **Integrity**, **Confidentiality**      | SQL injection via createNativeQuery                    | `UserServiceImpl.getByUsername()` | Username parameter is concatenated directly into SQL, allowing an attacker to retrieve arbitrary user data.       | Violates confidentiality; unauthorized access to sensitive data is possible + Violates Integrity; unauthorized modification or deletion |
 | **Confidentiality**                     | `getById` exposes raw `User` entity including password | `UserServiceImpl.getById()`       | Returns the full User entity including hashed passwords, exposing sensitive information unnecessarily.            | Violates confidentiality; sensitive data is exposed to callers who may not be authorized.                                               |
 | **Confidentiality**, **Accountability** | Logging plaintext passwords                            | `UserServiceImpl.save()`          | Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers. | Violates confidentiality and accountability; sensitive data is exposed and traceability of secure handling is compromised.              |
+
+![Security - 1.png](docs/images/Security%20-%201.png)
+![Security - 2.png](docs/images/Security%20-%202.png)
+![Security - 3.png](docs/images/Security%20-%203.png)
