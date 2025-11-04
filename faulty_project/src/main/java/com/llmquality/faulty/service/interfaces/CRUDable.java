@@ -13,8 +13,9 @@ import org.springframework.data.domain.Pageable;
  *
  * @param <R> the type of the DTO used for create/update requests
  * @param <S> the type of the DTO returned in responses without sensitive data
+ * @param <E> the type of the Database Entity
  */
-public interface CRUDable<R, S> {
+public interface CRUDable<R, S, E> {
 
     /**
      * Retrieves a paginated list of entities as response DTOs.
@@ -35,9 +36,9 @@ public interface CRUDable<R, S> {
      * Retrieves an entity by its unique identifier.
      *
      * @param id the ID of the entity to retrieve
-     * @return the entity represented as a response DTO
+     * @return the raw database entity
      */
-    S getById(Long id);
+    E getById(Long id);
 
     /**
      * Saves a new entity from a request DTO.

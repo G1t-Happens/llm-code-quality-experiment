@@ -15,7 +15,7 @@ import com.llmquality.faulty.entity.User;
  * and Delete operations for {@link UserResponse}/{@link User} objects.
  * </p>
  */
-public interface UserService extends CRUDable<UserRequest, UserResponse> {
+public interface UserService extends CRUDable<UserRequest, UserResponse, User> {
 
     /**
      * Validates user credentials and returns the login result.

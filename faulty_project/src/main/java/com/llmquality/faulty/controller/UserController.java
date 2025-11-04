@@ -2,6 +2,7 @@ package com.llmquality.faulty.controller;
 
 import com.llmquality.faulty.dto.*;
 import com.llmquality.faulty.dto.validation.UserValidationGroups;
+import com.llmquality.faulty.entity.User;
 import com.llmquality.faulty.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserResponse getById(@PathVariable Long id) {
+    public User getById(@PathVariable Long id) {
         return userService.getById(id);
     }
 
