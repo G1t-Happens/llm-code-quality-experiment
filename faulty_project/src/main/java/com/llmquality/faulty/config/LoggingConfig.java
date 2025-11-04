@@ -21,7 +21,7 @@ import java.util.TimeZone;
 @Configuration
 public class LoggingConfig {
 
-    private static final String DEFAULT_LOG_FILE = "application.log";
+    private static final String DEFAULT_LOG_FILE = "application:debug.log";
 
     private static final String LOG_DIRECTORY_PATH = "/home/dbe/projects/llm-code-quality-experiment/faulty_project/logs";
 
