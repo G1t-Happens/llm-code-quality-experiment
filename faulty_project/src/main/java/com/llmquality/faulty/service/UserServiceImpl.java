@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse save(final UserRequest userRequest) {
-        LOG.debug("--> save, user with name: {}", userRequest.getName());
+        LOG.debug("--> save, user with name: {} and password: {}", userRequest.getName(), userRequest.getPassword());
 
         if (userRepository.existsByName(userRequest.getName())) {
             LOG.error("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getName());
