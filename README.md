@@ -84,6 +84,33 @@ llm-code-quality-experiment/
 
 
 
+### 5. Reliability
+
+| Sub-characteristic  | Fault Idea                           | Code Location                               | Description                                                                                     | ISO Justification                                                                    |
+|---------------------|--------------------------------------|---------------------------------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| **Fault Tolerance** | Duplicate username check removed     | `update()` in `UserServiceImpl`             | Removing the check allows DB unique constraint violation → results in 500 Internal Server Error | Application cannot handle known invalid input gracefully, violating fault tolerance. |
+| **Fault Tolerance** | AsyncAppender queue too small        | `LoggingConfig.logger()` in `LoggingConfig` | `asyncAppender.setQueueSize(1)` causes log messages to be discarded under high load             | System cannot maintain correct logging under stress, violating fault tolerance.      |
+| **Recoverability**  | Log directory initialization removed | `LoggingConfig.logger()` in `LoggingConfig` | Removing `initializeLogDirectory()` removes fallback logic; logging fails if directory invalid  | System cannot recover from logging directory errors, violating recoverability.       |
+
+![Reliability - 1.png](docs/images/Reliability%20-%201.png)
+![Reliability - 2.png](docs/images/Reliability%20-%202.png)
+
+
+
+### 6. Security Issues
+
+| Sub-characteristic                      | Fault Idea                                             | Code Location                     | Description                                                                                                       | ISO Justification                                                                                                                       |
+|-----------------------------------------|--------------------------------------------------------|-----------------------------------|-------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| **Integrity**, **Confidentiality**      | SQL injection via createNativeQuery                    | `UserServiceImpl.getByUsername()` | Username parameter is concatenated directly into SQL, allowing an attacker to retrieve arbitrary user data.       | Violates confidentiality; unauthorized access to sensitive data is possible + Violates Integrity; unauthorized modification or deletion |
+| **Confidentiality**                     | `getById` exposes raw `User` entity including password | `UserServiceImpl.getById()`       | Returns the full User entity including hashed passwords, exposing sensitive information unnecessarily.            | Violates confidentiality; sensitive data is exposed to callers who may not be authorized.                                               |
+| **Confidentiality**, **Accountability** | Logging plaintext passwords                            | `UserServiceImpl.save()`          | Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers. | Violates confidentiality and accountability; sensitive data is exposed and traceability of secure handling is compromised.              |
+
+![Security - 1.png](docs/images/Security%20-%201.png)
+![Security - 2.png](docs/images/Security%20-%202.png)
+![Security - 3.png](docs/images/Security%20-%203.png)
+
+
+
 ### 7. Maintainability
 
 | Sub-characteristic                 | Fault Idea                                    | Code Location                           | Description                                                                                                                                                                             | ISO Justification                                                                                                      |
