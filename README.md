@@ -122,3 +122,13 @@ llm-code-quality-experiment/
 ![Maintainability - 1.png](docs/images/Maintainability%20-%201.png)
 ![Maintainability - 2.png](docs/images/Maintainability%20-%202.png)
 ![Maintainability - 3.png](docs/images/Maintainability%20-%203.png)
+
+
+
+### 8. Portability
+
+| Sub-characteristic | Fault Idea                                  | Code Location        | Description                                                                                                                                                                                   | ISO Justification                                                                                     |
+|--------------------|---------------------------------------------|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| **Adaptability**   | Hardcoded Linux-specific log directory      | `LoggingConfig.java` | The log directory path is hardcoded to a Linux/WSL path (`/home/dbe/.../logs`). Running this on Windows or another OS will fail or move to an unpredictable location unless manually changed. | Violates ISO 25010: Reduces adaptability; software cannot adjust easily to different OS environments. |
+| **Installability** | Invalid Windows characters in log file name | `LoggingConfig.java` | The default log file name contains characters valid on Linux but invalid on Windows (e.g., `application:errors.log`). This prevents installation/running on Windows.                          | Violates ISO 25010: Reduces installability; the software fails to set up or run on certain OSs.       |
+| **TODO**           | TODO                                        | TODO                 | TODO                                                                                                                                                                                          | TODO                                                                                                  |
