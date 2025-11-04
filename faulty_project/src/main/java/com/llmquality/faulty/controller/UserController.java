@@ -2,7 +2,8 @@ package com.llmquality.faulty.controller;
 
 import com.llmquality.faulty.dto.*;
 import com.llmquality.faulty.dto.validation.UserValidationGroups;
-import com.llmquality.faulty.service.interfaces.UserService;
+import com.llmquality.faulty.entity.User;
+import com.llmquality.faulty.service.UserServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
