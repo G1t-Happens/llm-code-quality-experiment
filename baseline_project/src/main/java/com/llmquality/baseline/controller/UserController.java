@@ -32,6 +32,11 @@ public class UserController {
         return userService.getById(id);
     }
 
+    @GetMapping("/search")
+    public UserResponse getByUsername(@RequestParam("username") String username) {
+        return userService.getByUsername(username);
+    }
+
     @PostMapping
     public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user) {
         return userService.save(user);

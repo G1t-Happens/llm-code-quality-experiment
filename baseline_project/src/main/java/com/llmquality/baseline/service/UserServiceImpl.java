@@ -58,6 +58,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse getByUsername(final String username) {
+        LOG.debug("--> getByUsername, username: {}", username);
+
+        final User existingUserEntity = userRepository.findByName(username)
+                .orElseThrow(() -> {
+                    LOG.error("<-- getByUsername, User '{}' not found", username);
+                    return new ResourceNotFoundException(USER, "username", username);
+                });
+
+        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
+        LOG.debug("<-- getByUsername, user found: {}", userResponse.id());
+        return userResponse;
+    }
+
+    @Override
     public UserResponse save(final UserRequest userRequest) {
         LOG.debug("--> save, user with name: {}", userRequest.getName());
 

@@ -24,4 +24,12 @@ public interface UserService extends CRUDable<UserRequest, UserResponse> {
      * @return a {@link LoginResponse} indicating whether authentication was successful
      */
     LoginResponse checkLogin(LoginRequest loginRequest);
+
+    /**
+     * Retrieves a user by their username.
+     *
+     * @param username username the username to search for
+     * @return the corresponding {@link UserResponse}
+     */
+    UserResponse getByUsername(String username);
 }
