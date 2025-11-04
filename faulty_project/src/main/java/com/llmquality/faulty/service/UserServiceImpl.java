@@ -7,6 +7,7 @@ import com.llmquality.faulty.exception.ResourceNotFoundException;
 import com.llmquality.faulty.mapper.UserMapper;
 import com.llmquality.faulty.repository.UserRepository;
 import com.llmquality.faulty.service.interfaces.UserService;
+import jakarta.persistence.EntityManager;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,10 +31,13 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
+    private final EntityManager entityManager;
+
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper, final EntityManager entityManager) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -69,7 +73,10 @@ public class UserServiceImpl implements UserService {
     public UserResponse getByUsername(final String username) {
         LOG.debug("--> getByUsername, username: {}", username);
 
-        final User existingUserEntity = userRepository.findByName(username)
+        String sql = "SELECT * FROM users WHERE username = '" + username + "'";
+        List<User> results = entityManager.createNativeQuery(sql, User.class).getResultList();
+
+        final User existingUserEntity = results.stream().findFirst()
                 .orElseThrow(() -> {
                     LOG.error("<-- getByUsername, User '{}' not found", username);
                     return new ResourceNotFoundException(USER, "username", username);
