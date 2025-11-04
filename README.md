@@ -81,3 +81,16 @@ llm-code-quality-experiment/
 ![Usability -1.png](docs/images/Usability%20-1.png)
 ![Usability - 2.png](docs/images/Usability%20-%202.png)
 ![Usability - 3.png](docs/images/Usability%20-%203.png)
+
+
+
+### 5. Reliability
+
+| Sub-characteristic  | Fault Idea                           | Code Location                               | Description                                                                                     | ISO Justification                                                                    |
+|---------------------|--------------------------------------|---------------------------------------------|-------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| **Fault Tolerance** | Duplicate username check removed     | `update()` in `UserServiceImpl`             | Removing the check allows DB unique constraint violation → results in 500 Internal Server Error | Application cannot handle known invalid input gracefully, violating fault tolerance. |
+| **Fault Tolerance** | AsyncAppender queue too small        | `LoggingConfig.logger()` in `LoggingConfig` | `asyncAppender.setQueueSize(1)` causes log messages to be discarded under high load             | System cannot maintain correct logging under stress, violating fault tolerance.      |
+| **Recoverability**  | Log directory initialization removed | `LoggingConfig.logger()` in `LoggingConfig` | Removing `initializeLogDirectory()` removes fallback logic; logging fails if directory invalid  | System cannot recover from logging directory errors, violating recoverability.       |
+
+![Reliability - 1.png](docs/images/Reliability%20-%201.png)
+![Reliability - 2.png](docs/images/Reliability%20-%202.png)
