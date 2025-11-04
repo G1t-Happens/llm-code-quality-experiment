@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getById(final Long id) {
+    public User getById(final Long id) {
         LOG.debug("--> getById, id: {}", id);
         final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
@@ -64,9 +64,8 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
-        LOG.debug("<-- getById, user found: {}", userResponse.id());
-        return userResponse;
+        LOG.debug("<-- getById, user found: {}", existingUserEntity.getId());
+        return existingUserEntity;
     }
 
     @Override
