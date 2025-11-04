@@ -24,8 +24,6 @@ public class UserServiceImpl implements UserService {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    private static final String USER = "User";
-
     private final UserRepository userRepository;
 
     private final UserMapper userMapper;
@@ -57,7 +55,7 @@ public class UserServiceImpl implements UserService {
         final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
                     LOG.error("<-- getById, User with ID {} not found", id);
-                    return new ResourceNotFoundException(USER, "id", id);
+                    return new ResourceNotFoundException("User", "id", id);
                 });
 
         final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
@@ -72,7 +70,7 @@ public class UserServiceImpl implements UserService {
         final User existingUserEntity = userRepository.findByName(username)
                 .orElseThrow(() -> {
                     LOG.error("<-- getByUsername, User '{}' not found", username);
-                    return new ResourceNotFoundException(USER, "username", username);
+                    return new ResourceNotFoundException("User", "username", username);
                 });
 
         final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
@@ -86,7 +84,7 @@ public class UserServiceImpl implements UserService {
 
         if (userRepository.existsByName(userRequest.getName())) {
             LOG.error("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getName());
-            throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
+            throw new ResourceAlreadyExistsException("User", "name", userRequest.getName());
         }
 
         final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
@@ -105,13 +103,13 @@ public class UserServiceImpl implements UserService {
         final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
                     LOG.error("<-- update, User with ID {} not found for update", id);
-                    return new ResourceNotFoundException(USER, "id", id);
+                    return new ResourceNotFoundException("User", "id", id);
                 });
 
         final String newName = userRequest.getName();
         if (newName != null && !newName.equals(existingUserEntity.getName()) && userRepository.existsByName(newName)) {
             LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
-            throw new ResourceAlreadyExistsException(USER, "name", newName);
+            throw new ResourceAlreadyExistsException("User", "name", newName);
         }
 
         userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
@@ -135,7 +133,7 @@ public class UserServiceImpl implements UserService {
         final User existingUserEntity = userRepository.findById(id)
                 .orElseThrow(() -> {
                     LOG.error("<-- delete, User with ID {} not found for deletion", id);
-                    return new ResourceNotFoundException(USER, "id", id);
+                    return new ResourceNotFoundException("User", "id", id);
                 });
 
         LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
@@ -148,7 +146,7 @@ public class UserServiceImpl implements UserService {
         final User existingUserEntity = userRepository.findByName(loginRequest.getX())
                 .orElseThrow(() -> {
                     LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getX());
-                    return new ResourceNotFoundException(USER, "name", loginRequest.getX());
+                    return new ResourceNotFoundException("User", "name", loginRequest.getX());
                 });
 
         final boolean isPasswordCorrect = loginRequest.getY().equals(existingUserEntity.getPassword());
