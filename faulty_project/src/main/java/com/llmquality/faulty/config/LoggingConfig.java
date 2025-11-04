@@ -23,8 +23,7 @@ public class LoggingConfig {
 
     private static final String DEFAULT_LOG_FILE = "application.log";
 
-    @Value("${logging.file.path:#{systemProperties['user.dir'] + '/logs'}}")
-    private String logDirectoryPath;
+    private static final String LOG_DIRECTORY_PATH = "/home/dbe/projects/llm-code-quality-experiment/faulty_project/logs";
 
     @Value("${logging.file.name:" + DEFAULT_LOG_FILE + "}")
     private String logFileName;
@@ -38,7 +37,7 @@ public class LoggingConfig {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
         var loggerContext = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
-        Path logDir = Paths.get(logDirectoryPath);
+        Path logDir = Paths.get(LOG_DIRECTORY_PATH);
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);
