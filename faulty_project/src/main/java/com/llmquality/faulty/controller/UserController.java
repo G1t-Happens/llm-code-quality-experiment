@@ -55,6 +55,6 @@ public class UserController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
-        return userService.checkLogin(loginRequest);
+        return userService.doStuff(loginRequest);
     }
 }

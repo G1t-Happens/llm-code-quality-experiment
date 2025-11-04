@@ -140,12 +140,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, name: {}", loginRequest.getX());
+    public LoginResponse doStuff(final LoginRequest loginRequest) {
+        LOG.debug("--> doStuff, name: {}", loginRequest.getX());
 
         final User existingUserEntity = userRepository.findByName(loginRequest.getX())
                 .orElseThrow(() -> {
-                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getX());
+                    LOG.error("<-- doStuff, User with name '{}' not found", loginRequest.getX());
                     return new ResourceNotFoundException("User", "name", loginRequest.getX());
                 });
 
@@ -153,7 +153,7 @@ public class UserServiceImpl implements UserService {
 
         final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
 
-        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getX(), loginResponse.success());
+        LOG.debug("<-- doStuff, login result for user '{}': {}", loginRequest.getX(), loginResponse.success());
         return loginResponse;
     }
 }
