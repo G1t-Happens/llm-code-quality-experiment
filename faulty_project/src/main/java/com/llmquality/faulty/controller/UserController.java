@@ -3,7 +3,7 @@ package com.llmquality.faulty.controller;
 import com.llmquality.faulty.dto.*;
 import com.llmquality.faulty.dto.validation.UserValidationGroups;
 import com.llmquality.faulty.entity.User;
-import com.llmquality.faulty.service.interfaces.UserService;
+import com.llmquality.faulty.service.UserServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("${api.base-path}/users")
 public class UserController {
 
-    private final UserService userService;
+    private final UserServiceImpl userService;
 
 
     @Autowired
-    public UserController(final UserService userService) {
+    public UserController(final UserServiceImpl userService) {
         this.userService = userService;
     }
 
@@ -55,6 +55,6 @@ public class UserController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
-        return userService.checkLogin(loginRequest);
+        return userService.doStuff(loginRequest);
     }
 }

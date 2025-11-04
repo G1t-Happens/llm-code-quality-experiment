@@ -23,7 +23,7 @@ public interface UserService extends CRUDable<UserRequest, UserResponse, User> {
      * @param loginRequest the login request containing username and password
      * @return a {@link LoginResponse} indicating whether authentication was successful
      */
-    LoginResponse checkLogin(LoginRequest loginRequest);
+    LoginResponse doStuff(LoginRequest loginRequest);
 
     /**
      * Retrieves a user by their username.
