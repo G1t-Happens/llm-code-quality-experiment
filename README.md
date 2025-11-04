@@ -91,3 +91,7 @@ llm-code-quality-experiment/
 | **Modularity**                     | Tight coupling between controller and service | `UserController.java`                   | The `UserController` now directly depends on `UserServiceImpl` instead of the `UserService` interface. This creates tight coupling, making testing and swapping implementations harder. | Violates ISO 25010: Lowers maintainability and modularity; changes in the service may force changes in the controller. |
 | **Reusability**, **Modifiability** | Removed reusable static constant              | Multiple locations in `UserServiceImpl` | The previously shared USER constant was removed, and the value is repeated manually in multiple locations, reducing the ability to change/reuse consistent values.                      | Violates ISO 25010: Reduces maintainability and increases potential for errors due to duplicated constants.            |
 | **Analysability**                  | Rewrite method name to something unclear      | `UserServiceImpl.java`                  | `checkLogin`-Method is rewritten in a way that is unclear, making it difficult to assess the impact of changes or understand the intended behavior.                                     | Violates ISO 25010: Lowers analyzability; developers cannot easily understand or predict the impact of changes.        |
+
+![Maintainability - 1.png](docs/images/Maintainability%20-%201.png)
+![Maintainability - 2.png](docs/images/Maintainability%20-%202.png)
+![Maintainability - 3.png](docs/images/Maintainability%20-%203.png)
