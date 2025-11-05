@@ -8,6 +8,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
 import ch.qos.logback.core.util.FileSize;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -27,18 +28,26 @@ public class LoggingConfig {
 
     private static final String DEFAULT_LOG_FILE = "application.log";
 
-    @Value("${logging.file.path:#{systemProperties['user.dir'] + '/logs'}}")
-    private String logDirectoryPath;
+    private final String logDirectoryPath;
 
-    @Value("${logging.file.name:" + DEFAULT_LOG_FILE + "}")
-    private String logFileName;
+    private final String logFileName;
 
-    @Value("${logging.level.root:DEBUG}")
-    private String rootLogLevel;
+    private final String rootLogLevel;
+
+    private ch.qos.logback.classic.LoggerContext loggerContext;
+
+    public LoggingConfig(
+            @Value("${logging.file.path:#{systemProperties['user.dir'] + '/logs'}}") String logDirectoryPath,
+            @Value("${logging.file.name:" + DEFAULT_LOG_FILE + "}") String logFileName,
+            @Value("${logging.level.root:DEBUG}") String rootLogLevel) {
+        this.logDirectoryPath = logDirectoryPath;
+        this.logFileName = logFileName;
+        this.rootLogLevel = rootLogLevel;
+    }
 
     @Bean
     public Logger logger() {
-        var loggerContext = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
+        loggerContext = (ch.qos.logback.classic.LoggerContext) LoggerFactory.getILoggerFactory();
         Path logDir = initializeLogDirectory(logDirectoryPath);
 
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
@@ -74,6 +83,13 @@ public class LoggingConfig {
         logger.setAdditive(false);
 
         return logger;
+    }
+
+    @PreDestroy
+    public void shutdownLogging() {
+        if (loggerContext != null) {
+            loggerContext.stop();
+        }
     }
 
     private Path initializeLogDirectory(String path) {

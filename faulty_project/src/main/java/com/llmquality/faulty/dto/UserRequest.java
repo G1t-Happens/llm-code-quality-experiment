@@ -18,7 +18,7 @@ public class UserRequest {
     @NotBlank(groups = {UserValidationGroups.Create.class})
     private String name;
 
-    @NotNull(groups = UserValidationGroups.Create.class)
+    @NotBlank(groups = UserValidationGroups.Create.class)
     @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$",
             message = "Password must be at least 8 characters long, contain at least one number, one lowercase and one uppercase letter.",
             groups = {UserValidationGroups.Update.class, UserValidationGroups.Create.class}

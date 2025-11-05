@@ -18,6 +18,14 @@ package com.llmquality.baseline.dto.validation;
 public class UserValidationGroups {
 
     /**
+     * Private constructor to prevent instantiation of this utility class.
+     * Throws UnsupportedOperationException if called.
+     */
+    private UserValidationGroups() {
+        throw new UnsupportedOperationException("Utility class - should not be instantiated");
+    }
+
+    /**
      * Validation group for creating a new user.
      * <p>
      * This interface is used to mark the validation constraints that should
