@@ -30,6 +30,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     private final EntityManager entityManager;
+
     private final PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -115,7 +116,8 @@ public class UserServiceImpl implements UserService {
                 });
 
         // Partial update via updateUserEntityFromUserRequest
-        final User updateUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, passwordEncoder);
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User updateUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, localPasswordEncoder);
         final User savedUserEntity = userRepository.save(updateUserEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
