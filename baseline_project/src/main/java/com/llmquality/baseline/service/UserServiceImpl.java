@@ -105,13 +105,9 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "name", newName);
         }
 
-        userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
-
-        if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            existingUserEntity.setPassword(passwordEncoder.encode(userRequest.getPassword()));
-        }
-
-        final User savedUserEntity = userRepository.save(existingUserEntity);
+        // Partial update via updateUserEntityFromUserRequest
+        final User updateUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, passwordEncoder);
+        final User savedUserEntity = userRepository.save(updateUserEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
         LOG.debug("<-- update, user updated with id: {}", userResponse.id());
