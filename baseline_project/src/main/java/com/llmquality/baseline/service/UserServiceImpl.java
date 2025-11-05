@@ -136,15 +136,11 @@ public class UserServiceImpl implements UserService {
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
         LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
 
-        final User existingUserEntity = userRepository.findByName(loginRequest.getName())
-                .orElseThrow(() -> {
-                    LOG.error("<-- checkLogin, User with name '{}' not found", loginRequest.getName());
-                    return new ResourceNotFoundException(USER, "name", loginRequest.getName());
-                });
+        final boolean isSuccess = userRepository.findByName(loginRequest.getName())
+                .map(user -> passwordEncoder.matches(loginRequest.getPassword(), user.getPassword()))
+                .orElse(false);
 
-        final boolean isPasswordCorrect = passwordEncoder.matches(loginRequest.getPassword(), existingUserEntity.getPassword());
-
-        final LoginResponse loginResponse = new LoginResponse(isPasswordCorrect);
+        final LoginResponse loginResponse = new LoginResponse(isSuccess);
 
         LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
         return loginResponse;
