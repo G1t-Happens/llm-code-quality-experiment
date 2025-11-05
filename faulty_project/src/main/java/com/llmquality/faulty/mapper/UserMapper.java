@@ -43,14 +43,17 @@ public interface UserMapper {
      *     <li> {@code name}, {@code email}, {@code password}, and {@code admin} are mapped from the DTO to the entity,
      *          with any {@code null} values being ignored. </li>
      * </ul>
+     * The password is hashed using the provided {@link PasswordEncoder}.
      *
-     * @param dto    the {@link UserRequest} DTO containing the data to update the entity.
-     * @param entity the {@link User} entity to be updated.
+     * @param dto             the {@link UserRequest} DTO containing the data to update the entity.
+     * @param entity          the {@link User} entity to be updated.
+     * @param passwordEncoder the password encoder to hash the password
+     * @return the mapped User entity with hashed password(if changed)
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "name", source = "name", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "email", source = "email", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "password", source = "password", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "password", expression = "java(dto.getPassword() != null ? passwordEncoder.encode(passwordEncoder.encode(dto.getPassword())) : entity.getPassword())")
     @Mapping(target = "admin", source = "admin", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity);
+    User updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity, @Context PasswordEncoder passwordEncoder);
 }

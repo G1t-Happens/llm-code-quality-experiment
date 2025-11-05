@@ -30,12 +30,14 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     private final EntityManager entityManager;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper, final EntityManager entityManager) {
+    public UserServiceImpl(final UserRepository userRepository, final UserMapper userMapper, final EntityManager entityManager, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.entityManager = entityManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -112,14 +114,9 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException("User", "id", id);
                 });
 
-        userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity);
-
-        if (userRequest.getPassword() != null && !userRequest.getPassword().isBlank()) {
-            final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
-            existingUserEntity.setPassword(localPasswordEncoder.encode(localPasswordEncoder.encode(userRequest.getPassword())));
-        }
-
-        final User savedUserEntity = userRepository.save(existingUserEntity);
+        // Partial update via updateUserEntityFromUserRequest
+        final User updateUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, passwordEncoder);
+        final User savedUserEntity = userRepository.save(updateUserEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
         LOG.debug("<-- update, user updated with id: {}", userResponse.id());
