@@ -3,7 +3,7 @@
 ## Overview
 
 This repository contains a controlled experiment evaluating the capability of large language models (LLMs) to detect and
-analyze software quality issues in Java Spring Boot applications.
+analyze software quality issues in applications.
 
 ## Repository Structure
 
@@ -11,6 +11,7 @@ analyze software quality issues in Java Spring Boot applications.
 llm-code-quality-experiment/
 ├── baseline_project/    # Clean, ISO25010-compliant reference project
 ├── faulty_project/      # Same project with injected errors for testing
+├── docs/                # Code extraction script & Code diff images
 └── README.md
 ```
 
