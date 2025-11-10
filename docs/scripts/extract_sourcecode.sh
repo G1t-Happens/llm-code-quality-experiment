@@ -136,8 +136,7 @@ printf "📄 Gefundene Dateien: %d\n--------------------------------------\n" "$
             continue
         fi
 
-        # Inhalt in die Ausgabedatei schreiben
-        cat "$file"
+        awk '{print NR "\t" $0}' "$file"
     done
 } >> "$OUTPUT_FILE"
 
