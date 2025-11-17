@@ -3,6 +3,7 @@ package com.llmquality.baseline.dto.product;
 import com.llmquality.baseline.dto.product.validation.ProductValidationGroups;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
@@ -20,6 +21,8 @@ public record ProductRequest(
         @NotBlank(message = "Title must not be blank", groups = ProductValidationGroups.Create.class)
         String title,
 
+        @NotBlank(message = "Description must not be blank", groups = ProductValidationGroups.Create.class)
+        @Size(max = 2000, message = "Description too long", groups = {ProductValidationGroups.Create.class, ProductValidationGroups.Update.class})
         String description,
 
         @Min(value = 0, message = "Price must be >= 0", groups = ProductValidationGroups.Create.class)

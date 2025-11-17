@@ -8,20 +8,20 @@ import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.mapper.OrderMapper;
 import com.llmquality.baseline.repository.OrderRepository;
 import com.llmquality.baseline.repository.ProductRepository;
+import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.OrderService;
 import jakarta.transaction.Transactional;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -30,28 +30,33 @@ public class OrderServiceImpl implements OrderService {
 
     private static final String ORDER = "Order";
 
+    private static final String USER = "User";
+
     private static final String PRODUCT = "Product";
 
     private final OrderRepository orderRepository;
+
     private final ProductRepository productRepository;
+
+    private final UserRepository userRepository;
+
     private final OrderMapper orderMapper;
-    private final ObjectProvider<Jwt> jwtProvider;
+
 
     public OrderServiceImpl(final OrderRepository orderRepository,
                             final ProductRepository productRepository,
-                            final OrderMapper orderMapper,
-                            final ObjectProvider<Jwt> jwtProvider) {
+                            final UserRepository userRepository,
+                            final OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
         this.orderMapper = orderMapper;
-        this.jwtProvider = jwtProvider;
     }
 
     @Override
     public PagedResponse<OrderResponse> listAll(Pageable pageable) {
         LOG.debug("--> listAll orders");
-        Page<OrderResponse> page = orderRepository.findAll(pageable)
-                .map(orderMapper::toResponse);
+        Page<OrderResponse> page = orderRepository.findAll(pageable).map(orderMapper::toResponse);
         return PagedResponse.fromPage(page);
     }
 
@@ -65,53 +70,50 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse save(OrderRequest request) {
-        LOG.debug("--> create new order with {} items", request.items().size());
+        LOG.debug("--> save, new order with {} items", request.items().size());
 
-        // Saubere Trennung: Wer ist gerade angemeldet?
-        Jwt jwt = jwtProvider.getIfAvailable();  // kann null sein (z. B. in Tests)
+        final String currentUsername = getCurrentUsername();
+        final User user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> {
+                    LOG.error("<-- save, user '{}' not found", currentUsername);
+                    return new ResourceNotFoundException(USER, "username", currentUsername);
+                });
 
-        String username = jwt != null
-                ? jwt.getSubject()
-                : "LOOL";
-        LOG.error(username);
+        Order order = new Order();
+        order.setUser(user);
+        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalAmount(BigDecimal.ZERO);
 
+        BigDecimal total = BigDecimal.ZERO;
 
-//
-//        Order order = new Order();
-//        order.setUser(username); // oder order.setUser(userRepository.findByUsername(username)... wenn du die Entity brauchst
-//        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-//        order.setStatus(OrderStatus.PENDING);
-//        order.setTotalAmount(BigDecimal.ZERO);
-//
-//        BigDecimal total = BigDecimal.ZERO;
-//
-//        for (OrderItemRequest itemReq : request.items()) {
-//            Product product = productRepository.findById(itemReq.productId())
-//                    .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, "id", itemReq.productId()));
-//
-//            if (product.getStock() < itemReq.quantity()) {
-//                throw new IllegalArgumentException("Nicht genug Lagerbestand für Produkt: " + product.getTitle());
-//            }
-//
-//            OrderItem item = new OrderItem();
-//            item.setOrder(order);
-//            item.setProduct(product);
-//            item.setQuantity(itemReq.quantity());
-//            item.setUnitPrice(product.getPrice());
-//
-//            // Lager reduzieren
-//            product.setStock(product.getStock() - itemReq.quantity());
-//            productRepository.save(product);
-//
-//            order.addItem(item);
-//            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
-//        }
-//
-//        order.setTotalAmount(total);
-//        Order saved = orderRepository.save(order);
-//
-//        LOG.debug("<-- order created with id {} for user {} (total {})", saved.getId(), username, total);
-        return null;
+        for (OrderItemRequest itemReq : request.items()) {
+            Product product = productRepository.findById(itemReq.productId())
+                    .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, "id", itemReq.productId()));
+
+            if (product.getStock() < itemReq.quantity()) {
+                throw new IllegalArgumentException("Nicht genug Lagerbestand für Produkt: " + product.getTitle());
+            }
+
+            OrderItem item = new OrderItem();
+            item.setOrder(order);
+            item.setProduct(product);
+            item.setQuantity(itemReq.quantity());
+            item.setUnitPrice(product.getPrice());
+
+            product.setStock(product.getStock() - itemReq.quantity());
+            productRepository.save(product);
+
+            order.addItem(item);
+            total = total.add(product.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
+        }
+
+        order.setTotalAmount(total);
+        final Order saved = orderRepository.save(order);
+        final OrderResponse orderResponse = orderMapper.toResponse(saved);
+
+        LOG.debug("<-- order created with id {} for user {} (total {})", saved.getId(), currentUsername, total);
+        return orderResponse;
     }
 
     @Override
@@ -136,24 +138,18 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.delete(order);
     }
 
-    public String getCurrentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    public static String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
+            throw new IllegalStateException("Kein authentifizierter Benutzer");
+        }
+
+        if (auth.getPrincipal() instanceof Jwt jwt) {
             return jwt.getSubject();
         }
 
-        return null;
-    }
-
-    /**
-     * Wirft eine Exception, wenn kein authentifizierter User vorhanden ist
-     */
-    public String getCurrentUsernameRequired() {
-        String username = getCurrentUsername();
-        if (username == null) {
-            throw new IllegalStateException("Kein authentifizierter Benutzer gefunden");
-        }
-        return username;
+        String name = auth.getName();
+        return "anonymousUser".equals(name) ? null : name;
     }
 }

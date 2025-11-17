@@ -1,7 +1,6 @@
 package com.llmquality.baseline.controller;
 
 import com.llmquality.baseline.dto.user.*;
-import com.llmquality.baseline.dto.user.validation.UserValidationGroups;
 import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import static com.llmquality.baseline.dto.user.validation.UserValidationGroups.*;
+
 
 @RestController
 @RequestMapping("${api.base-path}/users")
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -38,12 +40,12 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user) {
+    public UserResponse create(@RequestBody @Validated(Create.class) UserRequest user) {
         return userService.save(user);
     }
 
     @PatchMapping("/{id}")
-    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(UserValidationGroups.Update.class) UserRequest user) {
+    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest user) {
         return userService.update(id, user);
     }
 

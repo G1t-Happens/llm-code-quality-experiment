@@ -1,6 +1,8 @@
 package com.llmquality.baseline.dto.product.validation;
 
 
+import jakarta.validation.groups.Default;
+
 /**
  * This class contains a validation group for differentiating between the
  * validation rules applied during the creation and update of a products.
@@ -15,7 +17,7 @@ package com.llmquality.baseline.dto.product.validation;
  * for operations that don’t require them e.q. update requests
  * </p>
  */
-public class ProductValidationGroups {
+public final class ProductValidationGroups {
 
     /**
      * Private constructor to prevent instantiation of this utility class.
@@ -32,7 +34,7 @@ public class ProductValidationGroups {
      * be applied when creating a new product (e.g., during product registration).
      * </p>
      */
-    public interface Create {
+    public interface Create extends Default {
     }
 
     /**

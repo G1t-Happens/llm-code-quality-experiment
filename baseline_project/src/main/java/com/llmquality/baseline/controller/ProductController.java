@@ -2,7 +2,6 @@ package com.llmquality.baseline.controller;
 
 import com.llmquality.baseline.dto.product.ProductRequest;
 import com.llmquality.baseline.dto.product.ProductResponse;
-import com.llmquality.baseline.dto.product.validation.ProductValidationGroups;
 import com.llmquality.baseline.dto.user.PagedResponse;
 import com.llmquality.baseline.service.interfaces.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +9,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import static com.llmquality.baseline.dto.product.validation.ProductValidationGroups.*;
+
 
 @RestController
 @RequestMapping("${api.base-path}/products")
+@Validated
 public class ProductController {
 
     private final ProductService productService;
@@ -34,12 +36,12 @@ public class ProductController {
     }
 
     @PostMapping
-    public ProductResponse create(@RequestBody @Validated(ProductValidationGroups.Create.class) ProductRequest req) {
+    public ProductResponse create(@RequestBody @Validated(Create.class) ProductRequest req) {
         return productService.save(req);
     }
 
     @PatchMapping("/{id}")
-    public ProductResponse update(@PathVariable Long id, @RequestBody @Validated(ProductValidationGroups.Update.class) ProductRequest req) {
+    public ProductResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) ProductRequest req) {
         return productService.update(id, req);
     }
 

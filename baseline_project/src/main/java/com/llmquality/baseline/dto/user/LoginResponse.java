@@ -14,10 +14,8 @@ import jakarta.validation.constraints.NotNull;
  */
 public record LoginResponse(
 
-        @NotNull(message = "The success flag is always provided by the API and indicates whether the login was successful.")
         Boolean success,
 
-        @Nullable
         String token
 
 ) {

@@ -2,16 +2,20 @@ package com.llmquality.baseline.controller;
 
 import com.llmquality.baseline.dto.order.OrderRequest;
 import com.llmquality.baseline.dto.order.OrderResponse;
+import com.llmquality.baseline.dto.product.validation.ProductValidationGroups;
 import com.llmquality.baseline.dto.user.PagedResponse;
 import com.llmquality.baseline.service.interfaces.OrderService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static com.llmquality.baseline.dto.order.validation.OrderValidationGroups.*;
 
 
 @RestController
 @RequestMapping("${api.base-path}/orders")
+@Validated
 public class OrderController {
 
     private final OrderService orderService;
@@ -33,7 +37,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public OrderResponse create(@RequestBody @Valid OrderRequest orderRequest) {
+    public OrderResponse create(@RequestBody @Validated(Create.class) OrderRequest orderRequest) {
         return orderService.save(orderRequest);
     }
 
