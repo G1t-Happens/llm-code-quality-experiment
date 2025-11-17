@@ -1,6 +1,6 @@
 package com.llmquality.baseline.service.interfaces;
 
-import com.llmquality.baseline.dto.PagedResponse;
+import com.llmquality.baseline.dto.user.PagedResponse;
 import org.springframework.data.domain.Pageable;
 
 

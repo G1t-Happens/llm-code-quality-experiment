@@ -1,7 +1,7 @@
 package com.llmquality.baseline.controller;
 
-import com.llmquality.baseline.dto.*;
-import com.llmquality.baseline.dto.validation.UserValidationGroups;
+import com.llmquality.baseline.dto.user.*;
+import com.llmquality.baseline.dto.user.validation.UserValidationGroups;
 import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

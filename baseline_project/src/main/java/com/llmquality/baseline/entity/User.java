@@ -1,48 +1,58 @@
+// =============== 2. User Entity (bereinigt & modern) ===============
 package com.llmquality.baseline.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-import java.util.Objects;
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends AbstractEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id = 0L;
+    private Long id;
 
+    @NotBlank
+    @Size(min = 3, max = 100)
     @Column(name = "username", nullable = false, unique = true)
-    @Size(max = 255)
-    private String name;
+    private String username;
 
-    @Column(name = "userpw", nullable = false)
+    @NotBlank
     @Size(max = 255)
+    @Column(name = "password_hash", nullable = false)
     private String password;
 
-    @Column(name = "email", nullable = false)
+    @NotBlank
+    @Email
     @Size(max = 255)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(name = "isadmin", nullable = false)
-    private boolean admin;
+    @Column(name = "is_admin", nullable = false)
+    private boolean admin = false;
 
-    public boolean isAdmin() {
-        return admin;
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Order> orders = new ArrayList<>();
+
+    public Long getId() {
+        return id;
     }
 
-    public void setAdmin(boolean admin) {
-        this.admin = admin;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUsername() {
+        return username;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {
@@ -53,31 +63,27 @@ public class User {
         this.password = password;
     }
 
-    public String getName() {
-        return name;
+    public String getEmail() {
+        return email;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
-    public long getId() {
-        return id;
+    public boolean isAdmin() {
+        return admin;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User user)) return false;
-        return Objects.equals(name, user.getName());
+    public List<Order> getOrders() {
+        return orders;
     }
 
-    @Override
-    public int hashCode() {
-        return name.hashCode();
+    public void setOrders(List<Order> orders) {
+        this.orders = orders;
     }
 }

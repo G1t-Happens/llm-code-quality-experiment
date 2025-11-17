@@ -1,7 +1,8 @@
 package com.llmquality.baseline.service;
 
-import com.llmquality.baseline.dto.*;
+import com.llmquality.baseline.dto.user.*;
 import com.llmquality.baseline.entity.User;
+import com.llmquality.baseline.enums.Role;
 import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.mapper.UserMapper;
@@ -9,10 +10,24 @@ import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.UserService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 
 @Service
@@ -26,17 +41,27 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final JwtEncoder jwtEncoder;
+
     private final UserMapper userMapper;
 
+    @Value("${jwt.issuer:self}")
+    private String jwtIssuer;
+
+    @Value("${jwt.expiration:1}")
+    private long jwtExpirationHours;
+
+
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final JwtEncoder jwtEncoder, final UserMapper userMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtEncoder = jwtEncoder;
         this.userMapper = userMapper;
     }
 
     @Override
-    public PagedResponse<UserResponse> listAll(Pageable pageable) {
+    public PagedResponse<UserResponse> listAll(final Pageable pageable) {
         LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         final Page<UserResponse> page = userRepository.findAll(pageable).map(userMapper::toUserResponse);
         LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
@@ -61,7 +86,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getByUsername(final String username) {
         LOG.debug("--> getByUsername, username: {}", username);
 
-        final User existingUserEntity = userRepository.findByName(username)
+        final User existingUserEntity = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     LOG.error("<-- getByUsername, User '{}' not found", username);
                     return new ResourceNotFoundException(USER, "username", username);
@@ -74,11 +99,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse save(final UserRequest userRequest) {
-        LOG.debug("--> save, user with name: {}", userRequest.getName());
+        LOG.debug("--> save, user with name: {}", userRequest.getUsername());
 
-        if (userRepository.existsByName(userRequest.getName())) {
-            LOG.error("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getName());
-            throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
+        if (userRepository.existsByUsername(userRequest.getUsername())) {
+            LOG.error("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getUsername());
+            throw new ResourceAlreadyExistsException(USER, "name", userRequest.getUsername());
         }
 
         final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
@@ -99,8 +124,8 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        final String newName = userRequest.getName();
-        if (newName != null && !newName.equals(existingUserEntity.getName()) && userRepository.existsByName(newName)) {
+        final String newName = userRequest.getUsername();
+        if (newName != null && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByUsername(newName)) {
             LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
             throw new ResourceAlreadyExistsException(USER, "name", newName);
         }
@@ -130,15 +155,92 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
+        LOG.debug("--> checkLogin, username: {}", loginRequest.getUsername());
 
-        final boolean isSuccess = userRepository.findByName(loginRequest.getName())
-                .map(user -> passwordEncoder.matches(loginRequest.getPassword(), user.getPassword()))
-                .orElse(false);
+        final User user = userRepository.findByUsername(loginRequest.getUsername())
+                .orElseThrow(() -> {
+                    LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getUsername());
+                    return new ResourceNotFoundException("User", "username", loginRequest.getUsername());
+                });
 
-        final LoginResponse loginResponse = new LoginResponse(isSuccess);
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getUsername());
+            return new LoginResponse(false, null);
+        }
 
-        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
-        return loginResponse;
+        final List<GrantedAuthority> authorities = mapAuthorities(user);
+        final Authentication authentication = createAuthentication(user.getUsername(), authorities);
+        final String token = generateJwt(authentication);
+
+        LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.getUsername());
+        return new LoginResponse(true, token);
+    }
+
+    /**
+     * Maps the user's role to a list of granted authorities for Spring Security.
+     *
+     * @param user the user whose roles are to be mapped
+     * @return list of granted authorities
+     */
+    private List<GrantedAuthority> mapAuthorities(User user) {
+        LOG.debug("--> mapAuthorities, for user: {}", user.getId());
+        List<GrantedAuthority> grantedAuthorities = user.isAdmin()
+                ? List.of(new SimpleGrantedAuthority(Role.ADMIN.getName()))
+                : List.of(new SimpleGrantedAuthority(Role.USER.getName()));
+        LOG.debug("<-- mapAuthorities, for user: {}", user.getId());
+        return grantedAuthorities;
+    }
+
+    /**
+     * Creates an Authentication object for a given username and authorities.
+     *
+     * @param username    the username of the authenticated user
+     * @param authorities the granted authorities for the user
+     * @return an Authentication token
+     */
+    private Authentication createAuthentication(String username, List<GrantedAuthority> authorities) {
+        LOG.debug("--> createAuthentication, user={}", username);
+        Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        LOG.debug("<-- createAuthentication, user={}", username);
+        return auth;
+    }
+
+    /**
+     * Generates a JWT token for a given authentication object.
+     *
+     * @param authentication the authentication containing user details and roles
+     * @return a signed JWT token as String
+     */
+    private String generateJwt(Authentication authentication) {
+        LOG.debug("--> generateJwt, username: {}", authentication.getName());
+        final Instant now = Instant.now();
+        final List<String> roles = extractRoles(authentication);
+
+        final JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(jwtIssuer)
+                .issuedAt(now)
+                .expiresAt(now.plus(jwtExpirationHours, ChronoUnit.HOURS))
+                .subject(authentication.getName())
+                .claim("roles", roles)
+                .build();
+
+        final String jwt = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+        LOG.debug("<-- generateJwt, username: {}", authentication.getName());
+        return jwt;
+    }
+
+    /**
+     * Extracts role names from the granted authorities in an authentication object.
+     *
+     * @param authentication the authentication containing granted authorities
+     * @return list of role names
+     */
+    private List<String> extractRoles(Authentication authentication) {
+        LOG.debug("--> extractRoles");
+        final List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+        LOG.debug("<-- extractRoles, {} roles extracted", roles.size());
+        return roles;
     }
 }

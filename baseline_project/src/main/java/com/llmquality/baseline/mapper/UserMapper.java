@@ -1,7 +1,7 @@
 package com.llmquality.baseline.mapper;
 
-import com.llmquality.baseline.dto.UserRequest;
-import com.llmquality.baseline.dto.UserResponse;
+import com.llmquality.baseline.dto.user.UserRequest;
+import com.llmquality.baseline.dto.user.UserResponse;
 import com.llmquality.baseline.entity.User;
 import org.mapstruct.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +22,7 @@ public interface UserMapper {
      * @return the mapped User entity with hashed password
      */
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "orders", ignore = true)
     @Mapping(target = "password", expression = "java(passwordEncoder.encode(dto.getPassword()))")
     User toUserEntity(UserRequest dto, @Context PasswordEncoder passwordEncoder);
 
@@ -51,7 +52,8 @@ public interface UserMapper {
      * @return the mapped User entity with hashed password(if changed)
      */
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "name", source = "name", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "username", source = "username", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "email", source = "email", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "password", expression = "java(dto.getPassword() != null ? passwordEncoder.encode(dto.getPassword()) : entity.getPassword())")
     @Mapping(target = "admin", source = "admin", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

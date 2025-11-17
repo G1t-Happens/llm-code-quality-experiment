@@ -19,6 +19,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
+/**
+ * Configuration class for setting up application logging.
+ *
+ * <p>
+ * Configures a rolling file appender with asynchronous logging using Logback.
+ * Log files are stored in a configurable directory with a configurable file name
+ * and log level. Supports automatic creation of log directories if they do not exist.
+ * </p>
+ */
 @Configuration
 public class LoggingConfig {
 

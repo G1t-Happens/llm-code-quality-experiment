@@ -1,9 +1,9 @@
 package com.llmquality.baseline.service.interfaces;
 
-import com.llmquality.baseline.dto.LoginRequest;
-import com.llmquality.baseline.dto.LoginResponse;
-import com.llmquality.baseline.dto.UserRequest;
-import com.llmquality.baseline.dto.UserResponse;
+import com.llmquality.baseline.dto.user.LoginRequest;
+import com.llmquality.baseline.dto.user.LoginResponse;
+import com.llmquality.baseline.dto.user.UserRequest;
+import com.llmquality.baseline.dto.user.UserResponse;
 import com.llmquality.baseline.entity.User;
 
 
