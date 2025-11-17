@@ -1,8 +1,5 @@
 package com.llmquality.baseline.dto.user;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 
 /**
  * Response DTO for login operations.

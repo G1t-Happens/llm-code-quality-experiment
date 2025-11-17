@@ -2,7 +2,6 @@ package com.llmquality.baseline.controller;
 
 import com.llmquality.baseline.dto.order.OrderRequest;
 import com.llmquality.baseline.dto.order.OrderResponse;
-import com.llmquality.baseline.dto.product.validation.ProductValidationGroups;
 import com.llmquality.baseline.dto.user.PagedResponse;
 import com.llmquality.baseline.service.interfaces.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
