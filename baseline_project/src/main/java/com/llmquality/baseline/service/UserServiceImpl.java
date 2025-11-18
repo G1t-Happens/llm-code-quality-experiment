@@ -85,7 +85,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getByUsername(final String username) {
         LOG.debug("--> getByUsername, username: {}", username);
 
-        final User existingUserEntity = userRepository.findByName(username)
+        final User existingUserEntity = userRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     LOG.error("<-- getByUsername, User '{}' not found", username);
                     return new ResourceNotFoundException(USER, "username", username);
@@ -98,11 +98,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse save(final UserRequest userRequest) {
-        LOG.debug("--> save, user with name: {}", userRequest.getName());
+        LOG.debug("--> save, user with username: {}", userRequest.getUsername());
 
-        if (userRepository.existsByName(userRequest.getName())) {
-            LOG.error("<-- save, ResourceAlreadyExistsException for name: {}", userRequest.getName());
-            throw new ResourceAlreadyExistsException(USER, "name", userRequest.getName());
+        if (userRepository.existsByUsername(userRequest.getUsername())) {
+            LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.getUsername());
+            throw new ResourceAlreadyExistsException(USER, "username", userRequest.getUsername());
         }
 
         final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
@@ -123,10 +123,10 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        final String newName = userRequest.getName();
-        if (newName != null && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByName(newName)) {
+        final String newName = userRequest.getUsername();
+        if (newName != null && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByUsername(newName)) {
             LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
-            throw new ResourceAlreadyExistsException(USER, "name", newName);
+            throw new ResourceAlreadyExistsException(USER, "username", newName);
         }
 
         // Partial update via updateUserEntityFromUserRequest
@@ -156,7 +156,7 @@ public class UserServiceImpl implements UserService {
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
         LOG.debug("--> checkLogin, username: {}", loginRequest.getUsername());
 
-        final User user = userRepository.findByName(loginRequest.getUsername())
+        final User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> {
                     LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getUsername());
                     return new ResourceNotFoundException("User", "username", loginRequest.getUsername());

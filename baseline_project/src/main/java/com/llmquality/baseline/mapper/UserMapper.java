@@ -42,7 +42,7 @@ public interface UserMapper {
      * The method will map the following fields:
      * <ul>
      *     <li> {@code id} is ignored (not mapped) </li>
-     *     <li> {@code name}, {@code email}, {@code password}, and {@code admin} are mapped from the DTO to the entity,
+     *     <li> {@code username}, {@code email}, {@code password}, and {@code admin} are mapped from the DTO to the entity,
      *          with any {@code null} values being ignored. </li>
      * </ul>
      * The password is hashed using the provided {@link PasswordEncoder}.

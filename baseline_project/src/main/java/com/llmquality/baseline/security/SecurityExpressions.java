@@ -45,4 +45,16 @@ public class SecurityExpressions {
         return authentication.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
     }
+
+    /**
+     * Allows setting the {@code admin} flag to {@code true} only for users with ROLE_ADMIN.
+     * Used in @PreAuthorize to prevent self-promotion.
+     *
+     * @param newAdminValue  the new admin value from request (maybe null)
+     * @param authentication current authentication
+     * @return true if allowed
+     */
+    public boolean canSetAdminFlag(Boolean newAdminValue, Authentication authentication) {
+        return newAdminValue == null || !newAdminValue || isAdmin(authentication);
+    }
 }

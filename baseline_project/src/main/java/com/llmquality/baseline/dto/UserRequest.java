@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Pattern;
 public class UserRequest {
 
     @NotBlank(groups = {UserValidationGroups.Create.class})
-    private String name;
+    private String username;
 
     @NotBlank(groups = UserValidationGroups.Create.class)
     @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$",
@@ -32,12 +32,12 @@ public class UserRequest {
     @NotNull(groups = UserValidationGroups.Create.class)
     private Boolean admin;
 
-    public String getName() {
-        return name;
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {

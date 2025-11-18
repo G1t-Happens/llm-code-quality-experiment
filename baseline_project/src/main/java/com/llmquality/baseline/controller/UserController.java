@@ -41,14 +41,14 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse create(@RequestBody @Validated(Create.class) UserRequest user) {
-        return userService.save(user);
+    public UserResponse create(@RequestBody @Validated(Create.class) UserRequest userRequest) {
+        return userService.save(userRequest);
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#id, authentication)")
-    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest user) {
-        return userService.update(id, user);
+    @PreAuthorize("@sec.isAdmin(authentication) or (@sec.isOwner(#id, authentication) && @sec.canSetAdminFlag(#userRequest.admin, authentication))")
+    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest userRequest) {
+        return userService.update(id, userRequest);
     }
 
     @DeleteMapping("/{id}")
