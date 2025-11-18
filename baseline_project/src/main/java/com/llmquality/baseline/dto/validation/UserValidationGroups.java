@@ -15,7 +15,7 @@ package com.llmquality.baseline.dto.validation;
  * for operations that don’t require them e.q. update requests
  * </p>
  */
-public class UserValidationGroups {
+public final class UserValidationGroups {
 
     /**
      * Private constructor to prevent instantiation of this utility class.

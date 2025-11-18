@@ -26,6 +26,7 @@ public record AddressResponse(
         String country,
 
         AddressType addressType,
+
         Long userId
 ) {
     // You can add custom methods here if needed, e.g., formatted output or convenience methods.

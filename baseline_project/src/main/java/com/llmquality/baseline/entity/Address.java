@@ -2,36 +2,45 @@ package com.llmquality.baseline.entity;
 
 import com.llmquality.baseline.enums.AddressType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
+
 
 @Entity
 @Table(name = "addresses")
 public class Address {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id = 0L;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(name = "street", nullable = false)
+    @Size(max = 255)
     private String street;
 
-    @Column(nullable = false)
+    @Column(name = "house_number", nullable = false)
+    @Size(max = 255)
     private String houseNumber;
 
-    @Column(nullable = false)
+    @Column(name = "postal_code", nullable = false)
+    @Size(max = 255)
     private String postalCode;
 
-    @Column(nullable = false)
+    @Column(name = "city", nullable = false)
+    @Size(max = 255)
     private String city;
 
-    @Column(nullable = false)
+    @Column(name = "country", nullable = false)
+    @Size(max = 255)
     private String country;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "address_type", nullable = false)
     private AddressType addressType = AddressType.PRIVATE;
 
 
@@ -101,13 +110,14 @@ public class Address {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (!(o instanceof Address address)) return false;
-        return Objects.equals(id, address.id) && Objects.equals(user, address.user) && Objects.equals(street, address.street) && Objects.equals(houseNumber, address.houseNumber) && Objects.equals(postalCode, address.postalCode) && Objects.equals(city, address.city) && Objects.equals(country, address.country) && Objects.equals(addressType, address.addressType);
+        return Objects.equals(id, address.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, user, street, houseNumber, postalCode, city, country, addressType);
+        return Objects.hash(id);
     }
 }
 

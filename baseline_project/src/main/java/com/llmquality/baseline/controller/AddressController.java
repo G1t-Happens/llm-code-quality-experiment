@@ -4,10 +4,12 @@ import com.llmquality.baseline.dto.AddressRequest;
 import com.llmquality.baseline.dto.AddressResponse;
 import com.llmquality.baseline.dto.PagedResponse;
 import com.llmquality.baseline.service.interfaces.AddressService;
-import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
 
 
 @RestController
@@ -35,13 +37,13 @@ public class AddressController {
 
     @PostMapping
     @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#userId, authentication)")
-    public AddressResponse create(@PathVariable Long userId, @Valid @RequestBody AddressRequest addressRequest) {
+    public AddressResponse create(@PathVariable Long userId, @RequestBody @Validated(Create.class) AddressRequest addressRequest) {
         return addressService.save(userId, addressRequest);
     }
 
     @PatchMapping("/{addressId}")
     @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#userId, authentication)")
-    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody AddressRequest addressRequest) {
+    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
         return addressService.update(userId, addressId, addressRequest);
     }
 

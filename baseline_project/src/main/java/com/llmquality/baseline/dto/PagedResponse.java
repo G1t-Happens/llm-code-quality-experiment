@@ -19,11 +19,17 @@ import java.util.List;
  * @param <T> the type of content in the page
  */
 public record PagedResponse<T>(
+
         List<T> content,
+
         int page,
+
         int size,
+
         long totalElements,
+
         int totalPages,
+
         boolean last
 ) {
 

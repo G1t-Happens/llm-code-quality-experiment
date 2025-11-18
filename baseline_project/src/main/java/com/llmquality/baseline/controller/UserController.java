@@ -1,13 +1,14 @@
 package com.llmquality.baseline.controller;
 
 import com.llmquality.baseline.dto.*;
-import com.llmquality.baseline.dto.validation.UserValidationGroups;
 import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static com.llmquality.baseline.dto.validation.UserValidationGroups.*;
 
 
 @RestController
@@ -40,15 +41,13 @@ public class UserController {
     }
 
     @PostMapping
-    public UserResponse create(@RequestBody @Validated(UserValidationGroups.Create.class) UserRequest user) {
+    public UserResponse create(@RequestBody @Validated(Create.class) UserRequest user) {
         return userService.save(user);
     }
 
     @PatchMapping("/{id}")
     @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#id, authentication)")
-    public UserResponse update(
-            @PathVariable Long id,
-            @RequestBody @Validated(UserValidationGroups.Update.class) UserRequest user) {
+    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest user) {
         return userService.update(id, user);
     }
 

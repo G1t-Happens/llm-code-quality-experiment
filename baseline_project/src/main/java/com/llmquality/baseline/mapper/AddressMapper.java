@@ -20,5 +20,5 @@ public interface AddressMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    void updateAddressEntityFromAddressRequest(@MappingTarget Address address, AddressRequest addressRequest);
+    Address updateAddressEntityFromAddressRequest(@MappingTarget Address address, AddressRequest addressRequest);
 }

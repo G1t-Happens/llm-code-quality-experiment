@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
     private long jwtExpirationHours;
 
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper, final JwtEncoder jwtEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, JwtEncoder jwtEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
@@ -109,7 +109,7 @@ public class UserServiceImpl implements UserService {
         final User savedUserEntity = userRepository.save(userEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
-        LOG.debug("<-- save, user saved with id: {}", savedUserEntity.getId());
+        LOG.debug("<-- save, user saved with id: {}", userResponse.id());
         return userResponse;
     }
 
@@ -130,8 +130,8 @@ public class UserServiceImpl implements UserService {
         }
 
         // Partial update via updateUserEntityFromUserRequest
-        final User updateUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, passwordEncoder);
-        final User savedUserEntity = userRepository.save(updateUserEntity);
+        final User updatedUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, passwordEncoder);
+        final User savedUserEntity = userRepository.save(updatedUserEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
         LOG.debug("<-- update, user updated with id: {}", userResponse.id());
@@ -222,8 +222,6 @@ public class UserServiceImpl implements UserService {
                 .subject(String.valueOf(userId))
                 .claim("roles", roles)
                 .build();
-
-        LOG.debug("<userID: {}", userId);
 
         final String jwt = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
         LOG.debug("<-- generateJwt, username: {}", authentication.getName());
