@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService {
                 });
 
         final String newName = userRequest.getName();
-        if (newName != null && !newName.equals(existingUserEntity.getName()) && userRepository.existsByName(newName)) {
+        if (newName != null && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByName(newName)) {
             LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
             throw new ResourceAlreadyExistsException(USER, "name", newName);
         }
@@ -154,24 +154,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, username: {}", loginRequest.getName());
+        LOG.debug("--> checkLogin, username: {}", loginRequest.getUsername());
 
-        final User user = userRepository.findByName(loginRequest.getName())
+        final User user = userRepository.findByName(loginRequest.getUsername())
                 .orElseThrow(() -> {
-                    LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getName());
-                    return new ResourceNotFoundException("User", "username", loginRequest.getName());
+                    LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getUsername());
+                    return new ResourceNotFoundException("User", "username", loginRequest.getUsername());
                 });
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getName());
+            LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getUsername());
             return new LoginResponse(false, null);
         }
 
         final List<GrantedAuthority> authorities = mapAuthorities(user);
-        final Authentication authentication = createAuthentication(user.getName(), authorities);
+        final Authentication authentication = createAuthentication(user.getUsername(), authorities);
         final String token = generateJwt(authentication, user.getId());
 
-        LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.getName());
+        LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.getUsername());
         return new LoginResponse(true, token);
     }
 

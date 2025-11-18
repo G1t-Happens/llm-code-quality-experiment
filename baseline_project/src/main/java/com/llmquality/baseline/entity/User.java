@@ -16,7 +16,7 @@ public class User {
 
     @Column(name = "username", nullable = false, unique = true)
     @Size(max = 255)
-    private String name;
+    private String username;
 
     @Column(name = "userpw", nullable = false)
     @Size(max = 255)
@@ -53,12 +53,12 @@ public class User {
         this.password = password;
     }
 
-    public String getName() {
-        return name;
+    public String getUsername() {
+        return username;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUsername(String name) {
+        this.username = name;
     }
 
     public Long getId() {
