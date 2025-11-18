@@ -50,10 +50,9 @@ public interface UserMapper {
      * @param passwordEncoder the password encoder to hash the password
      * @return the mapped User entity with hashed password(if changed)
      */
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "name", source = "name", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "email", source = "email", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "password", expression = "java(dto.getPassword() != null ? passwordEncoder.encode(dto.getPassword()) : entity.getPassword())")
-    @Mapping(target = "admin", source = "admin", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "password",
+            expression = "java(dto.getPassword() != null ? passwordEncoder.encode(dto.getPassword()) : entity.getPassword())")
     User updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity, @Context PasswordEncoder passwordEncoder);
 }

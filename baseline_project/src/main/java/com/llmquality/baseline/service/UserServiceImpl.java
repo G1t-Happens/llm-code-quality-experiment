@@ -2,6 +2,7 @@ package com.llmquality.baseline.service;
 
 import com.llmquality.baseline.dto.*;
 import com.llmquality.baseline.entity.User;
+import com.llmquality.baseline.enums.Role;
 import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.mapper.UserMapper;
@@ -9,10 +10,24 @@ import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.UserService;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 
 @Service
@@ -28,11 +43,20 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
+    private final JwtEncoder jwtEncoder;
+
+    @Value("${jwt.issuer:self}")
+    private String jwtIssuer;
+
+    @Value("${jwt.expiration:1}")
+    private long jwtExpirationHours;
+
     @Autowired
-    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper) {
+    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder, final UserMapper userMapper, final JwtEncoder jwtEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
+        this.jwtEncoder = jwtEncoder;
     }
 
     @Override
@@ -130,15 +154,94 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, name: {}", loginRequest.getName());
+        LOG.debug("--> checkLogin, username: {}", loginRequest.getName());
 
-        final boolean isSuccess = userRepository.findByName(loginRequest.getName())
-                .map(user -> passwordEncoder.matches(loginRequest.getPassword(), user.getPassword()))
-                .orElse(false);
+        final User user = userRepository.findByName(loginRequest.getName())
+                .orElseThrow(() -> {
+                    LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getName());
+                    return new ResourceNotFoundException("User", "username", loginRequest.getName());
+                });
 
-        final LoginResponse loginResponse = new LoginResponse(isSuccess);
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+            LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getName());
+            return new LoginResponse(false, null);
+        }
 
-        LOG.debug("<-- checkLogin, login result for user '{}': {}", loginRequest.getName(), loginResponse.success());
-        return loginResponse;
+        final List<GrantedAuthority> authorities = mapAuthorities(user);
+        final Authentication authentication = createAuthentication(user.getName(), authorities);
+        final String token = generateJwt(authentication, user.getId());
+
+        LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.getName());
+        return new LoginResponse(true, token);
+    }
+
+    /**
+     * Maps the user's role to a list of granted authorities for Spring Security.
+     *
+     * @param user the user whose roles are to be mapped
+     * @return list of granted authorities
+     */
+    private List<GrantedAuthority> mapAuthorities(final User user) {
+        LOG.debug("--> mapAuthorities, for user: {}", user.getId());
+        final List<GrantedAuthority> grantedAuthorities = user.isAdmin()
+                ? List.of(new SimpleGrantedAuthority(Role.ADMIN.getName()))
+                : List.of(new SimpleGrantedAuthority(Role.USER.getName()));
+        LOG.debug("<-- mapAuthorities, for user: {}", user.getId());
+        return grantedAuthorities;
+    }
+
+    /**
+     * Creates an Authentication object for a given username and authorities.
+     *
+     * @param username    the username of the authenticated user
+     * @param authorities the granted authorities for the user
+     * @return an Authentication token
+     */
+    private Authentication createAuthentication(final String username, final List<GrantedAuthority> authorities) {
+        LOG.debug("--> createAuthentication, user={}", username);
+        final Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        LOG.debug("<-- createAuthentication, user={}", username);
+        return auth;
+    }
+
+    /**
+     * Generates a JWT token for a given authentication object.
+     *
+     * @param authentication the authentication containing user details and roles
+     * @return a signed JWT token as String
+     */
+    private String generateJwt(final Authentication authentication, final Long userId) {
+        LOG.debug("--> generateJwt, username: {}", authentication.getName());
+        final Instant now = Instant.now();
+        final List<String> roles = extractRoles(authentication);
+
+        final JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(jwtIssuer)
+                .issuedAt(now)
+                .expiresAt(now.plus(jwtExpirationHours, ChronoUnit.HOURS))
+                .subject(String.valueOf(userId))
+                .claim("roles", roles)
+                .build();
+
+        LOG.debug("<userID: {}", userId);
+
+        final String jwt = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+        LOG.debug("<-- generateJwt, username: {}", authentication.getName());
+        return jwt;
+    }
+
+    /**
+     * Extracts role names from the granted authorities in an authentication object.
+     *
+     * @param authentication the authentication containing granted authorities
+     * @return list of role names
+     */
+    private List<String> extractRoles(Authentication authentication) {
+        LOG.debug("--> extractRoles");
+        final List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+        LOG.debug("<-- extractRoles, {} roles extracted", roles.size());
+        return roles;
     }
 }
