@@ -1,3 +1,4 @@
+-- Insert demo users into the 'users' table - pw: Root2131
 INSERT INTO users (username, userpw, email, isadmin)
 VALUES ('Daniel', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW', 'daniel@test.de', true),
        ('Johannes', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW', 'johannes@test.de', false),
@@ -10,7 +11,7 @@ VALUES ('Daniel', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW'
        ('User9', '$2a$12$KK5nmVyXDRFatZHIS5UWbOVrTMeg4ZYljIbjxsGxcMuaLYN6ilh02', 'user9@test.de', false),
        ('User10', '$2a$12$KK5nmVyXDRFatZHIS5UWbOVrTMeg4ZYljIbjxsGxcMuaLYN6ilh02', 'user10@test.de', false);
 
-
+-- Insert addresses into the 'addresses' table
 INSERT INTO addresses (user_id, street, house_number, postal_code, city, country, address_type)
 VALUES (1, 'Musterstraße', '42', '80331', 'München', 'Deutschland', 'PRIVATE'),
        (1, 'Bahnhofstraße', '12a', '10115', 'Berlin', 'Deutschland', 'BUSINESS'),
