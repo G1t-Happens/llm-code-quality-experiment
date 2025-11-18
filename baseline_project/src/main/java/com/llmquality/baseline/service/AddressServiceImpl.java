@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+
 @Service
 public class AddressServiceImpl implements AddressService {
 
@@ -115,7 +116,7 @@ public class AddressServiceImpl implements AddressService {
      * @param userId    the ID of the user requesting the address
      * @return the address that belongs to the specified user
      * @throws ResourceNotFoundException if no address with the given ID exists
-     * @throws ForbiddenException if the address does not belong to the specified user
+     * @throws ForbiddenException        if the address does not belong to the specified user
      */
     private Address getAddressByIdAndUserId(final Long addressId, final Long userId) {
         LOG.debug("--> getAddressByIdAndUserId, get address for addressId: {} and userId {}", addressId, userId);

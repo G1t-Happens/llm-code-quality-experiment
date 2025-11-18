@@ -19,6 +19,32 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
+/**
+ * Configuration class for setting up logging using Logback.
+ * <p>
+ * This class configures a rolling file appender for the application logs, ensuring logs are written to files
+ * with automatic rotation based on file size and time. It uses asynchronous logging to improve performance.
+ * The logging configuration can be customized through application properties such as the log file path,
+ * log file name, and the root log level.
+ * </p>
+ *
+ * <p>
+ * By default:
+ * <ul>
+ *     <li>Logs are stored in the 'logs' directory.</li>
+ *     <li>The log file is named 'application.log'.</li>
+ *     <li>The root logging level is set to 'DEBUG'.</li>
+ * </ul>
+ * These defaults can be overridden by specifying properties in the application configuration.
+ * </p>
+ *
+ * <p>
+ * The class also ensures proper cleanup of resources by stopping the logger context when the application is shutting down.
+ * </p>
+ *
+ * @see org.slf4j.LoggerFactory
+ * @see ch.qos.logback.classic.LoggerContext
+ */
 @Configuration
 public class LoggingConfig {
 

@@ -2,7 +2,9 @@ package com.llmquality.baseline.security;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
+
 import java.util.Objects;
+
 
 /**
  * Custom Spring Security expressions for method security.
@@ -32,7 +34,13 @@ public class SecurityExpressions {
         return Objects.equals(resourceOwnerId.toString(), authentication.getName());
     }
 
-
+    /**
+     * Checks if the provided {@link Authentication} object represents an admin user.
+     * This method verifies if the user has the role 'ROLE_ADMIN' in their granted authorities.
+     *
+     * @param authentication the {@link Authentication} object representing the current user's authentication details
+     * @return {@code true} if the user has the 'ROLE_ADMIN' authority, {@code false} otherwise
+     */
     public boolean isAdmin(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));

@@ -6,6 +6,7 @@ import com.llmquality.baseline.entity.User;
 import org.mapstruct.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+
 /**
  * Mapper interface for converting between database entity {@link User} and User DTOs.
  */
