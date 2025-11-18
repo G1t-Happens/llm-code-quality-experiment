@@ -170,7 +170,7 @@ public class UserServiceImpl implements UserService {
 
         final List<GrantedAuthority> authorities = mapAuthorities(user);
         final Authentication authentication = createAuthentication(user.getUsername(), authorities);
-        final String token = generateJwt(authentication);
+        final String token = generateJwt(authentication, user.getId());
 
         LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.getUsername());
         return new LoginResponse(true, token);
@@ -182,9 +182,9 @@ public class UserServiceImpl implements UserService {
      * @param user the user whose roles are to be mapped
      * @return list of granted authorities
      */
-    private List<GrantedAuthority> mapAuthorities(User user) {
+    private List<GrantedAuthority> mapAuthorities(final User user) {
         LOG.debug("--> mapAuthorities, for user: {}", user.getId());
-        List<GrantedAuthority> grantedAuthorities = user.isAdmin()
+        final List<GrantedAuthority> grantedAuthorities = user.isAdmin()
                 ? List.of(new SimpleGrantedAuthority(Role.ADMIN.getName()))
                 : List.of(new SimpleGrantedAuthority(Role.USER.getName()));
         LOG.debug("<-- mapAuthorities, for user: {}", user.getId());
@@ -198,9 +198,9 @@ public class UserServiceImpl implements UserService {
      * @param authorities the granted authorities for the user
      * @return an Authentication token
      */
-    private Authentication createAuthentication(String username, List<GrantedAuthority> authorities) {
+    private Authentication createAuthentication(final String username, final List<GrantedAuthority> authorities) {
         LOG.debug("--> createAuthentication, user={}", username);
-        Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        final Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
         LOG.debug("<-- createAuthentication, user={}", username);
         return auth;
     }
@@ -211,7 +211,7 @@ public class UserServiceImpl implements UserService {
      * @param authentication the authentication containing user details and roles
      * @return a signed JWT token as String
      */
-    private String generateJwt(Authentication authentication) {
+    private String generateJwt(final Authentication authentication, final Long userId) {
         LOG.debug("--> generateJwt, username: {}", authentication.getName());
         final Instant now = Instant.now();
         final List<String> roles = extractRoles(authentication);
@@ -222,6 +222,7 @@ public class UserServiceImpl implements UserService {
                 .expiresAt(now.plus(jwtExpirationHours, ChronoUnit.HOURS))
                 .subject(authentication.getName())
                 .claim("roles", roles)
+                .claim("userId", userId)
                 .build();
 
         final String jwt = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();

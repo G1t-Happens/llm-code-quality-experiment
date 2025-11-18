@@ -1,8 +1,8 @@
--- Insert sample users into the "users" table with hashed passwords and timestamps
+-- Insert sample users into the "users" table with hashed passwords and timestamps - pw: Root2131
 INSERT INTO users (username, password_hash, email, is_admin, created, updated)
-VALUES ('Daniel', '$2a$12$KK5nmVyXDRFatZHIS5UWbOVrTMeg4ZYljIbjxsGxcMuaLYN6ilh02', 'daniel@test.de', true,
+VALUES ('Daniel', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW', 'daniel@test.de', true,
         '2023-07-17 15:38:58+00', '2023-07-17 15:38:58+00'),
-       ('Johannes', '$2a$12$djCFq.nuALsoNE5ZlqwBauHMmblaAmoiYSXVbQYGbfQBuL30MGI0a', 'johannes@test.de', false,
+       ('Johannes', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW', 'johannes@test.de', false,
         '2023-07-17 15:38:58+00', '2023-07-17 15:38:58+00'),
        ('User3', '$2a$12$KK5nmVyXDRFatZHIS5UWbOVrTMeg4ZYljIbjxsGxcMuaLYN6ilh02', 'user3@test.de', false,
         '2023-07-17 15:38:58+00', '2023-07-17 15:38:58+00'),

@@ -5,6 +5,7 @@ import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,16 +26,19 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public PagedResponse<UserResponse> listAll(Pageable pageable) {
         return userService.listAll(pageable);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or #id == authentication.principal.id")
     public UserResponse getById(@PathVariable Long id) {
         return userService.getById(id);
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public UserResponse getByUsername(@RequestParam("username") String username) {
         return userService.getByUsername(username);
     }
@@ -45,11 +49,13 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or #id == authentication.principal.id")
     public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest user) {
         return userService.update(id, user);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public void delete(@PathVariable Long id) {
         userService.delete(id);
     }

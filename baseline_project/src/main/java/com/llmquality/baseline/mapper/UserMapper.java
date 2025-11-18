@@ -16,6 +16,7 @@ public interface UserMapper {
      * Maps a {@link UserRequest} to a {@link User} entity.
      * The {@code id} is ignored since it is managed by JPA/database.
      * The password is hashed using the provided {@link PasswordEncoder}.
+     * Admin flag is always false, so users cant assign it themselves on registration.
      *
      * @param dto             the DTO to map
      * @param passwordEncoder the password encoder to hash the password
@@ -24,6 +25,7 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "password", expression = "java(passwordEncoder.encode(dto.getPassword()))")
+    @Mapping(target = "admin", constant = "false")
     User toUserEntity(UserRequest dto, @Context PasswordEncoder passwordEncoder);
 
     /**

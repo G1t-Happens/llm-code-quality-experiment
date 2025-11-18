@@ -1,4 +1,4 @@
-package com.llmquality.baseline.config;
+package com.llmquality.baseline.logging;
 
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.Level;

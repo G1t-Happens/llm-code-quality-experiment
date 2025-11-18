@@ -37,13 +37,6 @@ public class OrderItem {
     @Column(name = "subtotal", nullable = false, precision = 12, scale = 4)
     private BigDecimal subtotal;
 
-    @PrePersist
-    @PreUpdate
-    private void calculateSubtotal() {
-        this.subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
-    }
-
-
     public Order getOrder() {
         return order;
     }
@@ -78,5 +71,9 @@ public class OrderItem {
 
     public BigDecimal getSubtotal() {
         return subtotal;
+    }
+
+    public void setSubtotal(BigDecimal subtotal) {
+        this.subtotal = subtotal;
     }
 }

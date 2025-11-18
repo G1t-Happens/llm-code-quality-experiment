@@ -6,6 +6,7 @@ import com.llmquality.baseline.dto.user.PagedResponse;
 import com.llmquality.baseline.service.interfaces.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,16 +37,19 @@ public class ProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ProductResponse create(@RequestBody @Validated(Create.class) ProductRequest req) {
         return productService.save(req);
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ProductResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) ProductRequest req) {
         return productService.update(id, req);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public void delete(@PathVariable Long id) {
         productService.delete(id);
     }

@@ -11,6 +11,7 @@ import com.llmquality.baseline.mapper.OrderMapper;
 import com.llmquality.baseline.repository.OrderRepository;
 import com.llmquality.baseline.repository.ProductRepository;
 import com.llmquality.baseline.repository.UserRepository;
+import com.llmquality.baseline.service.interfaces.OrderSecurityService;
 import com.llmquality.baseline.service.interfaces.OrderService;
 import jakarta.transaction.Transactional;
 import org.slf4j.LoggerFactory;
@@ -46,24 +47,36 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderItemMapper orderItemMapper;
 
+    private final OrderSecurityService orderSecurityService;
+
 
     public OrderServiceImpl(final OrderRepository orderRepository,
                             final ProductRepository productRepository,
                             final UserRepository userRepository,
                             final OrderMapper orderMapper,
-                            final OrderItemMapper orderItemMapper) {
+                            final OrderItemMapper orderItemMapper,
+                            final OrderSecurityService orderSecurityService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.orderMapper = orderMapper;
         this.orderItemMapper = orderItemMapper;
+        this.orderSecurityService = orderSecurityService;
     }
 
     @Override
     public PagedResponse<OrderResponse> listAll(Pageable pageable) {
-        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-        final Page<OrderResponse> page = orderRepository.findAll(pageable).map(orderMapper::toOrderResponse);
-        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+        final Page<OrderResponse> page;
+        if (orderSecurityService.isAdmin()) {
+            LOG.debug("--> listAll (Admin), page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+            page = orderRepository.findAll(pageable).map(orderMapper::toOrderResponse);
+            LOG.debug("<-- listAll (Admin), total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+            return PagedResponse.fromPage(page);
+        }
+        Long userId = orderSecurityService.getCurrentUserId();
+        LOG.debug("--> listAll (User), page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        page = orderRepository.findByUserId(userId, pageable).map(orderMapper::toOrderResponse);
+        LOG.debug("<-- listAll (User), total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
         return PagedResponse.fromPage(page);
     }
 
@@ -85,11 +98,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse save(OrderRequest request) {
         LOG.debug("--> save, new order with {} items", request.items().size());
 
-        final String currentUsername = getCurrentUsername();
-        final User user = userRepository.findByUsername(currentUsername)
+        final Long userId = orderSecurityService.getCurrentUserId();
+        final User user = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    LOG.error("<-- save, user '{}' not found", currentUsername);
-                    return new ResourceNotFoundException(USER, "username", currentUsername);
+                    LOG.error("<-- save, user '{}' not found", userId);
+                    return new ResourceNotFoundException(USER, "id", userId);
                 });
 
         final Order order = orderMapper.toOrderEntity(request);
@@ -101,8 +114,12 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal total = BigDecimal.ZERO;
 
         for (OrderItemRequest itemReq : request.items()) {
-            final Product product = productRepository.findById(itemReq.productId())
-                    .orElseThrow(() -> new ResourceNotFoundException(PRODUCT, "id", itemReq.productId()));
+            final Long productId = itemReq.productId();
+            final Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> {
+                        LOG.error("<-- save, product '{}' not found", productId);
+                        return new ResourceNotFoundException(PRODUCT, "id", productId);
+                    });
 
             if (product.getStock() < itemReq.quantity()) {
                 throw new IllegalArgumentException("Nicht genug Lagerbestand für Produkt: " + product.getTitle());
@@ -112,6 +129,7 @@ public class OrderServiceImpl implements OrderService {
             item.setOrder(order);
             item.setProduct(product);
             item.setUnitPrice(product.getPrice());
+            item.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(itemReq.quantity())));
 
             product.setStock(product.getStock() - itemReq.quantity());
             productRepository.save(product);
@@ -124,7 +142,7 @@ public class OrderServiceImpl implements OrderService {
         final Order saved = orderRepository.save(order);
         final OrderResponse orderResponse = orderMapper.toOrderResponse(saved);
 
-        LOG.debug("<-- order created with id {} for user {} (total {})", saved.getId(), currentUsername, total);
+        LOG.debug("<-- order created with id {} for user {} (total {})", saved.getId(), userId, total);
         return orderResponse;
     }
 
