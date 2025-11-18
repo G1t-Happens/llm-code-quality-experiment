@@ -28,7 +28,7 @@ public interface OrderMapper {
      * @param request the order creation request containing items
      * @return a new {@link Order} entity ready for persistence
      */
-    Order toEntity(OrderRequest request);
+    Order toOrderEntity(OrderRequest request);
 
     /**
      * Converts a persisted {@link Order} entity to an {@link OrderResponse}.
@@ -40,5 +40,5 @@ public interface OrderMapper {
      * @return the API response DTO with complete order details
      */
     @Mapping(target = "userId", source = "user.id")
-    OrderResponse toResponse(Order order);
+    OrderResponse toOrderResponse(Order order);
 }

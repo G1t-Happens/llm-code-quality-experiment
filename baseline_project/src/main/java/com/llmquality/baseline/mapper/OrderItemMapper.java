@@ -28,7 +28,7 @@ public interface OrderItemMapper {
      * @param request the requested product and quantity
      * @return a new {@link OrderItem} entity
      */
-    OrderItem toEntity(OrderItemRequest request);
+    OrderItem toOrderItemEntity(OrderItemRequest request);
 
     /**
      * Converts a persisted {@link OrderItem} entity to an {@link OrderItemResponse}.
@@ -41,5 +41,5 @@ public interface OrderItemMapper {
      */
     @Mapping(target = "productId", source = "product.id")
     @Mapping(target = "productTitle", source = "product.title")
-    OrderItemResponse toResponse(OrderItem item);
+    OrderItemResponse toOrderItemResponse(OrderItem item);
 }

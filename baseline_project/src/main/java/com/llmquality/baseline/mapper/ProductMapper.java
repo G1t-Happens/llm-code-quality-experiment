@@ -56,5 +56,5 @@ public interface ProductMapper {
     @Mapping(target = "description", source = "description", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "price", source = "price", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "stock", source = "stock", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    Product updateEntityFromRequest(ProductRequest request, @MappingTarget Product product);
+    Product updateEntityFromProductRequest(ProductRequest request, @MappingTarget Product product);
 }

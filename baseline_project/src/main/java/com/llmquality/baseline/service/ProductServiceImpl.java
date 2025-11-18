@@ -71,7 +71,7 @@ public class ProductServiceImpl implements ProductService {
                     LOG.error("<-- update, product with ID {} not found", id);
                     return new ResourceNotFoundException(PRODUCT, "id", id);
                 });
-        final Product updatedProductEntity = productMapper.updateEntityFromRequest(request, product);
+        final Product updatedProductEntity = productMapper.updateEntityFromProductRequest(request, product);
         final Product savedProductEntity = productRepository.save(updatedProductEntity);
         final ProductResponse productResponse = productMapper.toProductResponse(savedProductEntity);
         LOG.debug("<-- update, product found: {}", productResponse.id());
