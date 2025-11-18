@@ -5,6 +5,7 @@ import com.llmquality.baseline.entity.User;
 import com.llmquality.baseline.enums.Role;
 import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
+import com.llmquality.baseline.exception.UnauthorizedException;
 import com.llmquality.baseline.mapper.UserMapper;
 import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.UserService;
@@ -159,12 +160,12 @@ public class UserServiceImpl implements UserService {
         final User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> {
                     LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getUsername());
-                    return new ResourceNotFoundException("User", "username", loginRequest.getUsername());
+                    return new ResourceNotFoundException(USER, "username", loginRequest.getUsername());
                 });
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getUsername());
-            return new LoginResponse(false, null);
+            throw new UnauthorizedException(USER, "username", loginRequest.getUsername());
         }
 
         final List<GrantedAuthority> authorities = mapAuthorities(user);
