@@ -56,6 +56,8 @@ public class SecurityConfig {
 
     private static final String JWT_ALGORITHM = "HmacSHA256";
 
+    private static final int MIN_SECRET_BYTES = 32;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -96,15 +98,34 @@ public class SecurityConfig {
 
     @Bean
     public JwtEncoder jwtEncoder() {
-        byte[] secretBytes = Base64.getDecoder().decode(jwtSecret);
-        SecretKey secretKey = new SecretKeySpec(secretBytes, JWT_ALGORITHM);
-        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
+        SecretKey key = createSecretKey(jwtSecret);
+        return new NimbusJwtEncoder(new ImmutableSecret<>(key));
     }
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        byte[] secretBytes = Base64.getDecoder().decode(jwtSecret);
-        SecretKey secretKey = new SecretKeySpec(secretBytes, JWT_ALGORITHM);
-        return NimbusJwtDecoder.withSecretKey(secretKey).build();
+        SecretKey key = createSecretKey(jwtSecret);
+        return NimbusJwtDecoder.withSecretKey(key).build();
+    }
+
+    private SecretKey createSecretKey(String base64Secret) {
+        if (base64Secret == null || base64Secret.isBlank()) {
+            throw new IllegalArgumentException("JWT secret is not configured");
+        }
+
+        byte[] secretBytes;
+        try {
+            secretBytes = Base64.getDecoder().decode(base64Secret);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("JWT secret is not valid Base64", ex);
+        }
+
+        if (secretBytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalArgumentException(
+                    "JWT secret too short; must be at least 32 bytes (after Base64 decoding)"
+            );
+        }
+
+        return new SecretKeySpec(secretBytes, JWT_ALGORITHM);
     }
 }

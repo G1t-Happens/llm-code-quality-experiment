@@ -41,7 +41,7 @@ public class Address {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "address_type", nullable = false)
-    private AddressType addressType = AddressType.PRIVATE;
+    private AddressType addressType;
 
     public AddressType getAddressType() {
         return addressType;
