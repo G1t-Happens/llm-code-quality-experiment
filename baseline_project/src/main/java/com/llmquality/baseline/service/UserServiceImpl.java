@@ -165,7 +165,7 @@ public class UserServiceImpl implements UserService {
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getUsername());
-            throw new UnauthorizedException(USER, "username", loginRequest.getUsername());
+            throw new UnauthorizedException(USER, "credentials", "invalid");
         }
 
         final List<GrantedAuthority> authorities = mapAuthorities(user);
