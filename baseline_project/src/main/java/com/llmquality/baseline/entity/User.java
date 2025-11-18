@@ -18,7 +18,7 @@ public class User {
     @Size(max = 255)
     private String username;
 
-    @Column(name = "userpw", nullable = false)
+    @Column(name = "password", nullable = false)
     @Size(max = 255)
     private String password;
 

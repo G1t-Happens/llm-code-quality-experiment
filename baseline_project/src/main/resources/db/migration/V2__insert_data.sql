@@ -1,5 +1,5 @@
 -- Insert demo users into the 'users' table - pw: Root2131
-INSERT INTO users (username, userpw, email, isadmin)
+INSERT INTO users (username, password, email, isadmin)
 VALUES ('Daniel', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW', 'daniel@test.de', true),
        ('Johannes', '$2a$10$lzr8dkyEhJjASvHeKoBo5e5hUiyLPJNXbGLZTcX0JZ35VDfDbWurW', 'johannes@test.de', false),
        ('User3', '$2a$12$KK5nmVyXDRFatZHIS5UWbOVrTMeg4ZYljIbjxsGxcMuaLYN6ilh02', 'user3@test.de', false),

@@ -54,6 +54,8 @@ public class SecurityConfig {
     @Value("${api.base-path}")
     private String apiBasePath;
 
+    private static final String JWT_ALGORITHM = "HmacSHA256";
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -95,14 +97,14 @@ public class SecurityConfig {
     @Bean
     public JwtEncoder jwtEncoder() {
         byte[] secretBytes = Base64.getDecoder().decode(jwtSecret);
-        SecretKey secretKey = new SecretKeySpec(secretBytes, "HmacSHA256");
+        SecretKey secretKey = new SecretKeySpec(secretBytes, JWT_ALGORITHM);
         return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
     }
 
     @Bean
     public JwtDecoder jwtDecoder() {
         byte[] secretBytes = Base64.getDecoder().decode(jwtSecret);
-        SecretKey secretKey = new SecretKeySpec(secretBytes, "HmacSHA256");
+        SecretKey secretKey = new SecretKeySpec(secretBytes, JWT_ALGORITHM);
         return NimbusJwtDecoder.withSecretKey(secretKey).build();
     }
 }

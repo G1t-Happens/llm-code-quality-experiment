@@ -99,11 +99,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse save(final UserRequest userRequest) {
-        LOG.debug("--> save, user with username: {}", userRequest.getUsername());
+        LOG.debug("--> save, user with username: {}", userRequest.username());
 
-        if (userRepository.existsByUsername(userRequest.getUsername())) {
-            LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.getUsername());
-            throw new ResourceAlreadyExistsException(USER, "username", userRequest.getUsername());
+        if (userRepository.existsByUsername(userRequest.username())) {
+            LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.username());
+            throw new ResourceAlreadyExistsException(USER, "username", userRequest.username());
         }
 
         final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException(USER, "id", id);
                 });
 
-        final String newName = userRequest.getUsername();
+        final String newName = userRequest.username();
         if (newName != null && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByUsername(newName)) {
             LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
             throw new ResourceAlreadyExistsException(USER, "username", newName);
@@ -155,16 +155,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, username: {}", loginRequest.getUsername());
+        LOG.debug("--> checkLogin, username: {}", loginRequest.username());
 
-        final User user = userRepository.findByUsername(loginRequest.getUsername())
+        final User user = userRepository.findByUsername(loginRequest.username())
                 .orElseThrow(() -> {
-                    LOG.error("<-- checkLogin, user '{}' not found", loginRequest.getUsername());
-                    return new ResourceNotFoundException(USER, "username", loginRequest.getUsername());
+                    LOG.error("<-- checkLogin, user '{}' not found", loginRequest.username());
+                    return new ResourceNotFoundException(USER, "username", loginRequest.username());
                 });
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.getUsername());
+        if (!passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
+            LOG.warn("<-- checkLogin, bad credentials for '{}'", loginRequest.username());
             throw new UnauthorizedException(USER, "credentials", "invalid");
         }
 
@@ -172,7 +172,7 @@ public class UserServiceImpl implements UserService {
         final Authentication authentication = createAuthentication(user.getUsername(), authorities);
         final String token = generateJwt(authentication, user.getId());
 
-        LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.getUsername());
+        LOG.debug("<-- checkLogin, login successful for '{}'", loginRequest.username());
         return new LoginResponse(true, token);
     }
 

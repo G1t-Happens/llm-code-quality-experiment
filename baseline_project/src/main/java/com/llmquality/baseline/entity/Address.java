@@ -43,7 +43,6 @@ public class Address {
     @Column(name = "address_type", nullable = false)
     private AddressType addressType = AddressType.PRIVATE;
 
-
     public AddressType getAddressType() {
         return addressType;
     }
