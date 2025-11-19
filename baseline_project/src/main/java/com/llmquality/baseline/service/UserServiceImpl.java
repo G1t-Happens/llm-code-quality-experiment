@@ -144,7 +144,8 @@ public class UserServiceImpl implements UserService {
         }
 
         // Partial update via updateUserEntityFromUserRequest
-        final User updatedUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, passwordEncoder);
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User updatedUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, localPasswordEncoder);
         final User savedUserEntity = userRepository.save(updatedUserEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
