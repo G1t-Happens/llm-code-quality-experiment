@@ -190,7 +190,7 @@ public class LoggingConfig {
         if (rollingFileNamePattern == null || rollingFileNamePattern.isEmpty()) {
             rollingFileNamePattern = DEFAULT_ROLLING_PATTERN;
         }
-        rollingPolicy.setFileNamePattern(logDir.resolve(rollingFileNamePattern).toString());
+        rollingPolicy.setFileNamePattern(logDir + "/" + rollingFileNamePattern);
 
         FileSize maxFileSize;
         try {
