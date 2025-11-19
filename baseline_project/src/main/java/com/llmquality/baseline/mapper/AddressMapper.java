@@ -54,5 +54,5 @@ public interface AddressMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    Address updateAddressEntityFromAddressRequest(@MappingTarget Address address, AddressRequest addressRequest);
+    Address updateAddressEntityFromAddressRequest(AddressRequest addressRequest, @MappingTarget Address address);
 }

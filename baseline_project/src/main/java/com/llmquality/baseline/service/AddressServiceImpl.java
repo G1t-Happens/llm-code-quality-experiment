@@ -16,8 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 
 @Service
 public class AddressServiceImpl implements AddressService {
@@ -47,7 +45,7 @@ public class AddressServiceImpl implements AddressService {
 
         final User existingUserEntity = userRepository.findById(userId)
                 .orElseThrow(() -> {
-                    LOG.error("<-- getById, User with ID {} not found", userId);
+                    LOG.error("<-- listAll, User with ID {} not found", userId);
                     return new ResourceNotFoundException(USER, "id", userId);
                 });
 
@@ -88,7 +86,7 @@ public class AddressServiceImpl implements AddressService {
         final Address address = getAddressByIdAndUserId(addressId, userId);
 
         // Partial update via updateAddressEntityFromAddressRequest
-        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(address, addressRequest);
+        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, address);
         final Address saveAddressEntity = addressRepository.save(updatedAddressEntity);
         final AddressResponse addressResponse = addressMapper.toAddressResponse(saveAddressEntity);
         LOG.debug("<-- update, address with addressId: {} by userId: {}", addressResponse.id(), addressResponse.userId());
@@ -121,21 +119,23 @@ public class AddressServiceImpl implements AddressService {
     private Address getAddressByIdAndUserId(final Long addressId, final Long userId) {
         LOG.debug("--> getAddressByIdAndUserId, get address for addressId: {} and userId {}", addressId, userId);
 
-        final Address exitingAddressEntity = addressRepository.findById(addressId)
+        final Address existingAddressEntity = addressRepository.findById(addressId)
                 .orElseThrow(() -> {
                     LOG.error("<-- getAddressByIdAndUserId, Address with ID {} not found", addressId);
                     return new ResourceNotFoundException(ADDRESS, "id", addressId);
                 });
 
-        final Address permittedExitingAddressEntity = Optional.of(exitingAddressEntity)
-                .filter(address -> address.getUser().getId().equals(userId))
-                .orElseThrow(() -> {
-                    LOG.error("<-- getAddressByIdAndUserId, User with ID {} is not authorized to access Address with ID {}", userId, addressId);
-                    return new ForbiddenException(USER, "id", userId);
-                });
+        if (existingAddressEntity.getUser() == null || existingAddressEntity.getUser().getId() == null) {
+            LOG.error("<-- getAddressByIdAndUserId, Address with ID {} has no user or user ID", addressId);
+            throw new ForbiddenException(USER, "id", userId);
+        }
 
-        LOG.debug("<-- getAddressByIdAndUserId, found address for addressId: {} and userId {}",
-                permittedExitingAddressEntity.getId(), permittedExitingAddressEntity.getUser().getId());
-        return permittedExitingAddressEntity;
+        if (!existingAddressEntity.getUser().getId().equals(userId)) {
+            LOG.error("<-- getAddressByIdAndUserId, User with ID {} is not authorized to access Address with ID {}", userId, addressId);
+            throw new ForbiddenException(USER, "id", userId);
+        }
+
+        LOG.debug("<-- getAddressByIdAndUserId, found address for addressId: {} and userId {}", existingAddressEntity.getId(), existingAddressEntity.getUser().getId());
+        return existingAddressEntity;
     }
 }

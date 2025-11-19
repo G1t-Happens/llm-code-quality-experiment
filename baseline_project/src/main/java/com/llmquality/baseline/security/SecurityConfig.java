@@ -110,22 +110,17 @@ public class SecurityConfig {
 
     private SecretKey createSecretKey(String base64Secret) {
         if (base64Secret == null || base64Secret.isBlank()) {
-            throw new IllegalArgumentException("JWT secret is not configured");
+            throw new IllegalStateException("JWT secret is not configured. Please set 'jwt.secret' in your application properties.");
         }
-
         byte[] secretBytes;
         try {
             secretBytes = Base64.getDecoder().decode(base64Secret);
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("JWT secret is not valid Base64", ex);
+            throw new IllegalStateException("JWT secret is not valid Base64: " + base64Secret, ex);
         }
-
         if (secretBytes.length < MIN_SECRET_BYTES) {
-            throw new IllegalArgumentException(
-                    "JWT secret too short; must be at least 32 bytes (after Base64 decoding)"
-            );
+            throw new IllegalStateException("JWT secret too short; must be at least 32 bytes (after Base64 decoding).");
         }
-
         return new SecretKeySpec(secretBytes, JWT_ALGORITHM);
     }
 }
