@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimeZone;
 
 
 /**
@@ -43,7 +44,7 @@ public class LoggingConfig {
 
     private static final String DEFAULT_LOG_DIR = "logs";
     private static final String DEFAULT_LOG_FILE = "application.log";
-    private static final String DEFAULT_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss,UTC} [%thread] %-5level %logger{36} - %msg%n";
+    private static final String DEFAULT_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n";
     private static final String DEFAULT_ROLLING_PATTERN = "application-%d{yyyy-MM-dd}.%i.log";
     private static final String DEFAULT_MAX_FILE_SIZE = "10MB";
     private static final String DEFAULT_TOTAL_SIZE_CAP = "100MB";
@@ -93,6 +94,8 @@ public class LoggingConfig {
 
         try {
             loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            System.setProperty("user.timezone", "UTC");
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
             Path logDir = createLogDirectory(logDirectoryPath);
 
