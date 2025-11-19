@@ -1,0 +1,50 @@
+The classification of software defects by severity is performed systematically using standardized software quality models and risk assessment methods:
+
+ISO/IEC 25010 Classification
+Each defect is assigned to a quality attribute: Functional, Performance, Reliability, Security, Usability, Maintainability, Portability, or Compatibility.
+This ensures that severity ratings are grounded in well-defined software quality dimensions.
+
+Quantitative Risk Assessment (FMEA Principle)
+Severity (impact), Likelihood (probability of occurrence), and Scope (affected components/users) are considered.
+Risk Priority Number (RPN) is calculated as:
+
+Severity and Likelihood Scoring (S and L)
+
+The numbers Severity (S) and Likelihood (L) are standardized scores used in the FMEA-based risk assessment:
+
+Severity (S) – indicates the impact of the defect if it occurs:
+1 = Low (minor effect)
+2 = Medium (moderate impact, e.g., performance or usability issue)
+3 = High (serious impact, e.g., system instability or major functionality loss)
+4 = Critical (severe impact, e.g., data loss, security breach, system crash)
+
+Likelihood (L) – indicates the probability that the defect occurs:
+1 = Low (rarely occurs)
+2 = Medium (occurs occasionally)
+3 = High (very likely, happens in most cases)
+
+Risk Priority Number (RPN) = S × L
+
+RPN is then mapped to Low / Medium / High / Critical severity.
+
+Example: SQL Injection → S=4 (Critical), L=3 (High) → RPN=12 → Critical
+
+Double password encryption → S=2 (Medium), L=3 (High) → RPN=6 → Medium
+
+This approach ensures that severity ratings are reproducible, objective, and grounded in both impact and probability, rather than subjective judgment.
+
+RPN Mapping to Severity Levels:
+| RPN Range | Severity Level | Beschreibung                                                                                 |
+| --------- | -------------- | -------------------------------------------------------------------------------------------- |
+| 1 – 3     | Low            | Minor impact, rare or occasional occurrence                                                  |
+| 4 – 6     | Medium         | Moderate impact, occurs occasionally or under certain conditions                             |
+| 7 – 9     | High           | Serious impact, likely to occur, may affect system behavior or usability significantly       |
+| 10 – 12   | Critical       | Severe impact, very likely or guaranteed, causes data loss, system crash, or security breach |
+
+
+Example:
+| ID   | Category      | Description                       | Severity (RPN) | Assigned Severity |
+| ---- | ------------- | --------------------------------- | -------------- | ----------------- |
+| E001 | Functional    | Double password encryption        | S=2, L=3 → 6   | Medium            |
+| E002 | Functional    | Missing delete in repository      | S=4, L=3 → 12  | Critical          |
+| E004 | Performance   | Load all users before pagination  | S=3, L=3 → 9   | High              |
