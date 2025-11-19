@@ -86,7 +86,7 @@ public class AddressServiceImpl implements AddressService {
                 });
 
         final Address addressEntity = addressMapper.toAddressEntity(addressRequest, existingUserEntity);
-        final AddressResponse addressResponse = addressMapper.toAddressResponse(addressRepository.save(addressEntity));
+        final AddressResponse addressResponse = addressMapper.toAddressResponse(addressEntity);
         LOG.debug("<-- save, address saved with id: {}", addressEntity.getId());
         return addressResponse;
     }
