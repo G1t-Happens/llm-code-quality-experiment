@@ -52,7 +52,7 @@ public class LoggingConfig {
     @Value("${logging.file.path:${user.dir}/logs}")
     private String logDirectoryPath;
 
-    @Value("${logging.file.name:" + DEFAULT_LOG_FILE + "}")
+    @Value("${logging.file.name:application:errors.log}")
     private String logFileName;
 
     @Value("${logging.level.root:#{null}}")
