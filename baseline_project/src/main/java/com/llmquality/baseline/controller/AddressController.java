@@ -39,7 +39,7 @@ public class AddressController {
         return addressService.getById(userId, addressId);
     }
 
-    @PostMapping
+    @PostMapping(consumes = "text/plain")
     @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
     public AddressResponse create(@PathVariable Long userId, @RequestBody @Validated(Create.class) AddressRequest addressRequest) {
         return addressService.save(userId, addressRequest);
