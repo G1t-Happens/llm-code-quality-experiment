@@ -23,8 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
 
 @Service
@@ -49,7 +51,7 @@ public class UserServiceImpl implements UserService {
     @Value("${jwt.issuer:self}")
     private String jwtIssuer;
 
-    @Value("${jwt.expiration:6}")
+    @Value("${jwt.expiration-hours:6}")
     private long jwtExpirationHours;
 
     @Autowired
@@ -160,54 +162,74 @@ public class UserServiceImpl implements UserService {
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
         LOG.debug("--> checkLogin");
         final String username = loginRequest.username();
-        final String password = loginRequest.password() != null ? loginRequest.password() : "";
+        final String password = Objects.requireNonNullElse(loginRequest.password(), "");
 
         final User user = userRepository.findByUsername(username).orElse(null);
 
         final String hashed = user != null ? user.getPassword() : DUMMY_HASH;
         final boolean valid = passwordEncoder.matches(password, hashed);
 
-        if (!valid || user == null) {
+        if (user == null || !valid) {
             LOG.warn("<-- checkLogin, FAILED");
             throw new UnauthorizedException(USER, "credentials", "invalid");
         }
 
-        final String token = generateJwt(user);
-        final LoginResponse loginResponse = new LoginResponse(token);
+        final LoginResponse loginResponse = createLoginResponse(user);
         LOG.debug("<-- checkLogin");
         return loginResponse;
     }
 
     /**
-     * Generates a signed JWT for the given user.
+     * Creates a {@link LoginResponse} containing a freshly generated JWT token with expiration metadata.
+     * <p>
+     * The issued-at and expiration timestamps are calculated once to ensure perfect consistency between
+     * the values embedded in the JWT and those returned to the client.
+     *
+     * @param user the authenticated user
+     * @return a {@link LoginResponse} with the JWT token, exact expiration instant and remaining seconds
+     */
+    private LoginResponse createLoginResponse(final User user) {
+        LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
+        final Instant issuedAt = Instant.now();
+        final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
+        final long expiresInSeconds = Duration.between(issuedAt, expiresAt).getSeconds();
+        final String token = generateJwtToken(user, issuedAt, expiresAt);
+        final LoginResponse loginResponse = new LoginResponse(token, expiresAt, expiresInSeconds);
+        LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
+        return loginResponse;
+    }
+
+    /**
+     * Generates a signed HS256 JWT for the given user using the provided timestamps.
      * <p>
      * The token contains:
      * <ul>
-     *   <li>{@code sub} – the user ID</li>
-     *   <li>{@code scope} – either {@code ADMIN} or {@code USER} (used for role-based authorization)</li>
-     *   <li>{@code iss}, {@code iat}, and {@code exp} claims as configured</li>
+     *   <li>{@code iss} – configured issuer</li>
+     *   <li>{@code iat} – issued-at timestamp</li>
+     *   <li>{@code exp} – expiration timestamp</li>
+     *   <li>{@code sub} – user ID</li>
+     *   <li>{@code scope} – {@code ROLE_ADMIN} or {@code ROLE_USER}</li>
      * </ul>
-     * The token is signed with HS256 using the application’s secret key.
-     * </p>
      *
-     * @param user the authenticated user entity
-     * @return the compact serialized JWT string
+     * @param user      the user to issue the token for
+     * @param issuedAt  exact issuance instant (must match the one used externally)
+     * @param expiresAt exact expiration instant (must match the one used externally)
+     * @return the compact JWT string
      */
-    private String generateJwt(User user) {
-        LOG.debug("--> generateJwt, for username: {}", user.getUsername());
-        final Instant now = Instant.now();
+    private String generateJwtToken(User user, Instant issuedAt, Instant expiresAt) {
+        LOG.debug("--> generateJwtToken, for username: {}", user.getUsername());
         final String scope = user.isAdmin() ? Role.ADMIN.name() : Role.USER.name();
 
         final JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(jwtIssuer)
-                .issuedAt(now)
-                .expiresAt(now.plus(jwtExpirationHours, ChronoUnit.HOURS))
+                .issuedAt(issuedAt)
+                .expiresAt(expiresAt)
                 .subject(String.valueOf(user.getId()))
                 .claim("scope", scope)
                 .build();
 
-        final String jwt = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
-        LOG.debug("<-- generateJwt, for username: {}", user.getUsername());
-        return jwt;
+        final String token = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+        LOG.debug("<-- generateJwtToken, for username: {}", user.getUsername());
+        return token;
     }
 }

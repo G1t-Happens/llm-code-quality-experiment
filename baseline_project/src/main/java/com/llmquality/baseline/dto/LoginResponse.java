@@ -1,6 +1,8 @@
 package com.llmquality.baseline.dto;
 
 
+import java.time.Instant;
+
 /**
  * Response DTO for login operations.
  * <p>
@@ -11,8 +13,11 @@ package com.llmquality.baseline.dto;
  */
 public record LoginResponse(
 
-        String token
+        String token,
 
+        Instant expiresAt,
+
+        long expiresInSeconds
 ) {
     // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
 }

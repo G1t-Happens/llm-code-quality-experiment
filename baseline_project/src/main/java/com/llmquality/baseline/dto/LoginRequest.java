@@ -12,6 +12,7 @@ import jakarta.validation.constraints.Size;
  * </p>
  */
 public record LoginRequest(
+
         @NotBlank(message = "Username must not be blank")
         @Size(max = 255, message = "Username must be at most 255 characters long")
         String username,
