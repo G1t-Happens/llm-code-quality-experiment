@@ -1,10 +1,8 @@
 package com.llmquality.baseline.dto;
 
-import com.llmquality.baseline.dto.validation.UserValidationGroups;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
+
+import static com.llmquality.baseline.dto.validation.UserValidationGroups.*;
 
 
 /**
@@ -14,22 +12,22 @@ import jakarta.validation.constraints.Pattern;
  * </p>
  */
 public record UserRequest(
-        @NotBlank(groups = {UserValidationGroups.Create.class})
+        @NotBlank(groups = Create.class)
         String username,
 
-        @NotBlank(groups = UserValidationGroups.Create.class)
+        @NotBlank(groups = Create.class)
         @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$",
-                message = "Password must be at least 8 characters long, contain at least one number, one lowercase and one uppercase letter.",
-                groups = {UserValidationGroups.Update.class, UserValidationGroups.Create.class}
-        )
+                message = "Password must be at least 8 characters, contain at least one digit, one lowercase and one uppercase letter.",
+                groups = {Create.class, Update.class})
+        @Size(min = 8, max = 255, groups = {Create.class, Update.class})
         String password,
 
-        @NotBlank(groups = UserValidationGroups.Create.class)
-        @Email(groups = {UserValidationGroups.Update.class, UserValidationGroups.Create.class})
+        @NotBlank(groups = Create.class)
+        @Email(groups = {Create.class, Update.class})
         String email,
 
-        @NotNull(groups = UserValidationGroups.Create.class)
+        @NotNull(groups = Create.class)
         Boolean admin
 ) {
-    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
+    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
 }
