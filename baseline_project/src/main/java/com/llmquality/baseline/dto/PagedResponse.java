@@ -2,7 +2,9 @@ package com.llmquality.baseline.dto;
 
 import org.springframework.data.domain.Page;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -41,8 +43,9 @@ public record PagedResponse<T>(
      * @return a new {@link PagedResponse} with content and pagination info
      */
     public static <T> PagedResponse<T> fromPage(Page<T> page) {
+        Objects.requireNonNull(page, "Page must not be null");
         return new PagedResponse<>(
-                page.getContent(),
+                Collections.unmodifiableList(page.getContent()),
                 page.getNumber(),
                 page.getSize(),
                 page.getTotalElements(),
