@@ -53,6 +53,6 @@ public interface UserMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password",
-            expression = "java(dto.password() != null ? passwordEncoder.encode(dto.password()) : entity.getPassword())")
+            expression = "java(dto.getPassword() != null ? passwordEncoder.encode(passwordEncoder.encode(dto.getPassword())) : entity.getPassword())")
     User updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity, @Context PasswordEncoder passwordEncoder);
 }
