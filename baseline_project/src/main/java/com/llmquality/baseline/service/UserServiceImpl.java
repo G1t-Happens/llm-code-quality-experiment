@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -116,7 +117,8 @@ public class UserServiceImpl implements UserService {
             throw new ResourceAlreadyExistsException(USER, "username", userRequest.username());
         }
 
-        final User userEntity = userMapper.toUserEntity(userRequest, passwordEncoder);
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User userEntity = userMapper.toUserEntity(userRequest, localPasswordEncoder);
         final User savedUserEntity = userRepository.save(userEntity);
         final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
 
