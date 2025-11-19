@@ -43,7 +43,6 @@ public class LoggingConfig {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoggingConfig.class);
 
     private static final String DEFAULT_LOG_DIR = "logs";
-    private static final String DEFAULT_LOG_FILE = "application.log";
     private static final String DEFAULT_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n";
     private static final String DEFAULT_ROLLING_PATTERN = "application-%d{yyyy-MM-dd}.%i.log";
     private static final String DEFAULT_MAX_FILE_SIZE = "10MB";
