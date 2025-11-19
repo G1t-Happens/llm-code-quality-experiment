@@ -28,6 +28,7 @@ public interface AddressMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", source = "user")
+    @Mapping(target = "street", source = "addressRequest.someValue")
     Address toAddressEntity(AddressRequest addressRequest, User user);
 
     /**
@@ -54,5 +55,6 @@ public interface AddressMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "street", source = "addressRequest.someValue")
     Address updateAddressEntityFromAddressRequest(AddressRequest addressRequest, @MappingTarget Address address);
 }
