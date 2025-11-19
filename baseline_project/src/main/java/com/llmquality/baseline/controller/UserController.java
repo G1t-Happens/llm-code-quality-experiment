@@ -44,7 +44,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or @sec.canSetAdminFlag(#userRequest.admin, authentication)")
-    public UserResponse create(@RequestBody @Validated(Create.class) UserRequest userRequest) {
+    public UserResponse create(@RequestBody UserRequest userRequest) {
         return userService.save(userRequest);
     }
 
