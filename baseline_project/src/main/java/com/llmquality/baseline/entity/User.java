@@ -23,14 +23,14 @@ public class User {
     private String email;
 
     @Column(name = "isadmin", nullable = false)
-    private boolean isAdmin;
+    private boolean admin;
 
     public boolean isAdmin() {
-        return isAdmin;
+        return admin;
     }
 
     public void setAdmin(boolean admin) {
-        isAdmin = admin;
+        this.admin = admin;
     }
 
     public String getEmail() {
