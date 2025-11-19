@@ -232,7 +232,7 @@ public class LoggingConfig {
                                      ConsoleAppender<ILoggingEvent> consoleAppender,
                                      Level level) {
 
-        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        Logger rootLogger = loggerContext.getLogger("com.llmquality.baseline");
         rootLogger.detachAndStopAllAppenders();
 
         rootLogger.addAppender(asyncFileAppender);
