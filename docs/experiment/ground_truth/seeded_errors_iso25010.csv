@@ -23,22 +23,3 @@ E021,UserServiceImpl.java,TODO,TODO,Maintainability,"Method named 'do_Some_Stuff
 E022,LoggingConfig.java,TODO,TODO,Portability,"The default log file name contains characters valid on Linux but invalid on Windows (e.g., application:errors.log). This prevents installation/running on Windows",manual,high,TODO
 E023,LoggingConfig.java,TODO,TODO,Portability,"Hardcoded Linux-specific log directory. Running this on Windows or another OS will fail or move to an unpredictable location unless manually changed",manual,high,TODO
 E024,LoggingConfig.java,TODO,TODO,Portability,"Hardcoded file path separator may cause portability issues across different operating systems",manual,medium,TODO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
