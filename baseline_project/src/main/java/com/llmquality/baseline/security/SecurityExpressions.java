@@ -1,8 +1,6 @@
 package com.llmquality.baseline.security;
 
 import com.llmquality.baseline.enums.Role;
-import com.llmquality.baseline.repository.AddressRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -17,22 +15,11 @@ import org.springframework.stereotype.Component;
 @Component("sec")
 public class SecurityExpressions {
 
-    private final AddressRepository addressRepository;
-
-    @Autowired
-    public SecurityExpressions(AddressRepository addressRepository) {
-        this.addressRepository = addressRepository;
-    }
-
     public boolean isOwner(Long resourceOwnerId, Authentication auth) {
         return resourceOwnerId != null
+                && auth != null
+                && auth.getName() != null
                 && resourceOwnerId.toString().equals(auth.getName());
-    }
-
-    public boolean isOwnerOfAddress(Long userId, Long addressId, Authentication auth) {
-        return isAdmin(auth)
-                || (userId != null && isOwner(userId, auth)
-                && addressRepository.existsByIdAndUserId(addressId, userId));
     }
 
     public boolean canSetAdminFlag(Boolean newValue, Authentication auth) {
@@ -40,6 +27,7 @@ public class SecurityExpressions {
     }
 
     public boolean isAdmin(Authentication auth) {
+        if (auth == null || auth.getAuthorities() == null) return false;
         return auth.getAuthorities().stream()
                 .anyMatch(granted -> Role.ADMIN.authority().equals(granted.getAuthority()));
     }

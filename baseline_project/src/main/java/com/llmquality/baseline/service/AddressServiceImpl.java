@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
+
 
 @Service
 @Transactional(readOnly = true)
@@ -65,6 +67,9 @@ public class AddressServiceImpl implements AddressService {
                     LOG.error("<-- getById, Address with ID {} not found", addressId);
                     return new ResourceNotFoundException(ADDRESS, "id", addressId);
                 });
+
+        enforceAddressOwnership(existingAddressEntity, userId);
+
         final AddressResponse addressResponse = addressMapper.toAddressResponse(existingAddressEntity);
         LOG.debug("<-- getById, userId: {} and addressId: {}", userId, addressResponse.id());
         return addressResponse;
@@ -96,6 +101,8 @@ public class AddressServiceImpl implements AddressService {
                     return new ResourceNotFoundException(ADDRESS, "id", addressId);
                 });
 
+        enforceAddressOwnership(existingAddressEntity, userId);
+
         // Partial update via updateAddressEntityFromAddressRequest
         final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, existingAddressEntity);
         final Address saveAddressEntity = addressRepository.save(updatedAddressEntity);
@@ -113,7 +120,33 @@ public class AddressServiceImpl implements AddressService {
                     LOG.error("<-- delete, Address with ID {} not found", addressId);
                     return new ResourceNotFoundException(ADDRESS, "id", addressId);
                 });
+
+        enforceAddressOwnership(existingAddressEntity, userId);
+
         addressRepository.delete(existingAddressEntity);
         LOG.debug("<-- delete, address with id {} deleted", existingAddressEntity.getId());
+    }
+
+    /**
+     * Enforces that the given address belongs to the requested user.
+     * <p>
+     * Throws {@link ResourceNotFoundException} (404) on mismatch to prevent information disclosure.
+     * Must be called after loading the address and after coarse-grained {@code @PreAuthorize} check.
+     * </p>
+     *
+     * @param address         the loaded address entity
+     * @param requestedUserId the userId from the request path
+     * @throws ResourceNotFoundException if address does not belong to requestedUserId
+     */
+    private void enforceAddressOwnership(Address address, Long requestedUserId) {
+        LOG.debug("--> enforceAddressOwnership");
+        final Long ownerId = (address.getUser() != null) ? address.getUser().getId() : null;
+
+        if (!Objects.equals(ownerId, requestedUserId)) {
+            LOG.warn("<-- enforceAddressOwnership, Access denied: User {} tried to access address {} (ownerId={})",
+                    requestedUserId, address.getId(), ownerId);
+            throw new ResourceNotFoundException(ADDRESS, "id", address.getId());
+        }
+        LOG.debug("<-- enforceAddressOwnership, Ownership confirmed");
     }
 }
