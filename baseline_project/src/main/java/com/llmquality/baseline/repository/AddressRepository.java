@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface AddressRepository extends JpaRepository<Address, Long> {
 
     Page<Address> findAllByUserId(Long userId, Pageable pageable);
+
+    boolean existsByIdAndUserId(Long id, Long userId);
 }

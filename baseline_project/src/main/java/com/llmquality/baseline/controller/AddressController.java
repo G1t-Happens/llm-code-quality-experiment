@@ -30,7 +30,7 @@ public class AddressController {
     }
 
     @GetMapping("/{addressId}")
-    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#userId, authentication)")
+    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwnerOfAddress(#userId, #addressId, authentication)")
     public AddressResponse getById(@PathVariable Long userId, @PathVariable Long addressId) {
         return addressService.getById(userId, addressId);
     }
@@ -42,13 +42,13 @@ public class AddressController {
     }
 
     @PatchMapping("/{addressId}")
-    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#userId, authentication)")
+    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwnerOfAddress(#userId, #addressId, authentication)")
     public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
         return addressService.update(userId, addressId, addressRequest);
     }
 
     @DeleteMapping("/{addressId}")
-    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#userId, authentication)")
+    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwnerOfAddress(#userId, #addressId, authentication)")
     public void delete(@PathVariable Long userId, @PathVariable Long addressId) {
         addressService.delete(userId, addressId);
     }

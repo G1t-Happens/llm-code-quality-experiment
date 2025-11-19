@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -32,6 +33,7 @@ import java.util.List;
 
 
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
@@ -97,6 +99,7 @@ public class UserServiceImpl implements UserService {
         return userResponse;
     }
 
+    @Transactional
     @Override
     public UserResponse save(final UserRequest userRequest) {
         LOG.debug("--> save, user with username: {}", userRequest.username());
@@ -114,6 +117,7 @@ public class UserServiceImpl implements UserService {
         return userResponse;
     }
 
+    @Transactional
     @Override
     public UserResponse update(final Long id, final UserRequest userRequest) {
         LOG.debug("--> update, user with id: {}", id);
@@ -139,6 +143,7 @@ public class UserServiceImpl implements UserService {
         return userResponse;
     }
 
+    @Transactional
     @Override
     public void delete(final Long id) {
         LOG.debug("--> delete, id: {}", id);
@@ -153,6 +158,7 @@ public class UserServiceImpl implements UserService {
         LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
     }
 
+    @Transactional
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
         LOG.debug("--> checkLogin, invoked");

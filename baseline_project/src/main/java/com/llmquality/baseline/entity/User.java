@@ -1,7 +1,6 @@
 package com.llmquality.baseline.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 
@@ -15,15 +14,12 @@ public class User {
     private Long id;
 
     @Column(name = "username", nullable = false, unique = true)
-    @Size(max = 255)
     private String username;
 
-    @Column(name = "password", nullable = false)
-    @Size(max = 255)
+    @Column(name = "password", nullable = false, length = 60)
     private String password;
 
     @Column(name = "email", nullable = false)
-    @Size(max = 255)
     private String email;
 
     @Column(name = "isadmin", nullable = false)

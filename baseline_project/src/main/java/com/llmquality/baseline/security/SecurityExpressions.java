@@ -1,5 +1,7 @@
 package com.llmquality.baseline.security;
 
+import com.llmquality.baseline.repository.AddressRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,13 @@ import java.util.Objects;
  */
 @Component("sec")
 public class SecurityExpressions {
+
+    private final AddressRepository addressRepository;
+
+    @Autowired
+    public SecurityExpressions(AddressRepository addressRepository) {
+        this.addressRepository = addressRepository;
+    }
 
     /**
      * Checks if the authenticated user is the owner of the resource.
@@ -56,5 +65,31 @@ public class SecurityExpressions {
      */
     public boolean canSetAdminFlag(Boolean newAdminValue, Authentication authentication) {
         return newAdminValue == null || !newAdminValue || isAdmin(authentication);
+    }
+
+    /**
+     * Returns {@code true} if the current user is either an admin or the actual owner of the requested address.
+     * <p>
+     * Checks:
+     * <ul>
+     *   <li>User has {@code ROLE_ADMIN}</li>
+     *   <li>Path {@code userId} matches the authenticated user (JWT sub claim)</li>
+     *   <li>Address with {@code addressId} exists and belongs to {@code userId}</li>
+     * </ul>
+     * </p>
+     * Provides full IDOR protection for {@code /users/{userId}/addresses/{addressId}} endpoints.
+     * Non-existent or foreign addresses yield {@code false} without leaking existence.
+     *
+     * @param userId         user ID from path ({@code #userId})
+     * @param addressId      address ID from path ({@code #addressId})
+     * @param authentication current authentication (never {@code null} in {@code @PreAuthorize})
+     * @return {@code true} if access is allowed
+     */
+    public boolean isOwnerOfAddress(Long userId, Long addressId, Authentication authentication) {
+        return isAdmin(authentication)
+                || (userId != null
+                && addressId != null
+                && userId.toString().equals(authentication.getName())
+                && addressRepository.existsByIdAndUserId(addressId, userId));
     }
 }

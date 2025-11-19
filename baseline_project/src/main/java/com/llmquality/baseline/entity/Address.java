@@ -2,7 +2,6 @@ package com.llmquality.baseline.entity;
 
 import com.llmquality.baseline.enums.AddressType;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 import java.util.Objects;
 
@@ -20,23 +19,18 @@ public class Address {
     private User user;
 
     @Column(name = "street", nullable = false)
-    @Size(max = 255)
     private String street;
 
     @Column(name = "house_number", nullable = false)
-    @Size(max = 255)
     private String houseNumber;
 
     @Column(name = "postal_code", nullable = false)
-    @Size(max = 255)
     private String postalCode;
 
     @Column(name = "city", nullable = false)
-    @Size(max = 255)
     private String city;
 
     @Column(name = "country", nullable = false)
-    @Size(max = 255)
     private String country;
 
     @Enumerated(EnumType.STRING)

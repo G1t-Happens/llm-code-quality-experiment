@@ -5,7 +5,6 @@ import com.llmquality.baseline.dto.AddressResponse;
 import com.llmquality.baseline.dto.PagedResponse;
 import com.llmquality.baseline.entity.Address;
 import com.llmquality.baseline.entity.User;
-import com.llmquality.baseline.exception.ForbiddenException;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.mapper.AddressMapper;
 import com.llmquality.baseline.repository.AddressRepository;
@@ -15,9 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
+@Transactional(readOnly = true)
 public class AddressServiceImpl implements AddressService {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AddressServiceImpl.class);
@@ -59,12 +60,17 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse getById(Long userId, Long addressId) {
         LOG.debug("--> getById, userId: {} and addressId: {}", userId, addressId);
-        final Address address = getAddressByIdAndUserId(addressId, userId);
-        final AddressResponse addressResponse = addressMapper.toAddressResponse(address);
+        final Address existingAddressEntity = addressRepository.findById(addressId)
+                .orElseThrow(() -> {
+                    LOG.error("<-- getById, Address with ID {} not found", addressId);
+                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
+                });
+        final AddressResponse addressResponse = addressMapper.toAddressResponse(existingAddressEntity);
         LOG.debug("<-- getById, userId: {} and addressId: {}", userId, addressResponse.id());
         return addressResponse;
     }
 
+    @Transactional
     @Override
     public AddressResponse save(final Long userId, final AddressRequest addressRequest) {
         LOG.debug("--> save, address for user with userId: {}", userId);
@@ -80,62 +86,34 @@ public class AddressServiceImpl implements AddressService {
         return addressResponse;
     }
 
+    @Transactional
     @Override
     public AddressResponse update(final Long userId, final Long addressId, final AddressRequest addressRequest) {
         LOG.debug("--> update, address with addressId: {} by userId: {}", addressId, userId);
-        final Address address = getAddressByIdAndUserId(addressId, userId);
+        final Address existingAddressEntity = addressRepository.findById(addressId)
+                .orElseThrow(() -> {
+                    LOG.error("<-- update, Address with ID {} not found", addressId);
+                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
+                });
 
         // Partial update via updateAddressEntityFromAddressRequest
-        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, address);
+        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, existingAddressEntity);
         final Address saveAddressEntity = addressRepository.save(updatedAddressEntity);
         final AddressResponse addressResponse = addressMapper.toAddressResponse(saveAddressEntity);
         LOG.debug("<-- update, address with addressId: {} by userId: {}", addressResponse.id(), addressResponse.userId());
         return addressResponse;
     }
 
+    @Transactional
     @Override
     public void delete(final Long userId, final Long addressId) {
         LOG.debug("--> delete, addressId: {}", addressId);
-        final Address address = getAddressByIdAndUserId(addressId, userId);
-        addressRepository.delete(address);
-        LOG.debug("<-- delete, address with id {} deleted", address.getId());
-    }
-
-    /**
-     * Retrieves an address by its ID and ensures that the address belongs to the specified user.
-     * <p>
-     * This method first checks if the address with the given ID exists. If the address is found,
-     * it then verifies that the address belongs to the user identified by the provided user ID.
-     * If the address does not exist, a {@link ResourceNotFoundException} is thrown.
-     * If the address exists but does not belong to the specified user, a {@link ForbiddenException} is thrown.
-     * </p>
-     *
-     * @param addressId the ID of the address to retrieve
-     * @param userId    the ID of the user requesting the address
-     * @return the address that belongs to the specified user
-     * @throws ResourceNotFoundException if no address with the given ID exists
-     * @throws ForbiddenException        if the address does not belong to the specified user
-     */
-    private Address getAddressByIdAndUserId(final Long addressId, final Long userId) {
-        LOG.debug("--> getAddressByIdAndUserId, get address for addressId: {} and userId {}", addressId, userId);
-
         final Address existingAddressEntity = addressRepository.findById(addressId)
                 .orElseThrow(() -> {
-                    LOG.error("<-- getAddressByIdAndUserId, Address with ID {} not found", addressId);
+                    LOG.error("<-- delete, Address with ID {} not found", addressId);
                     return new ResourceNotFoundException(ADDRESS, "id", addressId);
                 });
-
-        if (existingAddressEntity.getUser() == null || existingAddressEntity.getUser().getId() == null) {
-            LOG.error("<-- getAddressByIdAndUserId, Address with ID {} has no user or user ID", addressId);
-            throw new ForbiddenException(USER, "id", userId);
-        }
-
-        if (!existingAddressEntity.getUser().getId().equals(userId)) {
-            LOG.error("<-- getAddressByIdAndUserId, User with ID {} is not authorized to access Address with ID {}", userId, addressId);
-            throw new ForbiddenException(USER, "id", userId);
-        }
-
-        LOG.debug("<-- getAddressByIdAndUserId, found address for addressId: {} and userId {}", existingAddressEntity.getId(), existingAddressEntity.getUser().getId());
-        return existingAddressEntity;
+        addressRepository.delete(existingAddressEntity);
+        LOG.debug("<-- delete, address with id {} deleted", existingAddressEntity.getId());
     }
 }
