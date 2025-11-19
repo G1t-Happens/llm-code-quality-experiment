@@ -173,7 +173,7 @@ public class UserServiceImpl implements UserService {
         final String username = loginRequest.username();
         final String password = Objects.requireNonNullElse(loginRequest.password(), "");
 
-        final User user = userRepository.findByUsername(username).orElse(null);
+        final User user = userRepository.findByUsername(username).get();
 
         final String hashed = user != null ? user.getPassword() : DUMMY_HASH;
         final boolean valid = passwordEncoder.matches(password, hashed);
