@@ -168,13 +168,13 @@ public class UserServiceImpl implements UserService {
         final boolean valid = passwordEncoder.matches(password, hashed);
 
         if (!valid || user == null) {
-            LOG.warn("<-- checkLogin, FAILED for username: {}", username);
+            LOG.warn("<-- checkLogin, FAILED");
             throw new UnauthorizedException(USER, "credentials", "invalid");
         }
 
         final String token = generateJwt(user);
         final LoginResponse loginResponse = new LoginResponse(token);
-        LOG.info("Login successful for username: {} (userId={})", username, user.getId());
+        LOG.debug("<-- checkLogin");
         return loginResponse;
     }
 
