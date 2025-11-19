@@ -1,10 +1,9 @@
 package com.llmquality.baseline.dto;
 
-import com.llmquality.baseline.dto.validation.AddressValidationGroups;
 import com.llmquality.baseline.enums.AddressType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
+
+import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
 
 
 /**
@@ -16,27 +15,38 @@ import jakarta.validation.constraints.Size;
  * </p>
  */
 public record AddressRequest(
-        @NotBlank(groups = AddressValidationGroups.Create.class)
+
+        @NotBlank(groups = Create.class, message = "Street is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Street must not be empty or consist only of whitespace")
         @Size(max = 255, message = "Street must be at most 255 characters long")
         String street,
 
-        @NotBlank(groups = AddressValidationGroups.Create.class)
-        @Size(max = 255, message = "HouseNumber must be at most 255 characters long")
+        @NotBlank(groups = Create.class, message = "House number is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "House number must not be empty or consist only of whitespace")
+        @Size(max = 255)
         String houseNumber,
 
-        @NotBlank(groups = AddressValidationGroups.Create.class)
-        @Size(max = 255, message = "PostalCode must be at most 255 characters long")
+        @NotBlank(groups = Create.class, message = "Postal code is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Postal code must not be empty or consist only of whitespace")
+        @Size(max = 255)
         String postalCode,
 
-        @NotBlank(groups = AddressValidationGroups.Create.class)
-        @Size(max = 255, message = "City must be at most 255 characters long")
+        @NotBlank(groups = Create.class, message = "City is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "City must not be empty or consist only of whitespace")
+        @Size(max = 255)
         String city,
 
-        @NotBlank(groups = AddressValidationGroups.Create.class)
-        @Size(max = 255, message = "Country must be at most 255 characters long")
+        @NotBlank(groups = Create.class, message = "Country is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Country must not be empty or consist only of whitespace")
+        @Size(max = 255)
         String country,
 
-        @NotNull(groups = AddressValidationGroups.Create.class)
+        @NotNull(groups = Create.class, message = "Address type is required on create")
         AddressType addressType
 ) {
     // You can add custom methods here if needed, e.g., formatted output or convenience methods.
