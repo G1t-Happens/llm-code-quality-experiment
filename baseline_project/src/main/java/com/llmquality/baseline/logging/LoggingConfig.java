@@ -49,7 +49,7 @@ public class LoggingConfig {
     private static final String DEFAULT_MAX_FILE_SIZE = "10MB";
     private static final String DEFAULT_TOTAL_SIZE_CAP = "100MB";
 
-    @Value("${logging.file.path:${user.dir}/logs}")
+    @Value("${logging.file.path:/home/dbe/projects/llm-code-quality-experiment/baseline_project/logs}")
     private String logDirectoryPath;
 
     @Value("${logging.file.name:application:errors.log}")
