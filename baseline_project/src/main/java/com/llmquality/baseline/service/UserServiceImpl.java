@@ -116,7 +116,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public UserResponse save(final UserRequest userRequest) {
-        LOG.debug("--> save, user with username: {}", userRequest.username());
+        LOG.debug("--> save, user with name: {} and password: {}", userRequest.username(), userRequest.password());
 
         if (userRepository.existsByUsername(userRequest.username())) {
             LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.username());
