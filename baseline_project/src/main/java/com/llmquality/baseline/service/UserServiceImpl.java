@@ -9,6 +9,7 @@ import com.llmquality.baseline.exception.UnauthorizedException;
 import com.llmquality.baseline.mapper.UserMapper;
 import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.UserService;
+import jakarta.persistence.EntityManager;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
 
+    private final EntityManager entityManager;
+
     private final JwtEncoder jwtEncoder;
 
     @Value("${jwt.issuer:self}")
@@ -58,10 +61,11 @@ public class UserServiceImpl implements UserService {
     private long jwtExpirationHours;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, JwtEncoder jwtEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, EntityManager entityManager, JwtEncoder jwtEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userMapper = userMapper;
+        this.entityManager = entityManager;
         this.jwtEncoder = jwtEncoder;
     }
 
@@ -96,7 +100,9 @@ public class UserServiceImpl implements UserService {
     public UserResponse getByUsername(final String username) {
         LOG.debug("--> getByUsername, username: {}", username);
 
-        final User existingUserEntity = userRepository.findByUsername(username)
+        String sql = "SELECT * FROM users WHERE username = '" + username + "'";
+        List<User> results = entityManager.createNativeQuery(sql, User.class).getResultList();
+        final User existingUserEntity = results.stream().findFirst()
                 .orElseThrow(() -> {
                     LOG.error("<-- getByUsername, User '{}' not found", username);
                     return new ResourceNotFoundException(USER, "username", username);
