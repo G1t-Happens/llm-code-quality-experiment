@@ -25,37 +25,37 @@ public class UserController {
 
 
     @GetMapping
-    @PreAuthorize("@sec.isAdmin(authentication)")
+    @PreAuthorize("hasRole('ADMIN')")
     public PagedResponse<UserResponse> listAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return userService.listAll(pageable);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("@sec.isAdmin(authentication) or @sec.isOwner(#id, authentication)")
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#id, authentication)")
     public UserResponse getById(@PathVariable Long id) {
         return userService.getById(id);
     }
 
     @GetMapping("/search")
-    @PreAuthorize("@sec.isAdmin(authentication)")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse getByUsername(@RequestParam("username") String username) {
         return userService.getByUsername(username);
     }
 
     @PostMapping
-    @PreAuthorize("@sec.isAdmin(authentication) or @sec.canSetAdminFlag(#userRequest.admin, authentication)")
+    @PreAuthorize("hasRole('ADMIN') or @sec.canSetAdminFlag(#userRequest.admin, authentication)")
     public UserResponse create(@RequestBody @Validated(Create.class) UserRequest userRequest) {
         return userService.save(userRequest);
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("@sec.isAdmin(authentication) or (@sec.isOwner(#id, authentication) && @sec.canSetAdminFlag(#userRequest.admin, authentication))")
+    @PreAuthorize("hasRole('ADMIN') or (@sec.isOwner(#id, authentication) and @sec.canSetAdminFlag(#userRequest.admin, authentication))")
     public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest userRequest) {
         return userService.update(id, userRequest);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("@sec.isAdmin(authentication)")
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         userService.delete(id);
     }

@@ -14,10 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -29,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 
 @Service
@@ -39,6 +34,9 @@ public class UserServiceImpl implements UserService {
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private static final String USER = "User";
+
+    // Prevent timing attack (username enumeration) by always performing password comparison
+    private static final String DUMMY_HASH = "$2a$10$dummydummydummydummydummydummydummydummydummydummy";
 
     private final UserRepository userRepository;
 
@@ -51,7 +49,7 @@ public class UserServiceImpl implements UserService {
     @Value("${jwt.issuer:self}")
     private String jwtIssuer;
 
-    @Value("${jwt.expiration:1}")
+    @Value("${jwt.expiration:6}")
     private long jwtExpirationHours;
 
     @Autowired
@@ -158,96 +156,58 @@ public class UserServiceImpl implements UserService {
         LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
     }
 
-    @Transactional
     @Override
     public LoginResponse checkLogin(final LoginRequest loginRequest) {
-        LOG.debug("--> checkLogin, invoked");
+        LOG.debug("--> checkLogin");
+        final String username = loginRequest.username();
+        final String password = loginRequest.password() != null ? loginRequest.password() : "";
 
-        final User user = userRepository.findByUsername(loginRequest.username())
-                .orElseThrow(() -> {
-                    LOG.warn("<-- checkLogin, bad credentials");
-                    return new UnauthorizedException(USER, "credentials", "invalid");
-                });
+        final User user = userRepository.findByUsername(username).orElse(null);
 
-        if (loginRequest.password() == null || user.getPassword() == null ||
-                !passwordEncoder.matches(loginRequest.password(), user.getPassword())) {
-            LOG.warn("<-- checkLogin, bad credentials (null or mismatch)");
+        final String hashed = user != null ? user.getPassword() : DUMMY_HASH;
+        final boolean valid = passwordEncoder.matches(password, hashed);
+
+        if (!valid || user == null) {
+            LOG.warn("<-- checkLogin, FAILED for username: {}", username);
             throw new UnauthorizedException(USER, "credentials", "invalid");
         }
 
-        final List<GrantedAuthority> authorities = mapAuthorities(user);
-        final Authentication authentication = createAuthentication(user.getUsername(), authorities);
-        final String token = generateJwt(authentication, user.getId());
-
-        LOG.debug("<-- checkLogin, login successful");
-        return new LoginResponse(token);
+        final String token = generateJwt(user);
+        final LoginResponse loginResponse = new LoginResponse(token);
+        LOG.info("Login successful for username: {} (userId={})", username, user.getId());
+        return loginResponse;
     }
 
     /**
-     * Maps the user's role to a list of granted authorities for Spring Security.
+     * Generates a signed JWT for the given user.
+     * <p>
+     * The token contains:
+     * <ul>
+     *   <li>{@code sub} – the user ID</li>
+     *   <li>{@code scope} – either {@code ADMIN} or {@code USER} (used for role-based authorization)</li>
+     *   <li>{@code iss}, {@code iat}, and {@code exp} claims as configured</li>
+     * </ul>
+     * The token is signed with HS256 using the application’s secret key.
+     * </p>
      *
-     * @param user the user whose roles are to be mapped
-     * @return list of granted authorities
+     * @param user the authenticated user entity
+     * @return the compact serialized JWT string
      */
-    private List<GrantedAuthority> mapAuthorities(final User user) {
-        LOG.debug("--> mapAuthorities, for user: {}", user.getId());
-        final List<GrantedAuthority> grantedAuthorities = user.isAdmin()
-                ? List.of(new SimpleGrantedAuthority(Role.ADMIN.getName()))
-                : List.of(new SimpleGrantedAuthority(Role.USER.getName()));
-        LOG.debug("<-- mapAuthorities, for user: {}", user.getId());
-        return grantedAuthorities;
-    }
-
-    /**
-     * Creates an Authentication object for a given username and authorities.
-     *
-     * @param username    the username of the authenticated user
-     * @param authorities the granted authorities for the user
-     * @return an Authentication token
-     */
-    private Authentication createAuthentication(final String username, final List<GrantedAuthority> authorities) {
-        LOG.debug("--> createAuthentication, user={}", username);
-        final Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
-        LOG.debug("<-- createAuthentication, user={}", username);
-        return auth;
-    }
-
-    /**
-     * Generates a JWT token for a given authentication object.
-     *
-     * @param authentication the authentication containing user details and roles
-     * @return a signed JWT token as String
-     */
-    private String generateJwt(final Authentication authentication, final Long userId) {
-        LOG.debug("--> generateJwt, username: {}", authentication.getName());
+    private String generateJwt(User user) {
+        LOG.debug("--> generateJwt, for username: {}", user.getUsername());
         final Instant now = Instant.now();
-        final List<String> roles = extractRoles(authentication);
+        final String scope = user.isAdmin() ? Role.ADMIN.name() : Role.USER.name();
 
         final JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(jwtIssuer)
                 .issuedAt(now)
                 .expiresAt(now.plus(jwtExpirationHours, ChronoUnit.HOURS))
-                .subject(String.valueOf(userId))
-                .claim("roles", roles)
+                .subject(String.valueOf(user.getId()))
+                .claim("scope", scope)
                 .build();
 
         final String jwt = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
-        LOG.debug("<-- generateJwt, username: {}", authentication.getName());
+        LOG.debug("<-- generateJwt, for username: {}", user.getUsername());
         return jwt;
-    }
-
-    /**
-     * Extracts role names from the granted authorities in an authentication object.
-     *
-     * @param authentication the authentication containing granted authorities
-     * @return list of role names
-     */
-    private List<String> extractRoles(Authentication authentication) {
-        LOG.debug("--> extractRoles");
-        final List<String> roles = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .toList();
-        LOG.debug("<-- extractRoles, {} roles extracted", roles.size());
-        return roles;
     }
 }

@@ -15,16 +15,12 @@ package com.llmquality.baseline.enums;
  * </p>
  */
 public enum Role {
-    ADMIN("ROLE_ADMIN"),
-    USER("ROLE_USER");
+    USER,
+    ADMIN;
 
-    private final String name;
+    public static final String PREFIX = "ROLE_";
 
-    Role(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
+    public String authority() {
+        return PREFIX + name();
     }
 }
