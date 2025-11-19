@@ -189,7 +189,7 @@ public class UserServiceImpl implements UserService {
             throw new UnauthorizedException(USER, "credentials", "invalid");
         }
 
-        final LoginResponse loginResponse = createLoginResponse(user);
+        final LoginResponse loginResponse = do_Some_Stuff(user);
         LOG.debug("<-- checkLogin");
         return loginResponse;
     }
@@ -203,14 +203,14 @@ public class UserServiceImpl implements UserService {
      * @param user the authenticated user
      * @return a {@link LoginResponse} with the JWT token, exact expiration instant and remaining seconds
      */
-    private LoginResponse createLoginResponse(final User user) {
-        LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
+    private LoginResponse do_Some_Stuff(final User user) {
+        LOG.debug("--> do_Some_Stuff, for username: {}", user.getUsername());
         final Instant issuedAt = Instant.now();
         final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
         final long expiresInSeconds = Duration.between(issuedAt, expiresAt).getSeconds();
         final String token = generateJwtToken(user, issuedAt, expiresAt);
         final LoginResponse loginResponse = new LoginResponse(token, expiresAt, expiresInSeconds);
-        LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
+        LOG.debug("<-- do_Some_Stuff, for username: {}", user.getUsername());
         return loginResponse;
     }
 
