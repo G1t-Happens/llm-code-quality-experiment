@@ -56,8 +56,6 @@ public class SecurityConfig {
 
     private static final String JWT_ALGORITHM = "HmacSHA256";
 
-    private static final int MIN_SECRET_BYTES = 32;
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -107,18 +105,7 @@ public class SecurityConfig {
     }
 
     private SecretKey createSecretKey(String base64Secret) {
-        if (base64Secret == null || base64Secret.isBlank()) {
-            throw new IllegalStateException("JWT secret is not configured. Please set 'jwt.secret' in your application properties.");
-        }
-        byte[] secretBytes;
-        try {
-            secretBytes = Base64.getDecoder().decode(base64Secret);
-        } catch (IllegalArgumentException ex) {
-            throw new IllegalStateException("JWT secret is not valid Base64: " + base64Secret, ex);
-        }
-        if (secretBytes.length < MIN_SECRET_BYTES) {
-            throw new IllegalStateException("JWT secret too short; must be at least 32 bytes (after Base64 decoding).");
-        }
+        byte[] secretBytes = Base64.getDecoder().decode(base64Secret);
         return new SecretKeySpec(secretBytes, JWT_ALGORITHM);
     }
 }
