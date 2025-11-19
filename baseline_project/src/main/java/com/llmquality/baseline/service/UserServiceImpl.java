@@ -180,7 +180,7 @@ public class UserServiceImpl implements UserService {
         final String token = generateJwt(authentication, user.getId());
 
         LOG.debug("<-- checkLogin, login successful");
-        return new LoginResponse(true, token);
+        return new LoginResponse(token);
     }
 
     /**

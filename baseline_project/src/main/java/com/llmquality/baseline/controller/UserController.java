@@ -4,6 +4,8 @@ import com.llmquality.baseline.dto.*;
 import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +26,7 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("@sec.isAdmin(authentication)")
-    public PagedResponse<UserResponse> listAll(Pageable pageable) {
+    public PagedResponse<UserResponse> listAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return userService.listAll(pageable);
     }
 

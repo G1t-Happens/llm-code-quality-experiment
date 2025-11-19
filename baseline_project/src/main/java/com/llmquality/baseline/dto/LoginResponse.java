@@ -11,8 +11,6 @@ package com.llmquality.baseline.dto;
  */
 public record LoginResponse(
 
-        Boolean success,
-
         String token
 
 ) {
