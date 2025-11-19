@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -65,7 +67,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public PagedResponse<UserResponse> listAll(Pageable pageable) {
         LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-        final Page<UserResponse> page = userRepository.findAll(pageable).map(userMapper::toUserResponse);
+        final List<User> users = userRepository.findAll();
+        final List<UserResponse> userResponses = users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
         LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
         return PagedResponse.fromPage(page);
     }
