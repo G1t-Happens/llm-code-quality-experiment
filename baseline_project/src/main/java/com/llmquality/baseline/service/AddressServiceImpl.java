@@ -11,6 +11,7 @@ import com.llmquality.baseline.repository.AddressRepository;
 import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.AddressService;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,14 +32,13 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
 
-    private final UserRepository userRepository;
+    @Autowired private UserRepository userRepository;
 
     private final AddressMapper addressMapper;
 
 
-    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository, AddressMapper addressMapper) {
+    public AddressServiceImpl(AddressRepository addressRepository, AddressMapper addressMapper) {
         this.addressRepository = addressRepository;
-        this.userRepository = userRepository;
         this.addressMapper = addressMapper;
     }
 
