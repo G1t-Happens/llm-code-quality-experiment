@@ -1,0 +1,44 @@
+id,filename,start_line,end_line,iso_category,error_description,injection_method,severity,context_hash
+E001,UserMapper.java,TODO,TODO,Functional,"Double encryption of the password using a password encoder",manual,critical,TODO
+E002,UserServiceImpl.java,TODO,TODO,Functional,"Missing delete call in the repository/data access layer",manual,critical,TODO
+E003,AddressServiceImpl.java,TODO,TODO,Functional,"Missing save call in the repository/data access layer",manual,critical,TODO
+E004,UserServiceImpl.java,TODO,TODO,Performance,"Loading all users before pagination and transform them to DTOs – wrong order",manual,high,TODO
+E005,UserServiceImpl.java,TODO,TODO,Performance,"PasswordEncoder created per request rather than as a singleton",manual,medium,TODO
+E006,UserServiceImpl.java,TODO,TODO,Performance,"PasswordEncoder created per request rather than as a singleton",manual,medium,TODO
+E007,LoggingConfig.java,TODO,TODO,Compatibility,"Appender and log level are set on ROOT_LOGGER, affecting all components and modules globally",manual,medium,TODO
+E008,LoggingConfig.java,TODO,TODO,Compatibility,"Sets the timezone globally for the entire JVM instead of only for the logger, potentially affecting other modules, libraries, and scheduling operations",manual,medium,TODO
+E009,AddressController.java,TODO,TODO,Compatibility,"Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail",manual,critical,TODO
+E010,UserController.java,TODO,TODO,Usability,"The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",manual,medium,TODO
+E011,AddressRequest.java,TODO,TODO,Usability,"someValue field in AddressRequest is ambiguous and does not clearly indicate its purpose. Frontend developers not know which data to provide",manual,medium,TODO
+E012,AddressController.java,TODO,TODO,Usability,"The update() Endpoint uses PUT, but business logic uses partial field updates. API is hard to use correctly and does not convey the intended behavior clearly to clients",manual,medium,TODO
+E013,UserServiceImpl.java,TODO,TODO,Reliability,"Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized",manual,critical,TODO
+E014,SecurityConfig.java,TODO,TODO,Reliability,"Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",manual,critical,TODO
+E015,AddressServiceImpl.java,TODO,TODO,Reliability,"Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID",manual,critical,TODO
+E016,UserServiceImpl.java,TODO,TODO,Security,"Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",manual,critical,TODO
+E017,UserServiceImpl.java,TODO,TODO,Security,"Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",manual,critical,TODO
+E018,UserController.java,TODO,TODO,Security,"Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",manual,critical,TODO
+E019,AddressController.java,TODO,TODO,Maintainability,"Tight coupling between controller and service. This creates tight coupling, making testing and swapping implementations harder",manual,medium,TODO
+E020,AddressServiceImpl.java,TODO,TODO,Maintainability,"Using @Autowired field injection instead of constructor injection reduces testability, hides dependencies, and makes the class harder to instantiate manually or refactor",manual,medium,TODO
+E021,UserServiceImpl.java,TODO,TODO,Maintainability,"Method named 'do_Some_Stuff()' uses a vague, non-descriptive name that hides its intent, severely reducing code readability and analysability",manual,medium,TODO
+E022,LoggingConfig.java,TODO,TODO,Portability,"The default log file name contains characters valid on Linux but invalid on Windows (e.g., application:errors.log). This prevents installation/running on Windows",manual,high,TODO
+E023,LoggingConfig.java,TODO,TODO,Portability,"Hardcoded Linux-specific log directory. Running this on Windows or another OS will fail or move to an unpredictable location unless manually changed",manual,high,TODO
+E024,LoggingConfig.java,TODO,TODO,Portability,"Hardcoded file path separator may cause portability issues across different operating systems",manual,high,TODO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
