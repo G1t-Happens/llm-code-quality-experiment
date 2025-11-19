@@ -62,11 +62,7 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public AddressResponse getById(Long userId, Long addressId) {
         LOG.debug("--> getById, userId: {} and addressId: {}", userId, addressId);
-        final Address existingAddressEntity = addressRepository.findById(addressId)
-                .orElseThrow(() -> {
-                    LOG.error("<-- getById, Address with ID {} not found", addressId);
-                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
-                });
+        final Address existingAddressEntity = addressRepository.findById(addressId).get();
 
         enforceAddressOwnership(existingAddressEntity, userId);
 
