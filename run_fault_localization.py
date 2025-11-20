@@ -70,7 +70,6 @@ SYSTEM_PROMPT = load_file(SYSTEM_PROMPT_FILE)
 USER_PROMPT_TEMPLATE = load_file(USER_PROMPT_FILE)
 
 def load_code() -> str:
-    """Load and return code with a checksum for debugging purposes."""
     if not CODE_FILE.exists():
         raise FileNotFoundError(f"Code file not found: {CODE_FILE}")
     code = CODE_FILE.read_text(encoding="utf-8")
@@ -99,7 +98,7 @@ class GrokClient:
                 "json_schema": {
                     "name": "bug_list",
                     "strict": True,
-                    "schema": kwargs["response_format"].model_json_schema()  # BugList
+                    "schema": kwargs["response_format"].model_json_schema()
                 }
             }
         }
@@ -109,15 +108,13 @@ class GrokClient:
             json=payload,
             timeout=REQUEST_TIMEOUT
         )
-        response.raise_for_status()  # Wirft sofort bei 4xx/5xx
+        response.raise_for_status()
         data = response.json()
 
         raw_content = data["choices"][0]["message"]["content"]
 
-        # Seit grok-2-1212+: Immer pures JSON, keine Backticks, kein Text drumherum
         parsed_obj = kwargs["response_format"].model_validate(json.loads(raw_content))
 
-        # OpenAI-kompatibles Objekt (dein restlicher Code bleibt 100% gleich!)
         class Message:
             content = raw_content
             parsed = parsed_obj
@@ -140,7 +137,6 @@ class GrokClient:
 
 # ----------------------------- LLM Calls -----------------------------
 def call_grok(client: GrokClient, model: str, code: str):
-    """Make a call to the Grok model API."""
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
     print(f"Calling Grok → Model: {model}")
     call_kwargs = {
@@ -172,7 +168,6 @@ def call_grok(client: GrokClient, model: str, code: str):
     raise RuntimeError("Max retries exceeded – API nicht erreichbar")
 
 def call_openai(client: OpenAI, model: str, code: str):
-    """Make a call to the OpenAI model API."""
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
     print(f"Calling OpenAI → Model: {model}")
     is_reasoning_model = any(x in model.lower() for x in ["o1", "o3", "gpt-5", "gpt-4.5"])
@@ -211,7 +206,6 @@ def call_openai(client: OpenAI, model: str, code: str):
     raise RuntimeError("Max retries exceeded – API not reachable")
 
 def handle_api_error(call_kwargs, error):
-    """Handle specific API errors to retry with adjusted parameters."""
     if "temperature" in str(error):
         print("→ Temperature not allowed → removing parameter and retrying")
         call_kwargs.pop("temperature", None)
@@ -224,7 +218,6 @@ def handle_api_error(call_kwargs, error):
 
 # ----------------------------- Run Analysis -----------------------------
 def run_analysis(code: str):
-    """Run the analysis based on the selected provider."""
     if PROVIDER == "grok":
         client = GrokClient()
         try:
@@ -239,7 +232,6 @@ def run_analysis(code: str):
 
 # ----------------------------- Save Results -----------------------------
 def save_results(completion, bugs: List[dict]):
-    """Save the analysis results to files."""
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     prefix = PROVIDER
     raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
@@ -252,7 +244,6 @@ def save_results(completion, bugs: List[dict]):
 
 # ----------------------------- Main -----------------------------
 def main():
-    """Main entry point of the script."""
     code = load_code()
     print(f"Using provider: {PROVIDER.upper()} | Model: {MODEL}\n")
     completion = run_analysis(code)
