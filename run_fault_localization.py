@@ -1,133 +1,98 @@
 #!/usr/bin/env python3
-import os
 import json
-import re
 import time
+import os
+import hashlib
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import dotenv
 from openai import OpenAI
+from pydantic import BaseModel, Field
 
 # ----------------------------- Config -----------------------------
 BASE_DIR = Path(__file__).parent.resolve()
-
-CODE_FILE    = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_code.txt"
-ENV_FILE     = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
-RESULTS_DIR  = BASE_DIR / "docs" / "experiment" / "results"
+CODE_FILE   = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_code.txt"
+SYSTEM_PROMPT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt.txt"
+USER_PROMPT_FILE   = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt.txt"
+ENV_FILE    = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
+RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
 
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 dotenv.load_dotenv(ENV_FILE)
 
-# ----------------------------- BESTER PROMPT (95–100 % Recall) -----------------------------
-SYSTEM_PROMPT = """You are a precision fault localization expert for a scientific study.
-The codebase you will receive contains EXACTLY 24 deliberately injected defects (seeded bugs) for research purposes.
-These are NOT normal code smells — they are artificial faults like:
-- Double password encoding
-- Missing repository.save() or .delete() calls
-- Direct string concatenation in SQL queries
-- Removed @PreAuthorize annotations
-- Using .get() instead of .orElseThrow()
-- Creating new PasswordEncoder instances instead of using the bean
-- Hardcoded OS-specific paths
-- Global JVM timezone changes
-- etc.
+# ----------------------------- Pydantic Schema -----------------------------
+class SeededBug(BaseModel):
+    filename: str = Field(..., description="Java filename")
+    start_line: int = Field(..., ge=1, description="Start line")
+    end_line: int = Field(..., ge=1, description="End line")
+    severity: str = Field(..., pattern="^(critical|high|medium|low)$")
+    error_description: str = Field(..., description="Precise bug description")
 
-Your task: Find ALL 24 seeded bugs with exact filenames and line numbers.
-Do NOT invent additional bugs. Do NOT miss any of the 24 real ones.
-Output must be 100 % valid JSON and nothing else."""
+class BugList(BaseModel):
+    bugs: List[SeededBug]
 
-USER_PROMPT = """<complete_source_code>
-{code}
-</complete_source_code>
+# ----------------------------- Prompts -----------------------------
+SYSTEM_PROMPT = (BASE_DIR / SYSTEM_PROMPT_FILE).read_text(encoding="utf-8").strip()
+USER_PROMPT_TEMPLATE = (BASE_DIR / USER_PROMPT_FILE).read_text(encoding="utf-8").strip()
 
-Return exactly the 24 seeded bugs in this JSON format (no markdown, no explanation, no ```json
-
-[
-  {{
-    "id": "E001",
-    "filename": "UserMapper.java",
-    "start_line": 56,
-    "end_line": 56,
-    "iso_category": "Functional",
-    "severity": "medium",
-    "error_description": "Double encryption of the password using a password encoder",
-    "context_hash": "70821644b8976ac4"
-  }},
-  {{ ... }}
-]
-
-Start directly with [ and end with ]. Use precise line numbers."""
-
-# ------------------------------------------------------------------
+# ----------------------------- Code -----------------------------
 def load_code() -> str:
-    if not CODE_FILE.exists():
-        raise FileNotFoundError(f"Code file not found: {CODE_FILE}")
     code = CODE_FILE.read_text(encoding="utf-8")
-    print(f"Code loaded: {len(code):,} characters (~{len(code)//4} tokens)")
+    print(f"Code loaded: {len(code):,} chars | MD5: {hashlib.md5(code.encode()).hexdigest()}")
     return code
 
-def call_llm(client: OpenAI, model: str, code: str) -> str:
-    print(f"Calling {model} ...")
+# ----------------------------- Structured Outputs Call -----------------------------
+def call_llm(client: OpenAI, model: str, code: str):
+    user_msg = USER_PROMPT_TEMPLATE.format(code=code)
+
+    print(f"Calling {model} with Structured Outputs (.parse()) ...")
     start = time.time()
-    response = client.chat.completions.create(
+
+    # OpenAI-API-Call
+    completion = client.chat.completions.parse(
         model=model,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": USER_PROMPT.format(code=code)}
+            {"role": "user", "content": user_msg}
         ],
-        temperature=0.0,
-        max_tokens=8000,
-        response_format={"type": "json_object"}
+        temperature=0.3,
+        max_tokens=32768,
+        response_format=BugList
     )
+
     duration = time.time() - start
     print(f"Response received in {duration:.1f}s")
-    return response.choices[0].message.content.strip()
+    return completion
 
-def extract_json(raw: str) -> list:
-    raw = raw.strip()
-
-    # Remove ```json blocks
-    raw = re.sub(r"^```json\s*", "", raw, flags=re.MULTILINE)
-    raw = re.sub(r"```$", "", raw, flags=re.MULTILINE)
-
-    # Find the first [ and last ]
-    start = raw.find("[")
-    end = raw.rfind("]") + 1
-    if start == -1 or end == 0:
-        raise ValueError("No JSON array found")
-
-    json_str = raw[start:end]
-    return json.loads(json_str)
-
-def save_results(raw_response: str, faults: list):
+# ----------------------------- Save -----------------------------
+def save_results(completion, bugs: List[dict]):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     raw_file = RESULTS_DIR / f"raw_response_{ts}.txt"
     json_file = RESULTS_DIR / f"faults_detected_{ts}.json"
 
-    raw_file.write_text(raw_response, encoding="utf-8")
+    raw_file.write_text(completion.model_dump_json(indent=2), encoding="utf-8")
     with open(json_file, "w", encoding="utf-8") as f:
-        json.dump(faults, f, indent=2, ensure_ascii=False)
+        json.dump(bugs, f, indent=2, ensure_ascii=False)
 
-    print(f"\nSUCCESS! Found {len(faults)} faults")
+    print(f"\nSUCCESS! Found {len(bugs)} seeded bugs")
     print(f"   Raw  → {raw_file}")
     print(f"   JSON → {json_file}")
 
+# ----------------------------- Main -----------------------------
 def main():
     code = load_code()
-    model = os.getenv("MODEL", "gpt-4o-2024-11-20")
+    model = os.getenv("MODEL", "gpt-4.1")
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    raw = call_llm(client, model, code)
+    completion = call_llm(client, model, code)
 
-    try:
-        faults = extract_json(raw)
-        save_results(raw, faults)
-    except Exception as e:
-        error_file = RESULTS_DIR / f"EXTRACTION_FAILED_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        error_file.write_text(raw, encoding="utf-8")
-        print(f"Extraction failed → raw saved to {error_file}")
-        raise e
+    # Structured Outputs
+    parsed: BugList = completion.choices[0].message.parsed
+    bug_list = [bug.model_dump() for bug in parsed.bugs]
+
+    save_results(completion, bug_list)
 
 if __name__ == "__main__":
     main()
