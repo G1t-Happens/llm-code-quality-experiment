@@ -1,0 +1,170 @@
+[
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "severity": "critical",
+    "error_description": "Unconditional call to Optional.get() on result of addressRepository.findById(addressId) without checking presence will throw NoSuchElementException if address does not exist. This causes a 500 error instead of the intended 404 ResourceNotFoundException."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 87,
+    "end_line": 88,
+    "severity": "critical",
+    "error_description": "Address entity is created from AddressRequest and User, but not saved to the database before mapping to AddressResponse. This results in AddressResponse with null id and data not being persisted."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 103,
+    "severity": "critical",
+    "error_description": "Direct concatenation of untrusted username into SQL string in getByUsername creates a SQL injection vulnerability. This allows attackers to execute arbitrary SQL via crafted username."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 182,
+    "severity": "critical",
+    "error_description": "Unconditional call to Optional.get() on userRepository.findByUsername(username) without checking presence will throw NoSuchElementException if user does not exist, resulting in 500 error instead of UnauthorizedException."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 119,
+    "end_line": 119,
+    "severity": "high",
+    "error_description": "Sensitive user password is logged in plaintext in 'save' method, violating security best practices and risking credential leakage."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 126,
+    "end_line": 127,
+    "severity": "high",
+    "error_description": "BCryptPasswordEncoder is instantiated locally in save method instead of using the injected PasswordEncoder bean, causing inconsistent password hashing and violating dependency injection principles."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 153,
+    "end_line": 154,
+    "severity": "high",
+    "error_description": "BCryptPasswordEncoder is instantiated locally in update method instead of using the injected PasswordEncoder bean, causing inconsistent password hashing and violating dependency injection principles."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 173,
+    "end_line": 173,
+    "severity": "medium",
+    "error_description": "User entity is not deleted from repository in delete method, resulting in no actual deletion. Only a debug log is written."
+  },
+  {
+    "filename": "com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 56,
+    "end_line": 56,
+    "severity": "high",
+    "error_description": "Password is double-encoded in updateUserEntityFromUserRequest: passwordEncoder.encode(passwordEncoder.encode(dto.password())). This results in an invalid hash and prevents user login."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 36,
+    "end_line": 36,
+    "severity": "medium",
+    "error_description": "UserRepository is injected via field injection (@Autowired private UserRepository userRepository), violating constructor injection best practices and reducing testability and maintainability."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 42,
+    "end_line": 45,
+    "severity": "medium",
+    "error_description": "UserRepository is not injected via constructor, leading to inconsistent dependency management and potential for null pointer exceptions in tests."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 51,
+    "end_line": 51,
+    "severity": "low",
+    "error_description": "Redundant variable name 'existingUserEntity' for result of userRepository.findById; could be simplified for readability."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 68,
+    "end_line": 68,
+    "severity": "low",
+    "error_description": "Redundant variable name 'existingAddressEntity' for result of addressRepository.findById; could be simplified for readability."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 80,
+    "end_line": 80,
+    "severity": "low",
+    "error_description": "Redundant variable name 'existingUserEntity' for result of userRepository.findById; could be simplified for readability."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 104,
+    "severity": "medium",
+    "error_description": "Manual SQL query in getByUsername bypasses repository and ORM, reducing maintainability, testability, and introducing risk of inconsistency."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 126,
+    "end_line": 127,
+    "severity": "medium",
+    "error_description": "Manual instantiation of BCryptPasswordEncoder in save method duplicates dependency logic and violates DRY principle."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 153,
+    "end_line": 154,
+    "severity": "medium",
+    "error_description": "Manual instantiation of BCryptPasswordEncoder in update method duplicates dependency logic and violates DRY principle."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 119,
+    "end_line": 119,
+    "severity": "medium",
+    "error_description": "Logging both username and password in save method violates Clean Code security guidelines and increases risk of credential exposure."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 126,
+    "end_line": 127,
+    "severity": "low",
+    "error_description": "PasswordEncoder instantiation in save method is not covered by a comment or rationale, reducing code clarity."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 153,
+    "end_line": 154,
+    "severity": "low",
+    "error_description": "PasswordEncoder instantiation in update method is not covered by a comment or rationale, reducing code clarity."
+  },
+  {
+    "filename": "com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 56,
+    "end_line": 56,
+    "severity": "medium",
+    "error_description": "Password encoding logic is duplicated between toUserEntity and updateUserEntityFromUserRequest, violating DRY principle."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 103,
+    "severity": "high",
+    "error_description": "Direct SQL string concatenation in getByUsername is a security anti-pattern and should be replaced with parameterized queries or repository methods."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 182,
+    "severity": "high",
+    "error_description": "Direct call to Optional.get() on userRepository.findByUsername(username) is a runtime anti-pattern and should be replaced with isPresent() or orElseThrow."
+  },
+  {
+    "filename": "com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 173,
+    "end_line": 173,
+    "severity": "high",
+    "error_description": "User entity is not deleted from repository in delete method; missing userRepository.delete(existingUserEntity) call."
+  }
+]
