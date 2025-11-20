@@ -1,0 +1,107 @@
+[
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 104,
+    "severity": "high",
+    "error_description": "SQL injection vulnerability by concatenating untrusted 'username' into a native query. Allows malicious input to alter the query, breaching confidentiality/integrity (ISO 25010: Security - Injection). Use parameterized queries or repository methods instead."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 189,
+    "severity": "high",
+    "error_description": "Unchecked Optional.get() on findByUsername causes NoSuchElementException for unknown users, returning 500 instead of 401 and defeating constant-time mitigation. Breaks reliability and correct HTTP semantics for /login (ISO 25010: Functional correctness, Reliability)."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 56,
+    "end_line": 57,
+    "severity": "high",
+    "error_description": "Passwords are double-encoded during update (BCrypt over BCrypt), making subsequent logins impossible. Violates data integrity and functional correctness; must encode raw password exactly once."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 90,
+    "severity": "high",
+    "error_description": "Address is never persisted in save(); returns a DTO mapped from an unsaved entity (null ID). Causes data loss and inconsistent API behavior (ISO 25010: Functional completeness/correctness, Persistence). Must call addressRepository.save(entity) before mapping."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 42,
+    "end_line": 46,
+    "severity": "high",
+    "error_description": "create endpoint declares consumes='text/plain' but expects JSON AddressRequest. Causes 415 Unsupported Media Type and breaks REST contract (ISO 25010: Compatibility/Interoperability, Functional correctness). Should consume application/json."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 57,
+    "end_line": 60,
+    "severity": "high",
+    "error_description": "DELETE /users/{id} lacks authorization guard (@PreAuthorize). Any authenticated user can delete arbitrary users (authorization bypass). Severe security breach (ISO 25010: Security - Access control)."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "severity": "high",
+    "error_description": "Use of Optional.get() on addressRepository.findById causes 500 instead of 404 when address not found. Violates correct HTTP semantics and reduces fault tolerance (ISO 25010: Reliability, Functional correctness). Should throw ResourceNotFoundException on empty."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 166,
+    "end_line": 174,
+    "severity": "high",
+    "error_description": "delete() never invokes userRepository.delete(...). Endpoint reports success without deleting, causing functional inconsistency and potential security issues (e.g., expecting account removal)."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 75,
+    "end_line": 81,
+    "severity": "high",
+    "error_description": "listAll ignores pagination and loads all users into memory, then returns the entire list in the page. Breaks functional contract and degrades performance/capacity (ISO 25010: Performance efficiency, Functional correctness). Must use repository paging."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 45,
+    "end_line": 49,
+    "severity": "high",
+    "error_description": "Create user endpoint lacks @Validated(Create.class)/@Valid on request body, so required constraints (username/password/email) are not enforced. Allows creation of invalid users (integrity/validation failure; ISO 25010: Functional correctness, Security - Input validation)."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java",
+    "start_line": 33,
+    "end_line": 45,
+    "severity": "medium",
+    "error_description": "Validation error response echoes rejectedValue back to clients, potentially exposing secrets (e.g., plaintext passwords). Information disclosure vulnerability (ISO 25010: Security - Confidentiality). Avoid returning sensitive values."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 120,
+    "end_line": 120,
+    "severity": "high",
+    "error_description": "Sensitive data exposure: logs plaintext password during user creation. Violates confidentiality and audit best practices (ISO 25010: Security). Remove secret logging."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/logging/LoggingConfig.java",
+    "start_line": 55,
+    "end_line": 55,
+    "severity": "medium",
+    "error_description": "Default log file name contains ':' (application:errors.log), invalid on Windows and some filesystems, causing logging failure or degraded diagnostics (ISO 25010: Portability/Reliability). Use a cross-platform file name (e.g., application-errors.log)."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/logging/LoggingConfig.java",
+    "start_line": 51,
+    "end_line": 51,
+    "severity": "medium",
+    "error_description": "Default log directory points to a developer-specific absolute path. On hosts without permissions, initialization falls back after error; leads to fragile, environment-dependent behavior (ISO 25010: Portability/Reliability). Use relative/OS-appropriate defaults."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 126,
+    "end_line": 128,
+    "severity": "medium",
+    "error_description": "Inconsistent password hashing: creates a new BCryptPasswordEncoder instead of using the injected bean. Complicates future encoder migrations and testing (ISO 25010: Maintainability). Use the configured PasswordEncoder bean consistently."
+  }
+]

@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import List, Any
 
 import dotenv
-from openai import OpenAI, APIError, Timeout, RateLimitError
+from openai import OpenAI, APIError
+from openai import Timeout as OpenAITimeout
+from openai import RateLimitError as OpenAIRateLimitError
 from pydantic import BaseModel, Field
 
 # ----------------------------- Config -----------------------------
@@ -23,34 +25,28 @@ RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 dotenv.load_dotenv(ENV_FILE)
 
-
-# ----------------------------- Umgebungsvariablen mit sinnvollen Defaults -----------------------------
-OPENAI_MODEL            = os.getenv("OPENAI_MODEL", "gpt-4o-2024-11-20")
+# ----------------------------- Umgebungsvariablen -----------------------------
+OPENAI_MODEL            = os.getenv("OPENAI_MODEL", "gpt-5")
 OPENAI_API_KEY          = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE         = os.getenv("OPENAI_API_BASE") or None
 
-TEMPERATURE             = float(os.getenv("TEMPERATURE", "0.0"))
-REQUEST_TIMEOUT         = int(os.getenv("REQUEST_TIMEOUT", "600"))
-TOP_P                   = float(os.getenv("TOP_P", "0.95"))# Sekunden
+REQUEST_TIMEOUT         = int(os.getenv("REQUEST_TIMEOUT", "900"))
 
-# Maximale Output-Tokens (wird später ggf. überschrieben je nach Modell)
-DEFAULT_MAX_TOKENS      = int(os.getenv("MAX_TOKENS", "16384"))             # safe für gpt-4o
-O1_MAX_COMPLETION_TOKENS = int(os.getenv("O1_MAX_COMPLETION_TOKENS", "32768"))  # o1/o3 erlauben mehr
+DEFAULT_MAX_TOKENS      = 32768   # sicher für alle normalen Modelle
+O1_MAX_COMPLETION_TOKENS = 32768  # o1/o3/grok-like Modelle
 
 DEBUG                   = os.getenv("DEBUG", "0") == "1"
 
-
 # ----------------------------- Pydantic Schema -----------------------------
 class SeededBug(BaseModel):
-    filename: str = Field(..., description="Java filename (e.g. MyClass.java)")
-    start_line: int = Field(..., ge=1, description="Start line of the buggy code")
-    end_line: int = Field(..., ge=1, description="End line of the buggy code")
+    filename: str
+    start_line: int = Field(..., ge=1)
+    end_line: int = Field(..., ge=1)
     severity: str = Field(..., pattern="^(critical|high|medium|low)$")
-    error_description: str = Field(..., description="Precise, technical bug description")
+    error_description: str
 
 class BugList(BaseModel):
     bugs: List[SeededBug]
-
 
 # ----------------------------- Prompts -----------------------------
 def load_prompt(file_path: Path) -> str:
@@ -61,7 +57,6 @@ def load_prompt(file_path: Path) -> str:
 SYSTEM_PROMPT = load_prompt(SYSTEM_PROMPT_FILE)
 USER_PROMPT_TEMPLATE = load_prompt(USER_PROMPT_FILE)
 
-
 # ----------------------------- Code Loader -----------------------------
 def load_code() -> str:
     if not CODE_FILE.exists():
@@ -71,63 +66,61 @@ def load_code() -> str:
     print(f"Code loaded: {len(code):,} characters | MD5: {md5}")
     return code
 
-
-# ----------------------------- LLM Call (dynamisch o1 vs. normal) -----------------------------
+# ----------------------------- LLM Call -----------------------------
 def call_llm(client: OpenAI, model: str, code: str):
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
-
     print(f"Calling model '{model}' with Structured Outputs...")
-    if DEBUG:
-        print(f"Temperature: {TEMPERATURE} | Timeout: {REQUEST_TIMEOUT}s")
 
-    start_time = time.time()
+    # Erkennung von Reasoning-Modellen (o1, o3, gpt-5, gpt-4.5 usw.)
+    is_reasoning_model = any(x in model.lower() for x in ["o1", "o3", "gpt-5", "gpt-4.5"])
 
-    # Dynamische Parameter je nach Modellfamilie
     call_kwargs: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": user_msg}
         ],
-        "temperature": TEMPERATURE,
-        "top_p": TOP_P,
-        "timeout": REQUEST_TIMEOUT,
         "response_format": BugList,
+        "max_completion_tokens": O1_MAX_COMPLETION_TOKENS if is_reasoning_model else DEFAULT_MAX_TOKENS,
     }
 
-    # WICHTIG: o1- und o3-Modelle verwenden NICHT max_tokens, sondern max_completion_tokens
-    is_reasoning_model = "o1" in model.lower() or "o3" in model.lower()
-    if is_reasoning_model:
-        call_kwargs["max_completion_tokens"] = O1_MAX_COMPLETION_TOKENS
-        print(f"→ Reasoning-Modell erkannt → nutze max_completion_tokens = {O1_MAX_COMPLETION_TOKENS}")
+    # Nur normale Modelle dürfen temperature haben
+    if not is_reasoning_model:
+        call_kwargs["temperature"] = 0.0
+        print(f"→ Standard-Modell → temperature=0.0, max_completion_tokens={DEFAULT_MAX_TOKENS}")
     else:
-        max_tokens = DEFAULT_MAX_TOKENS
-        if "long-output" in model.lower():
-            max_tokens = 65536
-        call_kwargs["max_tokens"] = max_tokens
-        print(f"→ Standard-Modell → nutze max_tokens = {max_tokens}")
+        print(f"→ Reasoning-Modell ({model}) → temperature wird automatisch auf 1.0 gesetzt, max_completion_tokens={O1_MAX_COMPLETION_TOKENS}")
 
-    for attempt in range(1, 4):
+    start_time = time.time()
+
+    for attempt in range(1, 5):
         try:
             completion = client.chat.completions.parse(**call_kwargs)
             duration = time.time() - start_time
             print(f"Response received in {duration:.1f}s")
             return completion
 
-        except (Timeout, RateLimitError) as e:
-            print(f"Attempt {attempt}: {type(e).__name__} – retrying in 10s...")
-            time.sleep(10)
+        except (OpenAITimeout, OpenAIRateLimitError) as e:
+            print(f"Attempt {attempt}: {type(e).__name__} – warte 20s...")
+            time.sleep(20)
+
         except APIError as e:
-            print(f"OpenAI API Error: {e}")
-            if DEBUG:
-                print(f"Full error: {e!r}")
+            if "temperature" in str(e) or "unsupported value" in str(e).lower():
+                print("→ Temperature nicht erlaubt → entferne Parameter und retry")
+                call_kwargs.pop("temperature", None)
+                continue
+            if "max_completion_tokens" in str(e):
+                print("→ max_completion_tokens zu hoch → reduziere auf 16384 und retry")
+                call_kwargs["max_completion_tokens"] = 16384
+                continue
+            print(f"OpenAI API Fehler: {e}")
             raise
+
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            print(f"Unerwarteter Fehler: {e}")
             raise
 
     raise RuntimeError("Max retries exceeded – API nicht erreichbar")
-
 
 # ----------------------------- Save Results -----------------------------
 def save_results(completion, bugs: List[dict]):
@@ -136,20 +129,18 @@ def save_results(completion, bugs: List[dict]):
     json_file = RESULTS_DIR / f"faults_detected_{ts}.json"
 
     raw_file.write_text(completion.model_dump_json(indent=2), encoding="utf-8")
-    with open(json_file, "w", encoding="utf-8") as f:
-        json.dump(bugs, f, indent=2, ensure_ascii=False)
+    json_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print(f"\nSUCCESS! Found {len(bugs)} seeded bug(s)!")
     print(f"   Raw response  → {raw_file}")
     print(f"   Detected bugs → {json_file}\n")
-
 
 # ----------------------------- Main -----------------------------
 def main():
     code = load_code()
 
     if not OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY not found in .env file!")
+        raise ValueError("OPENAI_API_KEY fehlt in der .env!")
 
     client = OpenAI(
         api_key=OPENAI_API_KEY,
@@ -160,12 +151,10 @@ def main():
     print(f"Using model: {OPENAI_MODEL}\n")
 
     completion = call_llm(client, OPENAI_MODEL, code)
-
     parsed: BugList = completion.choices[0].message.parsed
     bug_list = [bug.model_dump() for bug in parsed.bugs]
 
     save_results(completion, bug_list)
-
 
 if __name__ == "__main__":
     main()
