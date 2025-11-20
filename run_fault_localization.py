@@ -88,28 +88,36 @@ class GrokClient:
         })
 
     def chat_completions_parse(self, **kwargs):
-        """Call Grok's chat completions API and parse the response."""
         payload = {
-            **kwargs,
+            "model": kwargs["model"],
+            "messages": kwargs["messages"],
+            "temperature": kwargs.get("temperature", 0.0),
+            "top_p": kwargs.get("top_p", 1.0),
+            "max_tokens": kwargs.get("max_completion_tokens"),
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {
                     "name": "bug_list",
                     "strict": True,
-                    "schema": kwargs["response_format"].model_json_schema()
+                    "schema": kwargs["response_format"].model_json_schema()  # BugList
                 }
             }
         }
-        response = self.session.post(
-            f"{API_BASE}/chat/completions", json=payload, timeout=REQUEST_TIMEOUT
-        )
-        print(f"Raw API Response: {response.text}")
-        response.raise_for_status()
-        data = response.json()
-        raw_content = data["choices"][0]["message"]["content"]
-        parsed_data = json.loads(raw_content)
-        parsed_obj = kwargs["response_format"].model_validate(parsed_data)
 
+        response = self.session.post(
+            f"{API_BASE}/chat/completions",
+            json=payload,
+            timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()  # Wirft sofort bei 4xx/5xx
+        data = response.json()
+
+        raw_content = data["choices"][0]["message"]["content"]
+
+        # Seit grok-2-1212+: Immer pures JSON, keine Backticks, kein Text drumherum
+        parsed_obj = kwargs["response_format"].model_validate(json.loads(raw_content))
+
+        # OpenAI-kompatibles Objekt (dein restlicher Code bleibt 100% gleich!)
         class Message:
             content = raw_content
             parsed = parsed_obj
@@ -119,14 +127,15 @@ class GrokClient:
 
         class Completion:
             choices = [Choice()]
+            model = data.get("model")
+            usage = data.get("usage", {})
 
-            def model_dump_json(self, indent=2):
-                return json.dumps(data, indent=indent, ensure_ascii=False)
+            def model_dump_json(self, **kw):
+                return json.dumps(data, **kw, ensure_ascii=False)
 
         return Completion()
 
     def close(self):
-        """Close the session."""
         self.session.close()
 
 # ----------------------------- LLM Calls -----------------------------
@@ -141,11 +150,11 @@ def call_grok(client: GrokClient, model: str, code: str):
             {"role": "user", "content": user_msg}
         ],
         "response_format": BugList,
-        "max_completion_tokens": MAX_TOKENS,
+        "max_tokens": MAX_TOKENS,
         "temperature": TEMPERATURE,
         "top_p": TOP_P,
     }
-    print(f"→ Standard Model → temperature={TEMPERATURE}, max_completion_tokens={MAX_TOKENS}")
+    print(f"→ Standard Model → temperature={TEMPERATURE}, max_tokens={MAX_TOKENS}")
     start_time = time.time()
     for attempt in range(1, 6):
         try:
