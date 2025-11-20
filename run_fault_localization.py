@@ -83,7 +83,7 @@ def save_results(completion, bugs: List[dict]):
 # ----------------------------- Main -----------------------------
 def main():
     code = load_code()
-    model = os.getenv("MODEL", "gpt-4.1")
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1")
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     completion = call_llm(client, model, code)
