@@ -30,7 +30,8 @@ OPENAI_API_KEY          = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE         = os.getenv("OPENAI_API_BASE") or None
 
 TEMPERATURE             = float(os.getenv("TEMPERATURE", "0.0"))
-REQUEST_TIMEOUT         = int(os.getenv("REQUEST_TIMEOUT", "600"))          # Sekunden
+REQUEST_TIMEOUT         = int(os.getenv("REQUEST_TIMEOUT", "600"))
+TOP_P                   = float(os.getenv("TOP_P", "0.95"))# Sekunden
 
 # Maximale Output-Tokens (wird später ggf. überschrieben je nach Modell)
 DEFAULT_MAX_TOKENS      = int(os.getenv("MAX_TOKENS", "16384"))             # safe für gpt-4o
@@ -89,6 +90,7 @@ def call_llm(client: OpenAI, model: str, code: str):
             {"role": "user",   "content": user_msg}
         ],
         "temperature": TEMPERATURE,
+        "top_p": TOP_P,
         "timeout": REQUEST_TIMEOUT,
         "response_format": BugList,
     }
