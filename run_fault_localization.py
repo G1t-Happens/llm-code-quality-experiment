@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-import json
-import time
-import os
+
 import hashlib
+import json
+import os
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import List, Any
+from typing import Any, List
+
 import dotenv
-from pydantic import BaseModel, Field
 import requests
-from openai import OpenAI, APIError
+from openai import APIError, OpenAI, RateLimitError as OpenAIRateLimitError
 from openai import Timeout as OpenAITimeout
-from openai import RateLimitError as OpenAIRateLimitError
+from pydantic import BaseModel, Field
 
 # ----------------------------- Config -----------------------------
 BASE_DIR = Path(__file__).parent.resolve()
@@ -30,7 +31,7 @@ MAX_TOKENS = int(os.getenv("MAX_TOKENS", "32768"))
 O1_MAX_COMPLETION_TOKENS = int(os.getenv("O1_MAX_COMPLETION_TOKENS", "32768"))
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "600"))
 TOP_P = float(os.getenv("TOP_P", "0.90"))
-DEBUG = os.getenv("DEBUG", "0") == "1"
+DEBUG = os.getenv("DEBUG", "0") == "1"  # Currently unused, but preserved
 
 # Provider-specific vars
 if PROVIDER == "grok":
@@ -59,32 +60,30 @@ class BugList(BaseModel):
     bugs: List[SeededBug]
 
 # ----------------------------- Prompts & Code -----------------------------
-def load_prompt(file_path: Path) -> str:
+def load_text_file(file_path: Path) -> str:
     if not file_path.exists():
-        raise FileNotFoundError(f"Prompt file nicht gefunden: {file_path}")
+        raise FileNotFoundError(f"File not found: {file_path}")
     return file_path.read_text(encoding="utf-8").strip()
 
-SYSTEM_PROMPT = load_prompt(SYSTEM_PROMPT_FILE)
-USER_PROMPT_TEMPLATE = load_prompt(USER_PROMPT_FILE)
+SYSTEM_PROMPT = load_text_file(SYSTEM_PROMPT_FILE)
+USER_PROMPT_TEMPLATE = load_text_file(USER_PROMPT_FILE)
 
 def load_code() -> str:
-    if not CODE_FILE.exists():
-        raise FileNotFoundError(f"Code-Datei nicht gefunden: {CODE_FILE}")
-    code = CODE_FILE.read_text(encoding="utf-8")
+    code = load_text_file(CODE_FILE)
     md5 = hashlib.md5(code.encode()).hexdigest()
     print(f"Code loaded: {len(code):,} characters | MD5: {md5}")
     return code
 
 # ----------------------------- Grok Client -----------------------------
 class GrokClient:
-    def __init__(self):
+    def __init__(self) -> None:
         self.session = requests.Session()
         self.session.headers.update({
             "Authorization": f"Bearer {API_KEY}",
             "Content-Type": "application/json"
         })
 
-    def chat_completions_parse(self, **kwargs):
+    def chat_completions_parse(self, **kwargs: Any) -> Any:
         payload = {
             **kwargs,
             "response_format": {
@@ -96,17 +95,18 @@ class GrokClient:
                 }
             }
         }
-        resp = self.session.post(
+        response = self.session.post(
             f"{API_BASE}/chat/completions",
             json=payload,
             timeout=REQUEST_TIMEOUT
         )
-        resp.raise_for_status()
-        data = resp.json()
+        response.raise_for_status()
+        data = response.json()
         raw_content = data["choices"][0]["message"]["content"]
         parsed_data = json.loads(raw_content)
         parsed_obj = kwargs["response_format"].model_validate(parsed_data)
-        # OpenAI-kompatibles Fake-Objekt
+
+        # Fake OpenAI-compatible object
         class Message:
             content = raw_content
             parsed = parsed_obj
@@ -117,16 +117,16 @@ class GrokClient:
         class Completion:
             choices = [Choice()]
 
-            def model_dump_json(self, indent=2):
+            def model_dump_json(self, indent: int = 2) -> str:
                 return json.dumps(data, indent=indent, ensure_ascii=False)
 
         return Completion()
 
-    def close(self):
+    def close(self) -> None:
         self.session.close()
 
 # ----------------------------- LLM Calls -----------------------------
-def call_grok(client: GrokClient, model: str, code: str):
+def call_grok(client: GrokClient, model: str, code: str) -> Any:
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
     print(f"Calling Grok → Model: {model}")
     call_kwargs = {
@@ -156,10 +156,10 @@ def call_grok(client: GrokClient, model: str, code: str):
                 raise
     raise RuntimeError("Max retries exceeded – API nicht erreichbar")
 
-def call_openai(client: OpenAI, model: str, code: str):
+def call_openai(client: OpenAI, model: str, code: str) -> Any:
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
     print(f"Calling model '{model}' with Structured Outputs...")
-    # Erkennung von Reasoning-Modellen (o1, o3, gpt-5, gpt-4.5 usw.)
+    # Detect reasoning models (o1, o3, gpt-5, gpt-4.5 etc.)
     is_reasoning_model = any(x in model.lower() for x in ["o1", "o3", "gpt-5", "gpt-4.5"])
     call_kwargs: dict[str, Any] = {
         "model": model,
@@ -171,7 +171,7 @@ def call_openai(client: OpenAI, model: str, code: str):
         "max_completion_tokens": O1_MAX_COMPLETION_TOKENS if is_reasoning_model else MAX_TOKENS,
         "top_p": TOP_P,
     }
-    # Nur normale Modelle dürfen temperature haben
+    # Only non-reasoning models allow temperature
     if not is_reasoning_model:
         call_kwargs["temperature"] = TEMPERATURE
         print(f"→ Standard-Modell → temperature={TEMPERATURE}, max_completion_tokens={MAX_TOKENS}")
@@ -188,11 +188,12 @@ def call_openai(client: OpenAI, model: str, code: str):
             print(f"Attempt {attempt}: {type(e).__name__} – warte 20s...")
             time.sleep(20)
         except APIError as e:
-            if "temperature" in str(e) or "unsupported value" in str(e).lower():
+            error_message = str(e).lower()
+            if "temperature" in error_message or "unsupported value" in error_message:
                 print("→ Temperature nicht erlaubt → entferne Parameter und retry")
                 call_kwargs.pop("temperature", None)
                 continue
-            if "max_completion_tokens" in str(e):
+            if "max_completion_tokens" in error_message:
                 print("→ max_completion_tokens zu hoch → reduziere auf 16384 und retry")
                 call_kwargs["max_completion_tokens"] = 16384
                 continue
@@ -204,7 +205,7 @@ def call_openai(client: OpenAI, model: str, code: str):
     raise RuntimeError("Max retries exceeded – API nicht erreichbar")
 
 # ----------------------------- Run Analysis -----------------------------
-def run_analysis(code: str):
+def run_analysis(code: str) -> Any:
     if PROVIDER == "grok":
         client = GrokClient()
         try:
@@ -222,7 +223,7 @@ def run_analysis(code: str):
         raise ValueError(f"Unbekannter PROVIDER: {PROVIDER}")
 
 # ----------------------------- Save Results -----------------------------
-def save_results(completion, bugs: List[dict]):
+def save_results(completion: Any, bugs: List[dict[str, Any]]) -> None:
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     prefix = PROVIDER
     raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
@@ -234,7 +235,7 @@ def save_results(completion, bugs: List[dict]):
     print(f" Detected bugs → {bugs_file}\n")
 
 # ----------------------------- Main -----------------------------
-def main():
+def main() -> None:
     code = load_code()
     print(f"Using provider: {PROVIDER.upper()} | Model: {MODEL}\n")
     completion = run_analysis(code)
