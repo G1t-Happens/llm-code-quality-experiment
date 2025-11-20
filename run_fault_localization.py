@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-
-import hashlib
 import json
-import os
 import time
+import os
+import hashlib
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List
-
+from typing import List, Any
 import dotenv
-import requests
-from openai import APIError, OpenAI, RateLimitError as OpenAIRateLimitError
-from openai import Timeout as OpenAITimeout
 from pydantic import BaseModel, Field
+import requests
+from openai import OpenAI, APIError
+from openai import Timeout as OpenAITimeout
+from openai import RateLimitError as OpenAIRateLimitError
 
 # ----------------------------- Config -----------------------------
 BASE_DIR = Path(__file__).parent.resolve()
@@ -22,6 +21,7 @@ USER_PROMPT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_promp
 ENV_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
 RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
 dotenv.load_dotenv(ENV_FILE)
 
 # ----------------------------- Env Vars -----------------------------
@@ -31,7 +31,7 @@ MAX_TOKENS = int(os.getenv("MAX_TOKENS", "32768"))
 O1_MAX_COMPLETION_TOKENS = int(os.getenv("O1_MAX_COMPLETION_TOKENS", "32768"))
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "600"))
 TOP_P = float(os.getenv("TOP_P", "0.90"))
-DEBUG = os.getenv("DEBUG", "0") == "1"  # Currently unused, but preserved
+DEBUG = os.getenv("DEBUG", "0") == "1"
 
 # Provider-specific vars
 if PROVIDER == "grok":
@@ -59,31 +59,36 @@ class SeededBug(BaseModel):
 class BugList(BaseModel):
     bugs: List[SeededBug]
 
-# ----------------------------- Prompts & Code -----------------------------
-def load_text_file(file_path: Path) -> str:
+# ----------------------------- File Handling -----------------------------
+def load_file(file_path: Path) -> str:
+    """Load text from a file and handle missing files gracefully."""
     if not file_path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
     return file_path.read_text(encoding="utf-8").strip()
 
-SYSTEM_PROMPT = load_text_file(SYSTEM_PROMPT_FILE)
-USER_PROMPT_TEMPLATE = load_text_file(USER_PROMPT_FILE)
+SYSTEM_PROMPT = load_file(SYSTEM_PROMPT_FILE)
+USER_PROMPT_TEMPLATE = load_file(USER_PROMPT_FILE)
 
 def load_code() -> str:
-    code = load_text_file(CODE_FILE)
+    """Load and return code with a checksum for debugging purposes."""
+    if not CODE_FILE.exists():
+        raise FileNotFoundError(f"Code file not found: {CODE_FILE}")
+    code = CODE_FILE.read_text(encoding="utf-8")
     md5 = hashlib.md5(code.encode()).hexdigest()
     print(f"Code loaded: {len(code):,} characters | MD5: {md5}")
     return code
 
-# ----------------------------- Grok Client -----------------------------
+# ----------------------------- API Clients -----------------------------
 class GrokClient:
-    def __init__(self) -> None:
+    def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
             "Authorization": f"Bearer {API_KEY}",
             "Content-Type": "application/json"
         })
 
-    def chat_completions_parse(self, **kwargs: Any) -> Any:
+    def chat_completions_parse(self, **kwargs):
+        """Call Grok's chat completions API and parse the response."""
         payload = {
             **kwargs,
             "response_format": {
@@ -96,17 +101,15 @@ class GrokClient:
             }
         }
         response = self.session.post(
-            f"{API_BASE}/chat/completions",
-            json=payload,
-            timeout=REQUEST_TIMEOUT
+            f"{API_BASE}/chat/completions", json=payload, timeout=REQUEST_TIMEOUT
         )
+        print(f"Raw API Response: {response.text}")
         response.raise_for_status()
         data = response.json()
         raw_content = data["choices"][0]["message"]["content"]
         parsed_data = json.loads(raw_content)
         parsed_obj = kwargs["response_format"].model_validate(parsed_data)
 
-        # Fake OpenAI-compatible object
         class Message:
             content = raw_content
             parsed = parsed_obj
@@ -117,16 +120,18 @@ class GrokClient:
         class Completion:
             choices = [Choice()]
 
-            def model_dump_json(self, indent: int = 2) -> str:
+            def model_dump_json(self, indent=2):
                 return json.dumps(data, indent=indent, ensure_ascii=False)
 
         return Completion()
 
-    def close(self) -> None:
+    def close(self):
+        """Close the session."""
         self.session.close()
 
 # ----------------------------- LLM Calls -----------------------------
-def call_grok(client: GrokClient, model: str, code: str) -> Any:
+def call_grok(client: GrokClient, model: str, code: str):
+    """Make a call to the Grok model API."""
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
     print(f"Calling Grok → Model: {model}")
     call_kwargs = {
@@ -140,6 +145,7 @@ def call_grok(client: GrokClient, model: str, code: str) -> Any:
         "temperature": TEMPERATURE,
         "top_p": TOP_P,
     }
+    print(f"→ Standard Model → temperature={TEMPERATURE}, max_completion_tokens={MAX_TOKENS}")
     start_time = time.time()
     for attempt in range(1, 6):
         try:
@@ -156,10 +162,10 @@ def call_grok(client: GrokClient, model: str, code: str) -> Any:
                 raise
     raise RuntimeError("Max retries exceeded – API nicht erreichbar")
 
-def call_openai(client: OpenAI, model: str, code: str) -> Any:
+def call_openai(client: OpenAI, model: str, code: str):
+    """Make a call to the OpenAI model API."""
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
-    print(f"Calling model '{model}' with Structured Outputs...")
-    # Detect reasoning models (o1, o3, gpt-5, gpt-4.5 etc.)
+    print(f"Calling OpenAI → Model: {model}")
     is_reasoning_model = any(x in model.lower() for x in ["o1", "o3", "gpt-5", "gpt-4.5"])
     call_kwargs: dict[str, Any] = {
         "model": model,
@@ -171,41 +177,45 @@ def call_openai(client: OpenAI, model: str, code: str) -> Any:
         "max_completion_tokens": O1_MAX_COMPLETION_TOKENS if is_reasoning_model else MAX_TOKENS,
         "top_p": TOP_P,
     }
-    # Only non-reasoning models allow temperature
     if not is_reasoning_model:
         call_kwargs["temperature"] = TEMPERATURE
-        print(f"→ Standard-Modell → temperature={TEMPERATURE}, max_completion_tokens={MAX_TOKENS}")
+        print(f"→ Standard Model → temperature={TEMPERATURE}, max_completion_tokens={MAX_TOKENS}")
     else:
-        print(f"→ Reasoning-Modell ({model}) → temperature wird automatisch auf 1.0 gesetzt, max_completion_tokens={O1_MAX_COMPLETION_TOKENS}")
+        print(f"→ Reasoning Model ({model}) → temperature automatically set to 1.0")
+
     start_time = time.time()
     for attempt in range(1, 5):
         try:
             completion = client.chat.completions.parse(**call_kwargs)
             duration = time.time() - start_time
-            print(f"Response received in {duration:.1f}s")
+            print(f"→ Response received in {duration:.1f}s")
             return completion
         except (OpenAITimeout, OpenAIRateLimitError) as e:
-            print(f"Attempt {attempt}: {type(e).__name__} – warte 20s...")
+            print(f"Attempt {attempt}: {type(e).__name__} – retrying...")
             time.sleep(20)
         except APIError as e:
-            error_message = str(e).lower()
-            if "temperature" in error_message or "unsupported value" in error_message:
-                print("→ Temperature nicht erlaubt → entferne Parameter und retry")
-                call_kwargs.pop("temperature", None)
-                continue
-            if "max_completion_tokens" in error_message:
-                print("→ max_completion_tokens zu hoch → reduziere auf 16384 und retry")
-                call_kwargs["max_completion_tokens"] = 16384
-                continue
-            print(f"OpenAI API Fehler: {e}")
-            raise
+            handle_api_error(call_kwargs, e)
+            continue
         except Exception as e:
-            print(f"Unerwarteter Fehler: {e}")
+            print(f"Unexpected error: {e}")
             raise
-    raise RuntimeError("Max retries exceeded – API nicht erreichbar")
+    raise RuntimeError("Max retries exceeded – API not reachable")
+
+def handle_api_error(call_kwargs, error):
+    """Handle specific API errors to retry with adjusted parameters."""
+    if "temperature" in str(error):
+        print("→ Temperature not allowed → removing parameter and retrying")
+        call_kwargs.pop("temperature", None)
+    elif "max_completion_tokens" in str(error):
+        print("→ max_completion_tokens too high → reducing to 16384 and retrying")
+        call_kwargs["max_completion_tokens"] = 16384
+    else:
+        print(f"API Error: {error}")
+        raise error
 
 # ----------------------------- Run Analysis -----------------------------
-def run_analysis(code: str) -> Any:
+def run_analysis(code: str):
+    """Run the analysis based on the selected provider."""
     if PROVIDER == "grok":
         client = GrokClient()
         try:
@@ -213,17 +223,14 @@ def run_analysis(code: str) -> Any:
         finally:
             client.close()
     elif PROVIDER == "openai":
-        client = OpenAI(
-            api_key=API_KEY,
-            base_url=API_BASE,
-            timeout=REQUEST_TIMEOUT,
-        )
+        client = OpenAI(api_key=API_KEY, base_url=API_BASE, timeout=REQUEST_TIMEOUT)
         return call_openai(client, MODEL, code)
     else:
-        raise ValueError(f"Unbekannter PROVIDER: {PROVIDER}")
+        raise ValueError(f"Unknown PROVIDER: {PROVIDER}")
 
 # ----------------------------- Save Results -----------------------------
-def save_results(completion: Any, bugs: List[dict[str, Any]]) -> None:
+def save_results(completion, bugs: List[dict]):
+    """Save the analysis results to files."""
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     prefix = PROVIDER
     raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
@@ -235,7 +242,8 @@ def save_results(completion: Any, bugs: List[dict[str, Any]]) -> None:
     print(f" Detected bugs → {bugs_file}\n")
 
 # ----------------------------- Main -----------------------------
-def main() -> None:
+def main():
+    """Main entry point of the script."""
     code = load_code()
     print(f"Using provider: {PROVIDER.upper()} | Model: {MODEL}\n")
     completion = run_analysis(code)
