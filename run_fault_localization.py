@@ -6,36 +6,46 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 from typing import List, Any
-
 import dotenv
+from pydantic import BaseModel, Field
+import requests
 from openai import OpenAI, APIError
 from openai import Timeout as OpenAITimeout
 from openai import RateLimitError as OpenAIRateLimitError
-from pydantic import BaseModel, Field
 
 # ----------------------------- Config -----------------------------
 BASE_DIR = Path(__file__).parent.resolve()
-
-CODE_FILE   = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_code.txt"
+CODE_FILE = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_code.txt"
 SYSTEM_PROMPT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt.txt"
-USER_PROMPT_FILE   = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt.txt"
-ENV_FILE    = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
+USER_PROMPT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt.txt"
+ENV_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
 RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
-
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 dotenv.load_dotenv(ENV_FILE)
 
-# ----------------------------- Umgebungsvariablen -----------------------------
-OPENAI_MODEL            = os.getenv("OPENAI_MODEL", "gpt-5")
-OPENAI_API_KEY          = os.getenv("OPENAI_API_KEY")
-OPENAI_API_BASE         = os.getenv("OPENAI_API_BASE") or None
+# ----------------------------- Env Vars -----------------------------
+PROVIDER = os.getenv("PROVIDER", "grok").lower()
+TEMPERATURE = float(os.getenv("TEMPERATURE", "0.0"))
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", "32768"))
+O1_MAX_COMPLETION_TOKENS = int(os.getenv("O1_MAX_COMPLETION_TOKENS", "32768"))
+REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "600"))
+TOP_P = float(os.getenv("TOP_P", "0.90"))
+DEBUG = os.getenv("DEBUG", "0") == "1"
 
-REQUEST_TIMEOUT         = int(os.getenv("REQUEST_TIMEOUT", "900"))
+# Provider-specific vars
+if PROVIDER == "grok":
+    API_KEY = os.getenv("GROK_API_KEY")
+    MODEL = os.getenv("GROK_MODEL", "grok-4-fast-non-reasoning")
+    API_BASE = os.getenv("GROK_API_BASE", "https://api.x.ai/v1").rstrip("/")
+elif PROVIDER == "openai":
+    API_KEY = os.getenv("OPENAI_API_KEY")
+    MODEL = os.getenv("OPENAI_MODEL", "gpt-5")
+    API_BASE = os.getenv("OPENAI_API_BASE") or None
+else:
+    raise ValueError(f"Ungültiger PROVIDER: {PROVIDER}. Muss 'grok' oder 'openai' sein.")
 
-DEFAULT_MAX_TOKENS      = 32768   # sicher für alle normalen Modelle
-O1_MAX_COMPLETION_TOKENS = 32768  # o1/o3/grok-like Modelle
-
-DEBUG                   = os.getenv("DEBUG", "0") == "1"
+if not API_KEY:
+    raise ValueError(f"{PROVIDER.upper()}_API_KEY fehlt in deiner .env!")
 
 # ----------------------------- Pydantic Schema -----------------------------
 class SeededBug(BaseModel):
@@ -48,62 +58,135 @@ class SeededBug(BaseModel):
 class BugList(BaseModel):
     bugs: List[SeededBug]
 
-# ----------------------------- Prompts -----------------------------
+# ----------------------------- Prompts & Code -----------------------------
 def load_prompt(file_path: Path) -> str:
     if not file_path.exists():
-        raise FileNotFoundError(f"Prompt file not found: {file_path}")
+        raise FileNotFoundError(f"Prompt file nicht gefunden: {file_path}")
     return file_path.read_text(encoding="utf-8").strip()
 
 SYSTEM_PROMPT = load_prompt(SYSTEM_PROMPT_FILE)
 USER_PROMPT_TEMPLATE = load_prompt(USER_PROMPT_FILE)
 
-# ----------------------------- Code Loader -----------------------------
 def load_code() -> str:
     if not CODE_FILE.exists():
-        raise FileNotFoundError(f"Code file not found: {CODE_FILE}")
+        raise FileNotFoundError(f"Code-Datei nicht gefunden: {CODE_FILE}")
     code = CODE_FILE.read_text(encoding="utf-8")
     md5 = hashlib.md5(code.encode()).hexdigest()
     print(f"Code loaded: {len(code):,} characters | MD5: {md5}")
     return code
 
-# ----------------------------- LLM Call -----------------------------
-def call_llm(client: OpenAI, model: str, code: str):
+# ----------------------------- Grok Client -----------------------------
+class GrokClient:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json"
+        })
+
+    def chat_completions_parse(self, **kwargs):
+        payload = {
+            **kwargs,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "bug_list",
+                    "strict": True,
+                    "schema": kwargs["response_format"].model_json_schema()
+                }
+            }
+        }
+        resp = self.session.post(
+            f"{API_BASE}/chat/completions",
+            json=payload,
+            timeout=REQUEST_TIMEOUT
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        raw_content = data["choices"][0]["message"]["content"]
+        parsed_data = json.loads(raw_content)
+        parsed_obj = kwargs["response_format"].model_validate(parsed_data)
+        # OpenAI-kompatibles Fake-Objekt
+        class Message:
+            content = raw_content
+            parsed = parsed_obj
+
+        class Choice:
+            message = Message()
+
+        class Completion:
+            choices = [Choice()]
+
+            def model_dump_json(self, indent=2):
+                return json.dumps(data, indent=indent, ensure_ascii=False)
+
+        return Completion()
+
+    def close(self):
+        self.session.close()
+
+# ----------------------------- LLM Calls -----------------------------
+def call_grok(client: GrokClient, model: str, code: str):
+    user_msg = USER_PROMPT_TEMPLATE.format(code=code)
+    print(f"Calling Grok → Model: {model}")
+    call_kwargs = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_msg}
+        ],
+        "response_format": BugList,
+        "max_completion_tokens": MAX_TOKENS,
+        "temperature": TEMPERATURE,
+        "top_p": TOP_P,
+    }
+    start_time = time.time()
+    for attempt in range(1, 6):
+        try:
+            print("Calling Grok with native Structured Outputs...")
+            completion = client.chat_completions_parse(**call_kwargs)
+            duration = time.time() - start_time
+            print(f"→ Response received in {duration:.1f}s!")
+            return completion
+        except Exception as e:
+            print(f"Attempt {attempt} failed: {e}")
+            if attempt < 5:
+                time.sleep(20)
+            else:
+                raise
+    raise RuntimeError("Max retries exceeded – API nicht erreichbar")
+
+def call_openai(client: OpenAI, model: str, code: str):
     user_msg = USER_PROMPT_TEMPLATE.format(code=code)
     print(f"Calling model '{model}' with Structured Outputs...")
-
     # Erkennung von Reasoning-Modellen (o1, o3, gpt-5, gpt-4.5 usw.)
     is_reasoning_model = any(x in model.lower() for x in ["o1", "o3", "gpt-5", "gpt-4.5"])
-
     call_kwargs: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user",   "content": user_msg}
+            {"role": "user", "content": user_msg}
         ],
         "response_format": BugList,
-        "max_completion_tokens": O1_MAX_COMPLETION_TOKENS if is_reasoning_model else DEFAULT_MAX_TOKENS,
+        "max_completion_tokens": O1_MAX_COMPLETION_TOKENS if is_reasoning_model else MAX_TOKENS,
+        "top_p": TOP_P,
     }
-
     # Nur normale Modelle dürfen temperature haben
     if not is_reasoning_model:
-        call_kwargs["temperature"] = 0.0
-        print(f"→ Standard-Modell → temperature=0.0, max_completion_tokens={DEFAULT_MAX_TOKENS}")
+        call_kwargs["temperature"] = TEMPERATURE
+        print(f"→ Standard-Modell → temperature={TEMPERATURE}, max_completion_tokens={MAX_TOKENS}")
     else:
         print(f"→ Reasoning-Modell ({model}) → temperature wird automatisch auf 1.0 gesetzt, max_completion_tokens={O1_MAX_COMPLETION_TOKENS}")
-
     start_time = time.time()
-
     for attempt in range(1, 5):
         try:
             completion = client.chat.completions.parse(**call_kwargs)
             duration = time.time() - start_time
             print(f"Response received in {duration:.1f}s")
             return completion
-
         except (OpenAITimeout, OpenAIRateLimitError) as e:
             print(f"Attempt {attempt}: {type(e).__name__} – warte 20s...")
             time.sleep(20)
-
         except APIError as e:
             if "temperature" in str(e) or "unsupported value" in str(e).lower():
                 print("→ Temperature nicht erlaubt → entferne Parameter und retry")
@@ -115,46 +198,49 @@ def call_llm(client: OpenAI, model: str, code: str):
                 continue
             print(f"OpenAI API Fehler: {e}")
             raise
-
         except Exception as e:
             print(f"Unerwarteter Fehler: {e}")
             raise
-
     raise RuntimeError("Max retries exceeded – API nicht erreichbar")
+
+# ----------------------------- Run Analysis -----------------------------
+def run_analysis(code: str):
+    if PROVIDER == "grok":
+        client = GrokClient()
+        try:
+            return call_grok(client, MODEL, code)
+        finally:
+            client.close()
+    elif PROVIDER == "openai":
+        client = OpenAI(
+            api_key=API_KEY,
+            base_url=API_BASE,
+            timeout=REQUEST_TIMEOUT,
+        )
+        return call_openai(client, MODEL, code)
+    else:
+        raise ValueError(f"Unbekannter PROVIDER: {PROVIDER}")
 
 # ----------------------------- Save Results -----------------------------
 def save_results(completion, bugs: List[dict]):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    raw_file = RESULTS_DIR / f"raw_response_{ts}.json"
-    json_file = RESULTS_DIR / f"faults_detected_{ts}.json"
-
+    prefix = PROVIDER
+    raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
+    bugs_file = RESULTS_DIR / f"{prefix}_faults_{ts}.json"
     raw_file.write_text(completion.model_dump_json(indent=2), encoding="utf-8")
-    json_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    print(f"\nSUCCESS! Found {len(bugs)} seeded bug(s)!")
-    print(f"   Raw response  → {raw_file}")
-    print(f"   Detected bugs → {json_file}\n")
+    bugs_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"\nSUCCESS! {PROVIDER.capitalize()} found {len(bugs)} seeded bug(s)!")
+    print(f" Raw response → {raw_file}")
+    print(f" Detected bugs → {bugs_file}\n")
 
 # ----------------------------- Main -----------------------------
 def main():
     code = load_code()
-
-    if not OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY fehlt in der .env!")
-
-    client = OpenAI(
-        api_key=OPENAI_API_KEY,
-        base_url=OPENAI_API_BASE,
-        timeout=REQUEST_TIMEOUT,
-    )
-
-    print(f"Using model: {OPENAI_MODEL}\n")
-
-    completion = call_llm(client, OPENAI_MODEL, code)
+    print(f"Using provider: {PROVIDER.upper()} | Model: {MODEL}\n")
+    completion = run_analysis(code)
     parsed: BugList = completion.choices[0].message.parsed
-    bug_list = [bug.model_dump() for bug in parsed.bugs]
-
-    save_results(completion, bug_list)
+    bugs = [bug.model_dump() for bug in parsed.bugs]
+    save_results(completion, bugs)
 
 if __name__ == "__main__":
     main()
