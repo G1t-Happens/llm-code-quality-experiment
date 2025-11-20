@@ -57,7 +57,7 @@ def call_llm(client: OpenAI, model: str, code: str):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_msg}
         ],
-        temperature=0.3,
+        temperature=0.0,
         max_tokens=32768,
         response_format=BugList
     )
