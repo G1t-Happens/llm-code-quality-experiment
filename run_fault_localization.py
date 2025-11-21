@@ -50,7 +50,7 @@ if PROVIDER == "grok":
 elif PROVIDER == "openai":
     API_KEY = os.getenv("OPENAI_API_KEY")
     MODEL = os.getenv("OPENAI_MODEL", "gpt-5")
-    API_BASE = os.getenv("OPENAI_API_BASE") or None
+    API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
 else:
     raise ValueError(f"Ungültiger PROVIDER: {PROVIDER}. Muss 'grok' oder 'openai' sein.")
 
@@ -92,24 +92,29 @@ def clear_generated_tests():
 def resolve_test_path(marker_path: str) -> Path:
     path = Path(marker_path.strip())
 
-    if "src/test/java" in path.parts:
-        idx = list(path.parts).index("src/test/java")
-    elif "src/main/java" in path.parts:
-        idx = list(path.parts).index("src/main/java")
-    else:
-        # Fallback: alles ab "com" nehmen (funktioniert bei Grok-Output)
+    # Extrahiere nur den Teil ab "com/llmquality/baseline/..."
+    try:
+        # Finde den Index von "com" – das ist der sichere Anker
+        com_index = list(path.parts).index("com")
+        relative_parts = path.parts[com_index:]
+    except ValueError:
+        # Fallback: suche nach "baseline" oder nimm einfach alles ab dem letzten "java"
         try:
-            com_idx = list(path.parts).index("com")
-            relative_parts = path.parts[com_idx:]
-            test_path = GENERATED_TESTS_DIR.joinpath(*relative_parts)
-        except ValueError:
-            raise ValueError(f"Unbekannter Pfad-Typ: {marker_path}")
-        else:
-            if not test_path.name.endswith("Test.java"):
-                stem = test_path.stem + ("Test" if not test_path.stem.endswith("Test") else "")
-                test_path = test_path.with_name(stem + ".java")
-            test_path.parent.mkdir(parents=True, exist_ok=True)
-            return test_path
+            java_index = [i for i, p in enumerate(path.parts) if p == "java"][-1]
+            relative_parts = path.parts[java_index + 1:]
+        except IndexError:
+            raise ValueError(f"Kann Package nicht finden in Pfad: {marker_path}")
+
+    test_path = GENERATED_TESTS_DIR.joinpath(*relative_parts)
+
+    if not test_path.name.endswith("Test.java"):
+        stem = test_path.stem
+        if not stem.endswith("Test"):
+            stem += "Test"
+        test_path = test_path.with_name(f"{stem}.java")
+
+    test_path.parent.mkdir(parents=True, exist_ok=True)
+    return test_path
 
     relative = path.parts[idx + 1 :]
     test_path = GENERATED_TESTS_DIR.joinpath(*relative)
@@ -130,12 +135,22 @@ def save_generated_test(file_marker: str, content: str):
 
     path_str = file_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
     if not path_str:
+        print("Leerer Pfad nach Parsing → überspringe")
         return
+
+    print(f"Versuche zu speichern: {path_str}")
 
     try:
         test_path = resolve_test_path(path_str)
+    except ValueError as e:
+        print(f"PARSE-FEHLER bei: {path_str}")
+        print(f"   Grund: {e}")
+        print(f"   → Test wird übersprungen\n")
+        return
     except Exception as e:
-        print(f"Pfad-Fehler: {e} → überspringe {path_str}")
+        print(f"UNERWARTETER FEHLER bei: {path_str}")
+        print(f"   {type(e).__name__}: {e}")
+        print(f"   → Test wird übersprungen\n")
         return
 
     # Package ableiten
@@ -143,7 +158,8 @@ def save_generated_test(file_marker: str, content: str):
         p = Path(path_str)
         com_idx = list(p.parts).index("com")
         package = ".".join(p.parts[com_idx:-1])
-    except:
+    except Exception as e:
+        print(f"Package konnte nicht abgeleitet werden für {path_str} → fallback")
         package = "com.llmquality.baseline"
 
     java_content = content.strip()
@@ -151,7 +167,8 @@ def save_generated_test(file_marker: str, content: str):
         java_content = f"package {package};\n\n{java_content}"
 
     test_path.write_text(java_content, encoding="utf-8")
-    print(f"Test gespeichert → {test_path}")
+    print(f"Test gespeichert → {test_path}\n")
+    return True
 
 # ----------------------------- LLM Clients -----------------------------
 class GrokClient:
@@ -267,14 +284,20 @@ def run_test_generation(code: str, clear_first: bool):
     raw_file.write_text(content, encoding="utf-8")
     print(f"Raw-Antwort gespeichert → {raw_file}")
 
+    test_blocks = [line for line in content.splitlines() if line.strip().startswith("===== FILE:")]
+    total_tests = len(test_blocks)
+    print(f"Anzahl generierter Testdateien: {total_tests}")
+
     print("Extrahiere und speichere Tests...")
     current_content = ""
     current_marker = None
+    saved_count = 0
 
     for raw_line in content.splitlines(keepends=True):
         if "===== FILE:" in raw_line:
             if current_marker and current_content.strip():
-                save_generated_test(current_marker, current_content)
+                if save_generated_test(current_marker, current_content):
+                    saved_count += 1
 
             start_idx = raw_line.find("===== FILE:") + len("===== FILE:")
             path_part = raw_line[start_idx:].strip()
@@ -287,10 +310,15 @@ def run_test_generation(code: str, clear_first: bool):
             current_content += raw_line
 
     if current_marker and current_content.strip():
-        save_generated_test(current_marker, current_content)
+        if save_generated_test(current_marker, current_content):
+            saved_count += 1
 
     print(f"\nTestgenerierung abgeschlossen!")
-    print(f"Tests liegen in:\n   {GENERATED_TESTS_DIR}\n")
+    print(f"   Generiert (Marker gefunden): {total_tests}")
+    print(f"   Erfolgreich gespeichert:      {saved_count}")
+    if total_tests > saved_count:
+        print(f"   ⚠️  {total_tests - saved_count} Test(s) übersprungen (Pfad-/Parse-Fehler)")
+    print(f"   Tests liegen in:\n      {GENERATED_TESTS_DIR}\n")
 
 # ----------------------------- CLI -----------------------------
 def parse_args():
