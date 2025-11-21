@@ -1,3 +1,51 @@
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/build.gradle =====
+
+1	plugins {
+2		id 'java'
+3		id 'org.springframework.boot' version '3.5.7'
+4		id 'io.spring.dependency-management' version '1.1.7'
+5	}
+6	
+7	group = 'com.llmquality'
+8	version = '0.0.1-SNAPSHOT'
+9	description = 'Spring Boot reference application for LLM-based software quality experiment (ISO/IEC 25010)'
+10	
+11	java {
+12		toolchain {
+13			languageVersion = JavaLanguageVersion.of(21)
+14		}
+15	}
+16	
+17	repositories {
+18		mavenCentral()
+19	}
+20	
+21	dependencies {
+22		implementation 'org.springframework.boot:spring-boot-starter-actuator'
+23		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+24		implementation 'org.springframework.boot:spring-boot-starter-validation'
+25		implementation 'org.springframework.boot:spring-boot-starter-web'
+26	    implementation 'org.springframework.boot:spring-boot-starter-security'
+27	    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+28	    implementation 'org.springframework.security:spring-security-oauth2-jose'
+29	    implementation 'org.flywaydb:flyway-core'
+30	    implementation 'org.flywaydb:flyway-database-postgresql'
+31	    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+32	    implementation 'org.mapstruct:mapstruct:1.6.3'
+33	    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+34	    runtimeOnly 'org.postgresql:postgresql'
+35		developmentOnly 'org.springframework.boot:spring-boot-devtools'
+36		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+37		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+38	}
+39	
+40	tasks.named('test') {
+41		useJUnitPlatform()
+42	}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/settings.gradle =====
+
+1	rootProject.name = 'baseline-project'
 
 ===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/BaselineProjectApplication.java =====
 
