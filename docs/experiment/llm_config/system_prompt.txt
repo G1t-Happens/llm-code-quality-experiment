@@ -27,6 +27,7 @@ Severity (strict):
 Perform at least 12 complete analysis passes. Only stop when three consecutive passes find no new injected defects or quality issues.
 
 Output exclusively a clean JSON array, sorted critical → low. No other text allowed.
+Always include the exact line numbers (start_line and end_line)
 
 [
   {

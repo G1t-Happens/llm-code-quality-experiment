@@ -1,2 +1,0 @@
-filename,det_lines,severity,description
-GlobalExceptionHandler.java,"(33, 45)",medium,"Validation error response echoes rejectedValue back to clients, potentially exposing secrets (e.g., plaintext passwords). Information disclosure vulnerability (ISO 25010: Security - Confidentiality). Avoid returning sensitive values."

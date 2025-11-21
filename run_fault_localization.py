@@ -96,13 +96,10 @@ def clear_generated_tests():
 def resolve_test_path(marker_path: str) -> Path:
     path = Path(marker_path.strip())
 
-    # Extrahiere nur den Teil ab "com/llmquality/baseline/..."
     try:
-        # Finde den Index von "com" – das ist der sichere Anker
         com_index = list(path.parts).index("com")
         relative_parts = path.parts[com_index:]
     except ValueError:
-        # Fallback: suche nach "baseline" oder nimm einfach alles ab dem letzten "java"
         try:
             java_index = [i for i, p in enumerate(path.parts) if p == "java"][-1]
             relative_parts = path.parts[java_index + 1:]
@@ -120,17 +117,6 @@ def resolve_test_path(marker_path: str) -> Path:
     test_path.parent.mkdir(parents=True, exist_ok=True)
     return test_path
 
-    relative = path.parts[idx + 1 :]
-    test_path = GENERATED_TESTS_DIR.joinpath(*relative)
-
-    if not test_path.name.endswith("Test.java"):
-        stem = test_path.stem
-        if not stem.endswith("Test"):
-            stem += "Test"
-        test_path = test_path.with_name(stem + ".java")
-
-    test_path.parent.mkdir(parents=True, exist_ok=True)
-    return test_path
 
 def save_generated_test(file_marker: str, content: str):
     if not file_marker.strip().startswith("===== FILE:"):
@@ -146,24 +132,15 @@ def save_generated_test(file_marker: str, content: str):
 
     try:
         test_path = resolve_test_path(path_str)
-    except ValueError as e:
-        print(f"PARSE-FEHLER bei: {path_str}")
-        print(f"   Grund: {e}")
-        print(f"   → Test wird übersprungen\n")
-        return
     except Exception as e:
-        print(f"UNERWARTETER FEHLER bei: {path_str}")
-        print(f"   {type(e).__name__}: {e}")
-        print(f"   → Test wird übersprungen\n")
+        print(f"PARSE-FEHLER bei: {path_str} → {e}")
         return
 
-    # Package ableiten
     try:
         p = Path(path_str)
         com_idx = list(p.parts).index("com")
         package = ".".join(p.parts[com_idx:-1])
-    except Exception as e:
-        print(f"Package konnte nicht abgeleitet werden für {path_str} → fallback")
+    except Exception:
         package = "com.llmquality.baseline"
 
     java_content = content.strip()
@@ -237,49 +214,51 @@ def run_fault_localization(code: str):
 
     raw_content = data["choices"][0]["message"]["content"].strip()
 
-    try:
-        parsed = BugList.model_validate(json.loads(raw_content))
-        print("JSON direkt geparst – alles gut! (structured output hat funktioniert)")
+    # ===================================================================
+    #  GROK-PARSER -- falls response schema doch nicht 100% durchgeht
+    # ===================================================================
+    def parse_grok_output(text: str) -> BugList:
+        # 1. Entferne alle Markdown-Codeblocks
+        text = re.sub(r"^```json\s*", "", text, flags=re.MULTILINE | re.IGNORECASE)
+        text = re.sub(r"^```\s*", "", text, flags=re.MULTILINE)
+        text = re.sub(r"```$", "", text, flags=re.MULTILINE)
 
-    except json.JSONDecodeError:
-        print("JSONDecodeError → starte robusten Fallback-Parser...")
-
-        def extract_json(text: str) -> str:
-            text = text.strip()
-
-            # 1. ```json { ... } ```
-            match = re.search(r"```json\s*([\s\S]*?)\s*```", text)
-            if match:
-                return match.group(1).strip()
-
-            # 2. ``` { ... } ``` (ohne json-Label)
-            match = re.search(r"```\s*([\s\S]*?)\s*```", text)
-            if match and '"bugs"' in match.group(1):
-                return match.group(1).strip()
-
-            # 3. Nacktes JSON irgendwo im Text
+        # 2. Suche das äußere JSON-Objekt mit "bugs": [...]
+        match = re.search(r'\{[\s\S]*"bugs"\s*:\s*\[[\s\S]*\]\s*\}', text)
+        if match:
+            json_str = match.group(0)
+        else:
+            # 3. Fallback: Alles ab erstem { bis letztem }
             start = text.find("{")
             end = text.rfind("}") + 1
-            if start != -1 and end > start:
-                candidate = text[start:end]
-                if "bugs" in candidate:
-                    return candidate.strip()
+            if start == -1 or end == 0:
+                raise ValueError("Kein JSON-Objekt gefunden")
+            json_str = text[start:end]
 
-            raise ValueError("Kein extrahierbares JSON gefunden – Grok hat komplett versagt")
-
-        # Versuche das gefundene JSON doch noch zu parsen
+        # 4. Parse JSON – und wrappe nackte Liste automatisch!
         try:
-            json_str = extract_json(raw_content)
-            print(f"JSON per Fallback extrahiert ({len(json_str)} Zeichen)")
-            parsed = BugList.model_validate(json.loads(json_str))
-        except Exception as e:
-            print("Auch der Fallback-Parser hat versagt!")
-            print("=== VOLLER OUTPUT VOM MODELL ===")
-            print(raw_content[:3000] + ("..." if len(raw_content) > 3000 else ""))
-            print("==================================")
-            raise e
+            parsed_data = json.loads(json_str)
+            if isinstance(parsed_data, list):
+                print("Grok hat nackte Liste ausgegeben → automatisch in {'bugs': [...]} gepackt")
+                parsed_data = {"bugs": parsed_data}
+            elif not isinstance(parsed_data, dict) or "bugs" not in parsed_data:
+                raise ValueError("JSON enthält keinen 'bugs'-Key")
+            return BugList.model_validate(parsed_data)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"JSON immer noch kaputt nach Extraktion: {e}\nLetzte 1000 Zeichen:\n{json_str[-1000:]}")
 
-    # Ab hier ist `parsed` auf jeden Fall ein gültiges BugList-Objekt
+    # -------------------------------------------------------------------
+    try:
+        parsed = parse_grok_output(raw_content)
+        print(f"JSON erfolgreich geparst → {len(parsed.bugs)} Bug(s) erkannt!")
+    except Exception as e:
+        print("Selbst mit dem Super-Parser gescheitert!")
+        print("=== VOLLER RAW OUTPUT ===")
+        print(raw_content[:5000] + ("..." if len(raw_content) > 5000 else ""))
+        print("==========================")
+        raise e
+
+    # Ab hier ist `parsed` garantiert ein BugList-Objekt
     bugs = [bug.model_dump() for bug in parsed.bugs]
 
     # Save results
@@ -292,9 +271,10 @@ def run_fault_localization(code: str):
     bugs_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print(f"\nFault Localization abgeschlossen! {len(bugs)} Bug(s) gefunden.")
-    print(f"   Raw → {raw_file}")
+    print(f"   Raw  → {raw_file}")
     print(f"   Bugs → {bugs_file}\n")
 
+# ----------------------------- Test Generation (unverändert) -----------------------------
 def run_test_generation(code: str, clear_first: bool):
     if clear_first:
         clear_generated_tests()
@@ -365,7 +345,7 @@ def run_test_generation(code: str, clear_first: bool):
     print(f"   Generiert (Marker gefunden): {total_tests}")
     print(f"   Erfolgreich gespeichert:      {saved_count}")
     if total_tests > saved_count:
-        print(f"   ⚠️  {total_tests - saved_count} Test(s) übersprungen (Pfad-/Parse-Fehler)")
+        print(f"   {total_tests - saved_count} Test(s) übersprungen (Pfad-/Parse-Fehler)")
     print(f"   Tests liegen in:\n      {GENERATED_TESTS_DIR}\n")
 
 # ----------------------------- CLI -----------------------------
@@ -380,7 +360,7 @@ def main():
     code = load_code()
 
     print(f"Provider: {PROVIDER.upper()} | Model: {MODEL}")
-    print(f"Modus: {'🧪Testgenerierung' if args.test_mode else 'Fault Localization'}\n")
+    print(f"Modus: {'Testgenerierung' if args.test_mode else 'Fault Localization'}\n")
 
     if args.test_mode:
         run_test_generation(code, clear_first=args.clear_tests)

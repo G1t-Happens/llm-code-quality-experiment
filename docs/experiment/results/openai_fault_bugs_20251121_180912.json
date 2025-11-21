@@ -1,0 +1,100 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 104,
+    "severity": "critical",
+    "error_description": "SQL injection vulnerability: constructs SQL with unescaped user input (username) in getByUsername, allowing arbitrary SQL execution. Violates ISO 25010 Security (Integrity, Confidentiality, Authenticity) and Clean Code (Correctness, Safety)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 183,
+    "severity": "critical",
+    "error_description": "Null dereference and authentication bypass: userRepository.findByUsername(username).get() will throw NoSuchElementException if user not found, resulting in 500 error instead of proper 401. Also, password check is performed after this, so DUMMY_HASH is never used, breaking timing attack mitigation. Violates ISO 25010 Reliability, Security, and Clean Code (User error protection, Fault tolerance)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 119,
+    "end_line": 127,
+    "severity": "high",
+    "error_description": "Password hashing inconsistency: uses a new BCryptPasswordEncoder instance for hashing in save (and update), instead of the injected passwordEncoder. This can cause different hash parameters (e.g., strength, salt) and breaks dependency injection, violating Maintainability and Security (ISO 25010)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 153,
+    "end_line": 154,
+    "severity": "high",
+    "error_description": "Password hashing inconsistency: update uses a new BCryptPasswordEncoder instance instead of the injected passwordEncoder, causing possible hash parameter mismatch and breaking dependency injection. Violates Maintainability and Security."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 173,
+    "end_line": 174,
+    "severity": "high",
+    "error_description": "User deletion does not actually remove the user entity from the database; only logs the deletion. This results in data persistence errors and violates functional correctness and reliability (ISO 25010)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 56,
+    "severity": "high",
+    "error_description": "Double password hashing: updateUserEntityFromUserRequest encodes the password twice (passwordEncoder.encode(passwordEncoder.encode(dto.password()))), resulting in unusable password hashes and breaking authentication. Violates Functional Correctness and Security."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 42,
+    "end_line": 46,
+    "severity": "high",
+    "error_description": "Incorrect content type: @PostMapping(consumes = \"text/plain\") for create address endpoint expects plain text, but AddressRequest is a JSON DTO. This causes 415 errors for standard JSON clients and breaks HTTP contract (ISO 25010 Functional Suitability, Usability)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 89,
+    "severity": "high",
+    "error_description": "Address entity is created and mapped to response without persisting to the database (missing addressRepository.save). Causes data loss and inconsistency between API and persistence layer. Violates Functional Correctness, Reliability, and Data Integrity."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 68,
+    "severity": "high",
+    "error_description": "Direct use of Optional.get() without isPresent() or orElseThrow() in getById can cause NoSuchElementException and 500 error if address not found, violating Reliability and User error protection."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 58,
+    "end_line": 60,
+    "severity": "high",
+    "error_description": "User deletion endpoint lacks @PreAuthorize, allowing any authenticated user to delete any user. This is a privilege escalation and security breach (ISO 25010 Security: Access Control, Integrity)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 26,
+    "end_line": 27,
+    "severity": "medium",
+    "error_description": "Password is always encoded on every mapping, even if already hashed, risking double hashing if not controlled at service layer. This can cause authentication failures and maintainability issues."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 75,
+    "end_line": 80,
+    "severity": "medium",
+    "error_description": "listAll ignores pagination: fetches all users with findAll(), then pages in memory, causing performance and scalability issues for large datasets. Violates ISO 25010 Performance and Resource Utilization."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 104,
+    "severity": "medium",
+    "error_description": "Direct use of native SQL for user lookup instead of repository or parameterized query, reducing maintainability, portability, and increasing risk of SQL dialect issues."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 26,
+    "end_line": 27,
+    "severity": "low",
+    "error_description": "No null check for password in toUserEntity; if password is null, passwordEncoder.encode(null) may throw or produce an invalid hash. Violates Robustness and User error protection."
+  }
+]

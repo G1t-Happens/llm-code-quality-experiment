@@ -1,0 +1,5 @@
+filename,det_lines,severity,description
+AddressServiceImpl.java,"(96, 96)",high,"NullPointerException risk when addressRepository.findById(addressId) returns empty Optional and .get() is called without check, causing application crash during address update (Reliability: Fault tolerance, Availability failure)"
+AddressServiceImpl.java,"(116, 116)",high,"NullPointerException risk when addressRepository.findById(addressId) returns empty Optional and .get() is called without check, causing application crash during address deletion (Reliability: Fault tolerance, Availability failure)"
+AddressServiceImpl.java,"(39, 41)",low,"Unused UserMapper field in AddressServiceImpl violates Clean Code principles, creating dead code that reduces readability and maintainability (Maintainability: Modularity, Analysability)"
+UserServiceImpl.java,"(192, 192)",low,"Non-descriptive method name 'do_Some_Stuff' violates Clean Code naming conventions, reducing readability and making intent unclear for JWT generation logic (Maintainability: Analysability, Readability)"

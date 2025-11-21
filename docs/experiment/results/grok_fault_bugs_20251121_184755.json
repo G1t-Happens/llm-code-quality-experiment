@@ -1,0 +1,93 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 103,
+    "end_line": 103,
+    "severity": "critical",
+    "error_description": "Direct string concatenation in native SQL query enables SQL injection vulnerability, allowing arbitrary database access and data manipulation (Security: injection, Integrity violation per ISO 25010)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 182,
+    "severity": "high",
+    "error_description": "NullPointerException risk when userRepository.findByUsername(username) returns empty Optional and .get() is called without check, causing application crash during login (Reliability: Fault tolerance, Availability failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "severity": "high",
+    "error_description": "NullPointerException risk when addressRepository.findById(addressId) returns empty Optional and .get() is called without check, causing application crash during address retrieval (Reliability: Fault tolerance, Availability failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 96,
+    "end_line": 96,
+    "severity": "high",
+    "error_description": "NullPointerException risk when addressRepository.findById(addressId) returns empty Optional and .get() is called without check, causing application crash during address update (Reliability: Fault tolerance, Availability failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 116,
+    "end_line": 116,
+    "severity": "high",
+    "error_description": "NullPointerException risk when addressRepository.findById(addressId) returns empty Optional and .get() is called without check, causing application crash during address deletion (Reliability: Fault tolerance, Availability failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 56,
+    "severity": "high",
+    "error_description": "Double password hashing in update mapping (passwordEncoder.encode(passwordEncoder.encode(...))) creates unusable password hashes, breaking authentication and causing login failures (Security: Authenticity, Integrity violation)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 57,
+    "end_line": 60,
+    "severity": "high",
+    "error_description": "DELETE /users/{id} endpoint lacks @PreAuthorize security annotation, allowing unauthorized users to delete any user record and causing data loss (Security: Access control, Integrity violation)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/dto/AddressRequest.java",
+    "start_line": 19,
+    "end_line": 22,
+    "severity": "medium",
+    "error_description": "Placeholder field 'someValue' with misleading validation messages ('House number is required') violates Clean Code naming and SRP principles, causing client confusion and incorrect data mapping to entity street field (Usability: Learnability, Maintainability: Analysability)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 126,
+    "end_line": 126,
+    "severity": "medium",
+    "error_description": "Local BCryptPasswordEncoder instantiation in save() bypasses Spring-managed bean, potentially causing inconsistent hashing strength/configuration and authentication inconsistencies (Maintainability: Reusability, Compatibility: Interoperability)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 153,
+    "end_line": 153,
+    "severity": "medium",
+    "error_description": "Local BCryptPasswordEncoder instantiation in update() bypasses Spring-managed bean, potentially causing inconsistent hashing strength/configuration and authentication inconsistencies (Maintainability: Reusability, Compatibility: Interoperability)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 36,
+    "end_line": 36,
+    "severity": "low",
+    "error_description": "Unused @Autowired UserRepository field violates Clean Code DRY principle and reduces maintainability, as the dependency is already injected via constructor (Maintainability: Modularity, Analysability)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 39,
+    "end_line": 41,
+    "severity": "low",
+    "error_description": "Unused UserMapper field in AddressServiceImpl violates Clean Code principles, creating dead code that reduces readability and maintainability (Maintainability: Modularity, Analysability)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 192,
+    "end_line": 192,
+    "severity": "low",
+    "error_description": "Non-descriptive method name 'do_Some_Stuff' violates Clean Code naming conventions, reducing readability and making intent unclear for JWT generation logic (Maintainability: Analysability, Readability)"
+  }
+]

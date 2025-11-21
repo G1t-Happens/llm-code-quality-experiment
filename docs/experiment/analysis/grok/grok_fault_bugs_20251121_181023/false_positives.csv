@@ -1,0 +1,9 @@
+filename,det_lines,severity,description
+AddressServiceImpl.java,"(96, 96)",high,"NullPointerException in update when addressRepository.findById returns empty Optional (Reliability: fault tolerance), leading to application crash during address updates."
+AddressServiceImpl.java,"(116, 116)",high,"NullPointerException in delete when addressRepository.findById returns empty Optional (Reliability: fault tolerance), causing crash during address deletion operations."
+AddressMapper.java,"(32, 32)",high,"Mapper incorrectly maps 'someValue' to 'street' (Functional suitability: correctness), resulting in lost or corrupted street address data during entity-DTO conversion."
+AddressMapper.java,"(58, 58)",high,"Update mapper incorrectly maps 'someValue' to 'street' (Functional suitability: correctness), leading to data corruption in partial address updates."
+UserServiceImpl.java,"(56, 56)",medium,"Hardcoded dummy hash exposes timing attack surface despite comment (Security: resistance), potentially enabling username enumeration via response time differences."
+UserServiceImpl.java,"(56, 56)",medium,"Inconsistent password encoder usage violates DRY principle (Maintainability: modularity), risking future inconsistencies if encoder configuration changes."
+UserServiceImpl.java,"(196, 196)",low,"Non-descriptive method name 'do_Some_Stuff' violates Clean Code naming principles (Maintainability: analysability), reducing code readability and comprehension."
+UserServiceImpl.java,"(63, 63)",low,"Constructor uses @Autowired annotation unnecessarily (Maintainability: modularity), as Spring Boot auto-wires by type; this adds redundant noise to the code."
