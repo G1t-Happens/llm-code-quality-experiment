@@ -5,9 +5,10 @@ import os
 import hashlib
 import argparse
 import shutil
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Literal
 
 import dotenv
 from pydantic import BaseModel, Field
@@ -58,12 +59,15 @@ if not API_KEY:
     raise ValueError(f"{PROVIDER.upper()}_API_KEY fehlt in der .env!")
 
 # ----------------------------- Pydantic Models (nur für Fault-Mode) -----------------------------
+SeverityLevel = Literal["critical", "high", "medium", "low"]
+
 class SeededBug(BaseModel):
-    filename: str
-    start_line: int = Field(..., ge=1)
-    end_line: int = Field(..., ge=1)
-    severity: str = Field(..., pattern="^(critical|high|medium|low)$")
-    error_description: str
+    filename: str = Field(..., description="Filename relative to the project root")
+    start_line: int = Field(..., ge=1, description="First affected line (1-based)")
+    end_line: int = Field(..., ge=1, description="Last affected line (1-based)")
+    severity: SeverityLevel = Field(..., description="Severity level of the bug")
+    error_description: str = Field(..., min_length=10, description="Detailed description of the error")
+
 
 class BugList(BaseModel):
     bugs: List[SeededBug]
@@ -214,7 +218,7 @@ def run_fault_localization(code: str):
         {"role": "user", "content": user_prompt}
     ]
 
-    print(f"🔍 Starte statische Fault Localization mit {PROVIDER.upper()} ({MODEL})...")
+    print(f"Starre statische Fault Localization mit {PROVIDER.upper()} ({MODEL})...")
     if PROVIDER == "grok":
         client = GrokClient()
         try:
@@ -231,8 +235,51 @@ def run_fault_localization(code: str):
             max_completion_tokens=MAX_TOKENS,
         ).model_dump()
 
-    raw_content = data["choices"][0]["message"]["content"]
-    parsed = BugList.model_validate(json.loads(raw_content))
+    raw_content = data["choices"][0]["message"]["content"].strip()
+
+    try:
+        parsed = BugList.model_validate(json.loads(raw_content))
+        print("JSON direkt geparst – alles gut! (structured output hat funktioniert)")
+
+    except json.JSONDecodeError:
+        print("JSONDecodeError → starte robusten Fallback-Parser...")
+
+        def extract_json(text: str) -> str:
+            text = text.strip()
+
+            # 1. ```json { ... } ```
+            match = re.search(r"```json\s*([\s\S]*?)\s*```", text)
+            if match:
+                return match.group(1).strip()
+
+            # 2. ``` { ... } ``` (ohne json-Label)
+            match = re.search(r"```\s*([\s\S]*?)\s*```", text)
+            if match and '"bugs"' in match.group(1):
+                return match.group(1).strip()
+
+            # 3. Nacktes JSON irgendwo im Text
+            start = text.find("{")
+            end = text.rfind("}") + 1
+            if start != -1 and end > start:
+                candidate = text[start:end]
+                if "bugs" in candidate:
+                    return candidate.strip()
+
+            raise ValueError("Kein extrahierbares JSON gefunden – Grok hat komplett versagt")
+
+        # Versuche das gefundene JSON doch noch zu parsen
+        try:
+            json_str = extract_json(raw_content)
+            print(f"JSON per Fallback extrahiert ({len(json_str)} Zeichen)")
+            parsed = BugList.model_validate(json.loads(json_str))
+        except Exception as e:
+            print("Auch der Fallback-Parser hat versagt!")
+            print("=== VOLLER OUTPUT VOM MODELL ===")
+            print(raw_content[:3000] + ("..." if len(raw_content) > 3000 else ""))
+            print("==================================")
+            raise e
+
+    # Ab hier ist `parsed` auf jeden Fall ein gültiges BugList-Objekt
     bugs = [bug.model_dump() for bug in parsed.bugs]
 
     # Save results
@@ -240,10 +287,11 @@ def run_fault_localization(code: str):
     prefix = f"{PROVIDER}_fault"
     raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
     bugs_file = RESULTS_DIR / f"{prefix}_bugs_{ts}.json"
+
     raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     bugs_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    print(f"\n✅ Fault Localization abgeschlossen! {len(bugs)} Bug(s) gefunden.")
+    print(f"\nFault Localization abgeschlossen! {len(bugs)} Bug(s) gefunden.")
     print(f"   Raw → {raw_file}")
     print(f"   Bugs → {bugs_file}\n")
 
