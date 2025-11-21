@@ -1,6 +1,6 @@
 gt_id,filename,gt_lines,severity,description
 E002,UserServiceImpl.java,"(164, 174)",critical,Missing delete call in the repository/data access layer
-E003,AddressServiceImpl.java,"(76, 88)",critical,Missing save call in the repository/data access layer
+E003,AddressServiceImpl.java,"(78, 90)",critical,Missing save call in the repository/data access layer
 E004,UserServiceImpl.java,"(75, 80)",high,Loading all users before pagination and transform them to DTOs – wrong order
 E007,LoggingConfig.java,"(237, 237)",medium,"Appender and log level are set on ROOT_LOGGER, affecting all components and modules globally"
 E008,LoggingConfig.java,"(96, 97)",high,"Sets the timezone globally for the entire JVM instead of only for the logger, potentially affecting other modules, libraries, and scheduling operations"

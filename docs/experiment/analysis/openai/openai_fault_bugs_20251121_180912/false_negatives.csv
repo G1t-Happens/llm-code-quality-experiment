@@ -7,7 +7,7 @@ E010,UserController.java,"(47, 47)",high,"The create() endpoint does not validat
 E011,AddressRequest.java,"(23, 23)",low,someValue field in AddressRequest is ambiguous and does not clearly indicate its purpose. Frontend developers not know which data to provide
 E014,SecurityConfig.java,"(107, 110)",critical,"Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
 E019,AddressController.java,"(21, 25)",low,"Tight coupling between controller and service. This creates tight coupling, making testing and swapping implementations harder"
-E020,AddressServiceImpl.java,"(35, 35)",medium,"Using @Autowired field injection instead of constructor injection reduces testability, hides dependencies, and makes the class harder to instantiate manually or refactor"
+E020,AddressServiceImpl.java,"(36, 36)",medium,"Using @Autowired field injection instead of constructor injection reduces testability, hides dependencies, and makes the class harder to instantiate manually or refactor"
 E021,UserServiceImpl.java,"(206, 206)",low,"Method named 'do_Some_Stuff()' uses a vague, non-descriptive name that hides its intent, severely reducing code readability and analysability"
 E022,LoggingConfig.java,"(54, 55)",high,"The default log file name contains characters valid on Linux but invalid on Windows (e.g., application:errors.log). This prevents installation/running on Windows"
 E023,LoggingConfig.java,"(51, 52)",high,Hardcoded Linux-specific log directory. Running this on Windows or another OS will fail or move to an unpredictable location unless manually changed
