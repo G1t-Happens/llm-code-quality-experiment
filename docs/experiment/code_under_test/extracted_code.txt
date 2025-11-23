@@ -72,59 +72,61 @@
 4	import com.llmquality.baseline.dto.AddressResponse;
 5	import com.llmquality.baseline.dto.PagedResponse;
 6	import com.llmquality.baseline.service.interfaces.AddressService;
-7	import org.springframework.data.domain.Pageable;
-8	import org.springframework.data.domain.Sort;
-9	import org.springframework.data.web.PageableDefault;
-10	import org.springframework.security.access.prepost.PreAuthorize;
-11	import org.springframework.validation.annotation.Validated;
-12	import org.springframework.web.bind.annotation.*;
-13	
-14	import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
-15	
+7	import org.springframework.beans.factory.annotation.Autowired;
+8	import org.springframework.data.domain.Pageable;
+9	import org.springframework.data.domain.Sort;
+10	import org.springframework.data.web.PageableDefault;
+11	import org.springframework.security.access.prepost.PreAuthorize;
+12	import org.springframework.validation.annotation.Validated;
+13	import org.springframework.web.bind.annotation.*;
+14	
+15	import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
 16	
-17	@RestController
-18	@RequestMapping("${api.base-path}/users/{userId}/addresses")
-19	public class AddressController {
-20	
-21	    private final AddressService addressService;
-22	
-23	    public AddressController(AddressService addressService) {
-24	        this.addressService = addressService;
-25	    }
-26	
-27	
-28	    @GetMapping
-29	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-30	    public PagedResponse<AddressResponse> listAll(
-31	            @PathVariable Long userId,
-32	            @PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-33	        return addressService.listAll(userId, pageable);
-34	    }
-35	
-36	    @GetMapping("/{addressId}")
-37	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-38	    public AddressResponse getById(@PathVariable Long userId, @PathVariable Long addressId) {
-39	        return addressService.getById(userId, addressId);
-40	    }
-41	
-42	    @PostMapping(consumes = "text/plain")
-43	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-44	    public AddressResponse create(@PathVariable Long userId, @RequestBody @Validated(Create.class) AddressRequest addressRequest) {
-45	        return addressService.save(userId, addressRequest);
-46	    }
-47	
-48	    @PatchMapping("/{addressId}")
-49	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-50	    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
-51	        return addressService.update(userId, addressId, addressRequest);
-52	    }
-53	
-54	    @DeleteMapping("/{addressId}")
-55	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-56	    public void delete(@PathVariable Long userId, @PathVariable Long addressId) {
-57	        addressService.delete(userId, addressId);
-58	    }
-59	}
+17	
+18	@RestController
+19	@RequestMapping("${api.base-path}/users/{userId}/addresses")
+20	public class AddressController {
+21	
+22	    private final AddressService addressService;
+23	
+24	    @Autowired
+25	    public AddressController(AddressService addressService) {
+26	        this.addressService = addressService;
+27	    }
+28	
+29	
+30	    @GetMapping
+31	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+32	    public PagedResponse<AddressResponse> listAll(
+33	            @PathVariable Long userId,
+34	            @PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+35	        return addressService.listAll(userId, pageable);
+36	    }
+37	
+38	    @GetMapping("/{addressId}")
+39	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+40	    public AddressResponse getById(@PathVariable Long userId, @PathVariable Long addressId) {
+41	        return addressService.getById(userId, addressId);
+42	    }
+43	
+44	    @PostMapping(consumes = "text/plain")
+45	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+46	    public AddressResponse create(@PathVariable Long userId, @RequestBody @Validated(Create.class) AddressRequest addressRequest) {
+47	        return addressService.save(userId, addressRequest);
+48	    }
+49	
+50	    @PatchMapping("/{addressId}")
+51	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+52	    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
+53	        return addressService.update(userId, addressId, addressRequest);
+54	    }
+55	
+56	    @DeleteMapping("/{addressId}")
+57	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+58	    public void delete(@PathVariable Long userId, @PathVariable Long addressId) {
+59	        addressService.delete(userId, addressId);
+60	    }
+61	}
 
 ===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java =====
 
@@ -133,67 +135,69 @@
 3	import com.llmquality.baseline.dto.*;
 4	import com.llmquality.baseline.service.interfaces.UserService;
 5	import jakarta.validation.Valid;
-6	import org.springframework.data.domain.Pageable;
-7	import org.springframework.data.domain.Sort;
-8	import org.springframework.data.web.PageableDefault;
-9	import org.springframework.security.access.prepost.PreAuthorize;
-10	import org.springframework.validation.annotation.Validated;
-11	import org.springframework.web.bind.annotation.*;
-12	
-13	import static com.llmquality.baseline.dto.validation.UserValidationGroups.*;
-14	
+6	import org.springframework.beans.factory.annotation.Autowired;
+7	import org.springframework.data.domain.Pageable;
+8	import org.springframework.data.domain.Sort;
+9	import org.springframework.data.web.PageableDefault;
+10	import org.springframework.security.access.prepost.PreAuthorize;
+11	import org.springframework.validation.annotation.Validated;
+12	import org.springframework.web.bind.annotation.*;
+13	
+14	import static com.llmquality.baseline.dto.validation.UserValidationGroups.*;
 15	
-16	@RestController
-17	@RequestMapping("${api.base-path}/users")
-18	public class UserController {
-19	
-20	    private final UserService userService;
-21	
-22	    public UserController(UserService userService) {
-23	        this.userService = userService;
-24	    }
-25	
-26	
-27	    @GetMapping
-28	    @PreAuthorize("hasRole('ADMIN')")
-29	    public PagedResponse<UserResponse> listAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-30	        return userService.listAll(pageable);
-31	    }
-32	
-33	    @GetMapping("/{id}")
-34	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#id, authentication)")
-35	    public UserResponse getById(@PathVariable Long id) {
-36	        return userService.getById(id);
-37	    }
-38	
-39	    @GetMapping("/search")
-40	    @PreAuthorize("hasRole('ADMIN')")
-41	    public UserResponse getByUsername(@RequestParam("username") String username) {
-42	        return userService.getByUsername(username);
-43	    }
-44	
-45	    @PostMapping
-46	    @PreAuthorize("hasRole('ADMIN') or @sec.canSetAdminFlag(#userRequest.admin, authentication)")
-47	    public UserResponse create(@RequestBody UserRequest userRequest) {
-48	        return userService.save(userRequest);
-49	    }
-50	
-51	    @PatchMapping("/{id}")
-52	    @PreAuthorize("hasRole('ADMIN') or (@sec.isOwner(#id, authentication) and @sec.canSetAdminFlag(#userRequest.admin, authentication))")
-53	    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest userRequest) {
-54	        return userService.update(id, userRequest);
-55	    }
-56	
-57	    @DeleteMapping("/{id}")
-58	    public void delete(@PathVariable Long id) {
-59	        userService.delete(id);
-60	    }
-61	
-62	    @PostMapping("/login")
-63	    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
-64	        return userService.checkLogin(loginRequest);
-65	    }
-66	}
+16	
+17	@RestController
+18	@RequestMapping("${api.base-path}/users")
+19	public class UserController {
+20	
+21	    private final UserService userService;
+22	
+23	    @Autowired
+24	    public UserController(UserService userService) {
+25	        this.userService = userService;
+26	    }
+27	
+28	
+29	    @GetMapping
+30	    @PreAuthorize("hasRole('ADMIN')")
+31	    public PagedResponse<UserResponse> listAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+32	        return userService.listAll(pageable);
+33	    }
+34	
+35	    @GetMapping("/{id}")
+36	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#id, authentication)")
+37	    public UserResponse getById(@PathVariable Long id) {
+38	        return userService.getById(id);
+39	    }
+40	
+41	    @GetMapping("/search")
+42	    @PreAuthorize("hasRole('ADMIN')")
+43	    public UserResponse getByUsername(@RequestParam("username") String username) {
+44	        return userService.getByUsername(username);
+45	    }
+46	
+47	    @PostMapping
+48	    @PreAuthorize("hasRole('ADMIN') or @sec.canSetAdminFlag(#userRequest.admin, authentication)")
+49	    public UserResponse create(@RequestBody UserRequest userRequest) {
+50	        return userService.save(userRequest);
+51	    }
+52	
+53	    @PatchMapping("/{id}")
+54	    @PreAuthorize("hasRole('ADMIN') or (@sec.isOwner(#id, authentication) and @sec.canSetAdminFlag(#userRequest.admin, authentication))")
+55	    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest userRequest) {
+56	        return userService.update(id, userRequest);
+57	    }
+58	
+59	    @DeleteMapping("/{id}")
+60	    public void delete(@PathVariable Long id) {
+61	        userService.delete(id);
+62	    }
+63	
+64	    @PostMapping("/login")
+65	    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
+66	        return userService.checkLogin(loginRequest);
+67	    }
+68	}
 
 ===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/AddressRequest.java =====
 
@@ -320,26 +324,20 @@
 1	package com.llmquality.baseline.dto;
 2	
 3	
-4	import java.time.Instant;
-5	
-6	/**
-7	 * Response DTO for login operations.
-8	 * <p>
-9	 * This is a Java {@code record}, which is immutable and automatically provides
-10	 * a constructor, getter, {@code equals()}, {@code hashCode()}, and {@code toString()} methods.
-11	 * Introduced in Java 17.
-12	 * </p>
-13	 */
-14	public record LoginResponse(
-15	
-16	        String token,
-17	
-18	        Instant expiresAt,
-19	
-20	        long expiresInSeconds
-21	) {
-22	    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
-23	}
+4	/**
+5	 * Response DTO for login operations.
+6	 * <p>
+7	 * This is a Java {@code record}, which is immutable and automatically provides
+8	 * a constructor, getter, {@code equals()}, {@code hashCode()}, and {@code toString()} methods.
+9	 * Introduced in Java 17.
+10	 * </p>
+11	 */
+12	public record LoginResponse(
+13	
+14	        String token
+15	) {
+16	    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
+17	}
 
 ===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/PagedResponse.java =====
 
@@ -1655,148 +1653,147 @@
 7	import com.llmquality.baseline.entity.User;
 8	import com.llmquality.baseline.exception.ResourceNotFoundException;
 9	import com.llmquality.baseline.mapper.AddressMapper;
-10	import com.llmquality.baseline.mapper.UserMapper;
-11	import com.llmquality.baseline.repository.AddressRepository;
-12	import com.llmquality.baseline.repository.UserRepository;
-13	import com.llmquality.baseline.service.interfaces.AddressService;
-14	import org.slf4j.LoggerFactory;
-15	import org.springframework.beans.factory.annotation.Autowired;
-16	import org.springframework.data.domain.Page;
-17	import org.springframework.data.domain.Pageable;
-18	import org.springframework.stereotype.Service;
-19	import org.springframework.transaction.annotation.Transactional;
-20	
-21	import java.util.Objects;
+10	import com.llmquality.baseline.repository.AddressRepository;
+11	import com.llmquality.baseline.repository.UserRepository;
+12	import com.llmquality.baseline.service.interfaces.AddressService;
+13	import org.slf4j.LoggerFactory;
+14	import org.springframework.beans.factory.annotation.Autowired;
+15	import org.springframework.data.domain.Page;
+16	import org.springframework.data.domain.Pageable;
+17	import org.springframework.stereotype.Service;
+18	import org.springframework.transaction.annotation.Transactional;
+19	
+20	import java.util.Objects;
+21	
 22	
-23	
-24	@Service
-25	@Transactional(readOnly = true)
-26	public class AddressServiceImpl implements AddressService {
-27	
-28	    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AddressServiceImpl.class);
-29	
-30	    private static final String USER = "User";
-31	
-32	    private static final String ADDRESS = "Address";
-33	
-34	    private final AddressRepository addressRepository;
-35	
-36	    private final UserRepository userRepository;
-37	
-38	    private final AddressMapper addressMapper;
+23	@Service
+24	@Transactional(readOnly = true)
+25	public class AddressServiceImpl implements AddressService {
+26	
+27	    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AddressServiceImpl.class);
+28	
+29	    private static final String USER = "User";
+30	
+31	    private static final String ADDRESS = "Address";
+32	
+33	    private final AddressRepository addressRepository;
+34	
+35	    private final UserRepository userRepository;
+36	
+37	    private final AddressMapper addressMapper;
+38	
 39	
-40	
-41	    @Autowired
-42	    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository, AddressMapper addressMapper) {
-43	        this.addressRepository = addressRepository;
-44	        this.userRepository = userRepository;
-45	        this.addressMapper = addressMapper;
-46	    }
-47	
-48	    @Override
-49	    public PagedResponse<AddressResponse> listAll(final Long userId, final Pageable pageable) {
-50	        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-51	
-52	        final User existingUserEntity = userRepository.findById(userId)
-53	                .orElseThrow(() -> {
-54	                    LOG.error("<-- listAll, User with ID {} not found", userId);
-55	                    return new ResourceNotFoundException(USER, "id", userId);
-56	                });
-57	
-58	        final Page<AddressResponse> page = addressRepository
-59	                .findAllByUserId(existingUserEntity.getId(), pageable)
-60	                .map(addressMapper::toAddressResponse);
-61	        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
-62	        return PagedResponse.fromPage(page);
-63	    }
-64	
-65	    @Override
-66	    public AddressResponse getById(Long userId, Long addressId) {
-67	        LOG.debug("--> getById, userId: {} and addressId: {}", userId, addressId);
-68	        final Address existingAddressEntity = addressRepository.findById(addressId).get();
-69	
-70	        enforceAddressOwnership(existingAddressEntity, userId);
-71	
-72	        final AddressResponse addressResponse = addressMapper.toAddressResponse(existingAddressEntity);
-73	        LOG.debug("<-- getById, userId: {} and addressId: {}", userId, addressResponse.id());
-74	        return addressResponse;
-75	    }
-76	
-77	    @Transactional
-78	    @Override
-79	    public AddressResponse save(final Long userId, final AddressRequest addressRequest) {
-80	        LOG.debug("--> save, address for user with userId: {}", userId);
-81	        final User existingUserEntity = userRepository.findById(userId)
-82	                .orElseThrow(() -> {
-83	                    LOG.error("<-- getById, User with userId {} not found", userId);
-84	                    return new ResourceNotFoundException(USER, "id", userId);
-85	                });
-86	
-87	        final Address addressEntity = addressMapper.toAddressEntity(addressRequest, existingUserEntity);
-88	        final AddressResponse addressResponse = addressMapper.toAddressResponse(addressEntity);
-89	        LOG.debug("<-- save, address saved with id: {}", addressEntity.getId());
-90	        return addressResponse;
-91	    }
-92	
-93	    @Transactional
-94	    @Override
-95	    public AddressResponse update(final Long userId, final Long addressId, final AddressRequest addressRequest) {
-96	        LOG.debug("--> update, address with addressId: {} by userId: {}", addressId, userId);
-97	        final Address existingAddressEntity = addressRepository.findById(addressId)
-98	                .orElseThrow(() -> {
-99	                    LOG.error("<-- update, Address with ID {} not found", addressId);
-100	                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
-101	                });
-102	
-103	        enforceAddressOwnership(existingAddressEntity, userId);
-104	
-105	        // Partial update via updateAddressEntityFromAddressRequest
-106	        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, existingAddressEntity);
-107	        final Address saveAddressEntity = addressRepository.save(updatedAddressEntity);
-108	        final AddressResponse addressResponse = addressMapper.toAddressResponse(saveAddressEntity);
-109	        LOG.debug("<-- update, address with addressId: {} by userId: {}", addressResponse.id(), addressResponse.userId());
-110	        return addressResponse;
-111	    }
-112	
-113	    @Transactional
-114	    @Override
-115	    public void delete(final Long userId, final Long addressId) {
-116	        LOG.debug("--> delete, addressId: {}", addressId);
-117	        final Address existingAddressEntity = addressRepository.findById(addressId)
-118	                .orElseThrow(() -> {
-119	                    LOG.error("<-- delete, Address with ID {} not found", addressId);
-120	                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
-121	                });
-122	
-123	        enforceAddressOwnership(existingAddressEntity, userId);
-124	
-125	        addressRepository.delete(existingAddressEntity);
-126	        LOG.debug("<-- delete, address with id {} deleted", existingAddressEntity.getId());
-127	    }
-128	
-129	    /**
-130	     * Enforces that the given address belongs to the requested user.
-131	     * <p>
-132	     * Throws {@link ResourceNotFoundException} (404) on mismatch to prevent information disclosure.
-133	     * Must be called after loading the address and after coarse-grained {@code @PreAuthorize} check.
-134	     * </p>
-135	     *
-136	     * @param address         the loaded address entity
-137	     * @param requestedUserId the userId from the request path
-138	     * @throws ResourceNotFoundException if address does not belong to requestedUserId
-139	     */
-140	    private void enforceAddressOwnership(Address address, Long requestedUserId) {
-141	        LOG.debug("--> enforceAddressOwnership");
-142	        final Long ownerId = (address.getUser() != null) ? address.getUser().getId() : null;
-143	
-144	        if (!Objects.equals(ownerId, requestedUserId)) {
-145	            LOG.warn("<-- enforceAddressOwnership, Access denied: User {} tried to access address {} (ownerId={})",
-146	                    requestedUserId, address.getId(), ownerId);
-147	            throw new ResourceNotFoundException(ADDRESS, "id", address.getId());
-148	        }
-149	        LOG.debug("<-- enforceAddressOwnership, Ownership confirmed");
-150	    }
-151	}
+40	    @Autowired
+41	    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository, AddressMapper addressMapper) {
+42	        this.addressRepository = addressRepository;
+43	        this.userRepository = userRepository;
+44	        this.addressMapper = addressMapper;
+45	    }
+46	
+47	    @Override
+48	    public PagedResponse<AddressResponse> listAll(final Long userId, final Pageable pageable) {
+49	        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+50	
+51	        final User existingUserEntity = userRepository.findById(userId)
+52	                .orElseThrow(() -> {
+53	                    LOG.error("<-- listAll, User with ID {} not found", userId);
+54	                    return new ResourceNotFoundException(USER, "id", userId);
+55	                });
+56	
+57	        final Page<AddressResponse> page = addressRepository
+58	                .findAllByUserId(existingUserEntity.getId(), pageable)
+59	                .map(addressMapper::toAddressResponse);
+60	        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+61	        return PagedResponse.fromPage(page);
+62	    }
+63	
+64	    @Override
+65	    public AddressResponse getById(Long userId, Long addressId) {
+66	        LOG.debug("--> getById, userId: {} and addressId: {}", userId, addressId);
+67	        final Address existingAddressEntity = addressRepository.findById(addressId).get();
+68	
+69	        enforceAddressOwnership(existingAddressEntity, userId);
+70	
+71	        final AddressResponse addressResponse = addressMapper.toAddressResponse(existingAddressEntity);
+72	        LOG.debug("<-- getById, userId: {} and addressId: {}", userId, addressResponse.id());
+73	        return addressResponse;
+74	    }
+75	
+76	    @Transactional
+77	    @Override
+78	    public AddressResponse save(final Long userId, final AddressRequest addressRequest) {
+79	        LOG.debug("--> save, address for user with userId: {}", userId);
+80	        final User existingUserEntity = userRepository.findById(userId)
+81	                .orElseThrow(() -> {
+82	                    LOG.error("<-- getById, User with userId {} not found", userId);
+83	                    return new ResourceNotFoundException(USER, "id", userId);
+84	                });
+85	
+86	        final Address addressEntity = addressMapper.toAddressEntity(addressRequest, existingUserEntity);
+87	        final AddressResponse addressResponse = addressMapper.toAddressResponse(addressEntity);
+88	        LOG.debug("<-- save, address saved with id: {}", addressEntity.getId());
+89	        return addressResponse;
+90	    }
+91	
+92	    @Transactional
+93	    @Override
+94	    public AddressResponse update(final Long userId, final Long addressId, final AddressRequest addressRequest) {
+95	        LOG.debug("--> update, address with addressId: {} by userId: {}", addressId, userId);
+96	        final Address existingAddressEntity = addressRepository.findById(addressId)
+97	                .orElseThrow(() -> {
+98	                    LOG.error("<-- update, Address with ID {} not found", addressId);
+99	                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
+100	                });
+101	
+102	        enforceAddressOwnership(existingAddressEntity, userId);
+103	
+104	        // Partial update via updateAddressEntityFromAddressRequest
+105	        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, existingAddressEntity);
+106	        final Address saveAddressEntity = addressRepository.save(updatedAddressEntity);
+107	        final AddressResponse addressResponse = addressMapper.toAddressResponse(saveAddressEntity);
+108	        LOG.debug("<-- update, address with addressId: {} by userId: {}", addressResponse.id(), addressResponse.userId());
+109	        return addressResponse;
+110	    }
+111	
+112	    @Transactional
+113	    @Override
+114	    public void delete(final Long userId, final Long addressId) {
+115	        LOG.debug("--> delete, addressId: {}", addressId);
+116	        final Address existingAddressEntity = addressRepository.findById(addressId)
+117	                .orElseThrow(() -> {
+118	                    LOG.error("<-- delete, Address with ID {} not found", addressId);
+119	                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
+120	                });
+121	
+122	        enforceAddressOwnership(existingAddressEntity, userId);
+123	
+124	        addressRepository.delete(existingAddressEntity);
+125	        LOG.debug("<-- delete, address with id {} deleted", existingAddressEntity.getId());
+126	    }
+127	
+128	    /**
+129	     * Enforces that the given address belongs to the requested user.
+130	     * <p>
+131	     * Throws {@link ResourceNotFoundException} (404) on mismatch to prevent information disclosure.
+132	     * Must be called after loading the address and after coarse-grained {@code @PreAuthorize} check.
+133	     * </p>
+134	     *
+135	     * @param address         the loaded address entity
+136	     * @param requestedUserId the userId from the request path
+137	     * @throws ResourceNotFoundException if address does not belong to requestedUserId
+138	     */
+139	    private void enforceAddressOwnership(Address address, Long requestedUserId) {
+140	        LOG.debug("--> enforceAddressOwnership");
+141	        final Long ownerId = (address.getUser() != null) ? address.getUser().getId() : null;
+142	
+143	        if (!Objects.equals(ownerId, requestedUserId)) {
+144	            LOG.warn("<-- enforceAddressOwnership, Access denied: User {} tried to access address {} (ownerId={})",
+145	                    requestedUserId, address.getId(), ownerId);
+146	            throw new ResourceNotFoundException(ADDRESS, "id", address.getId());
+147	        }
+148	        LOG.debug("<-- enforceAddressOwnership, Ownership confirmed");
+149	    }
+150	}
 
 ===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java =====
 
@@ -1828,228 +1825,226 @@
 26	import org.springframework.security.crypto.password.PasswordEncoder;
 27	import org.springframework.transaction.annotation.Transactional;
 28	
-29	import java.time.Duration;
-30	import java.time.Instant;
-31	import java.time.temporal.ChronoUnit;
-32	import java.util.List;
-33	import java.util.Objects;
+29	import java.time.Instant;
+30	import java.time.temporal.ChronoUnit;
+31	import java.util.List;
+32	import java.util.Objects;
+33	
 34	
-35	
-36	@Service
-37	@Transactional(readOnly = true)
-38	public class UserServiceImpl implements UserService {
-39	
-40	    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
-41	
-42	    private static final String USER = "User";
-43	
-44	    // Prevent timing attack (username enumeration) by always performing password comparison
-45	    private static final String DUMMY_HASH = "$2a$10$dummydummydummydummydummydummydummydummydummydummy";
-46	
-47	    private final UserRepository userRepository;
-48	
-49	    private final PasswordEncoder passwordEncoder;
-50	
-51	    private final UserMapper userMapper;
-52	
-53	    private final EntityManager entityManager;
-54	
-55	    private final JwtEncoder jwtEncoder;
-56	
-57	    @Value("${jwt.issuer:self}")
-58	    private String jwtIssuer;
-59	
-60	    @Value("${jwt.expiration-hours:6}")
-61	    private long jwtExpirationHours;
-62	
-63	    @Autowired
-64	    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, EntityManager entityManager, JwtEncoder jwtEncoder) {
-65	        this.userRepository = userRepository;
-66	        this.passwordEncoder = passwordEncoder;
-67	        this.userMapper = userMapper;
-68	        this.entityManager = entityManager;
-69	        this.jwtEncoder = jwtEncoder;
-70	    }
-71	
-72	    @Override
-73	    public PagedResponse<UserResponse> listAll(Pageable pageable) {
-74	        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
-75	        final List<User> users = userRepository.findAll();
-76	        final List<UserResponse> userResponses = users.stream()
-77	                .map(userMapper::toUserResponse)
-78	                .toList();
-79	
-80	        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
-81	        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
-82	        return PagedResponse.fromPage(page);
-83	    }
-84	
-85	    @Override
-86	    public UserResponse getById(final Long id) {
-87	        LOG.debug("--> getById, id: {}", id);
-88	        final User existingUserEntity = userRepository.findById(id)
-89	                .orElseThrow(() -> {
-90	                    LOG.error("<-- getById, User with ID {} not found", id);
-91	                    return new ResourceNotFoundException(USER, "id", id);
-92	                });
-93	
-94	        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
-95	        LOG.debug("<-- getById, user found: {}", userResponse.id());
-96	        return userResponse;
-97	    }
-98	
-99	    @Override
-100	    public UserResponse getByUsername(final String username) {
-101	        LOG.debug("--> getByUsername, username: {}", username);
-102	
-103	        String sql = "SELECT * FROM users WHERE username = '" + username + "'";
-104	        List<User> results = entityManager.createNativeQuery(sql, User.class).getResultList();
-105	        final User existingUserEntity = results.stream().findFirst()
-106	                .orElseThrow(() -> {
-107	                    LOG.error("<-- getByUsername, User '{}' not found", username);
-108	                    return new ResourceNotFoundException(USER, "username", username);
-109	                });
-110	
-111	        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
-112	        LOG.debug("<-- getByUsername, user found: {}", userResponse.id());
-113	        return userResponse;
-114	    }
-115	
-116	    @Transactional
-117	    @Override
-118	    public UserResponse save(final UserRequest userRequest) {
-119	        LOG.debug("--> save, user with name: {} and password: {}", userRequest.username(), userRequest.password());
-120	
-121	        if (userRepository.existsByUsername(userRequest.username())) {
-122	            LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.username());
-123	            throw new ResourceAlreadyExistsException(USER, "username", userRequest.username());
-124	        }
-125	
-126	        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
-127	        final User userEntity = userMapper.toUserEntity(userRequest, localPasswordEncoder);
-128	        final User savedUserEntity = userRepository.save(userEntity);
-129	        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
-130	
-131	        LOG.debug("<-- save, user saved with id: {}", userResponse.id());
-132	        return userResponse;
-133	    }
-134	
-135	    @Transactional
-136	    @Override
-137	    public UserResponse update(final Long id, final UserRequest userRequest) {
-138	        LOG.debug("--> update, user with id: {}", id);
-139	
-140	        final User existingUserEntity = userRepository.findById(id)
-141	                .orElseThrow(() -> {
-142	                    LOG.error("<-- update, User with ID {} not found for update", id);
-143	                    return new ResourceNotFoundException(USER, "id", id);
-144	                });
-145	
-146	        final String newName = userRequest.username();
-147	        if (newName != null && !newName.isBlank() && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByUsername(newName)) {
-148	            LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
-149	            throw new ResourceAlreadyExistsException(USER, "username", newName);
-150	        }
-151	
-152	        // Partial update via updateUserEntityFromUserRequest
-153	        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
-154	        final User updatedUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, localPasswordEncoder);
-155	        final User savedUserEntity = userRepository.save(updatedUserEntity);
-156	        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
-157	
-158	        LOG.debug("<-- update, user updated with id: {}", userResponse.id());
-159	        return userResponse;
-160	    }
-161	
-162	    @Transactional
-163	    @Override
-164	    public void delete(final Long id) {
-165	        LOG.debug("--> delete, id: {}", id);
-166	
-167	        final User existingUserEntity = userRepository.findById(id)
-168	                .orElseThrow(() -> {
-169	                    LOG.error("<-- delete, User with ID {} not found for deletion", id);
-170	                    return new ResourceNotFoundException(USER, "id", id);
-171	                });
-172	
-173	        LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
-174	    }
-175	
-176	    @Override
-177	    public LoginResponse checkLogin(final LoginRequest loginRequest) {
-178	        LOG.debug("--> checkLogin");
-179	        final String username = loginRequest.username();
-180	        final String password = Objects.requireNonNullElse(loginRequest.password(), "");
-181	
-182	        final User user = userRepository.findByUsername(username).get();
-183	
-184	        final String hashed = user != null ? user.getPassword() : DUMMY_HASH;
-185	        final boolean valid = passwordEncoder.matches(password, hashed);
-186	
-187	        if (user == null || !valid) {
-188	            LOG.warn("<-- checkLogin, FAILED");
-189	            throw new UnauthorizedException(USER, "credentials", "invalid");
-190	        }
-191	
-192	        final LoginResponse loginResponse = createLoginResponse(user);
-193	        LOG.debug("<-- checkLogin");
-194	        return loginResponse;
-195	    }
-196	
-197	    /**
-198	     * Creates a {@link LoginResponse} containing a freshly generated JWT token with expiration metadata.
-199	     * <p>
-200	     * The issued-at and expiration timestamps are calculated once to ensure perfect consistency between
-201	     * the values embedded in the JWT and those returned to the client.
-202	     *
-203	     * @param user the authenticated user
-204	     * @return a {@link LoginResponse} with the JWT token, exact expiration instant and remaining seconds
-205	     */
-206	    private LoginResponse createLoginResponse(final User user) {
-207	        LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
-208	        final Instant issuedAt = Instant.now();
-209	        final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
-210	        final long expiresInSeconds = Duration.between(issuedAt, expiresAt).getSeconds();
-211	        final String token = generateJwtToken(user, issuedAt, expiresAt);
-212	        final LoginResponse loginResponse = new LoginResponse(token, expiresAt, expiresInSeconds);
-213	        LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
-214	        return loginResponse;
-215	    }
-216	
-217	    /**
-218	     * Generates a signed HS256 JWT for the given user using the provided timestamps.
-219	     * <p>
-220	     * The token contains:
-221	     * <ul>
-222	     *   <li>{@code iss} – configured issuer</li>
-223	     *   <li>{@code iat} – issued-at timestamp</li>
-224	     *   <li>{@code exp} – expiration timestamp</li>
-225	     *   <li>{@code sub} – user ID</li>
-226	     *   <li>{@code scope} – {@code ROLE_ADMIN} or {@code ROLE_USER}</li>
-227	     * </ul>
-228	     *
-229	     * @param user      the user to issue the token for
-230	     * @param issuedAt  exact issuance instant (must match the one used externally)
-231	     * @param expiresAt exact expiration instant (must match the one used externally)
-232	     * @return the compact JWT string
-233	     */
-234	    private String generateJwtToken(User user, Instant issuedAt, Instant expiresAt) {
-235	        LOG.debug("--> generateJwtToken, for username: {}", user.getUsername());
-236	        final String scope = user.isAdmin() ? Role.ADMIN.name() : Role.USER.name();
-237	
-238	        final JwtClaimsSet claims = JwtClaimsSet.builder()
-239	                .issuer(jwtIssuer)
-240	                .issuedAt(issuedAt)
-241	                .expiresAt(expiresAt)
-242	                .subject(String.valueOf(user.getId()))
-243	                .claim("scope", scope)
-244	                .build();
-245	
-246	        final String token = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
-247	        LOG.debug("<-- generateJwtToken, for username: {}", user.getUsername());
-248	        return token;
-249	    }
-250	}
+35	@Service
+36	@Transactional(readOnly = true)
+37	public class UserServiceImpl implements UserService {
+38	
+39	    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
+40	
+41	    private static final String USER = "User";
+42	
+43	    // Prevent timing attack (username enumeration) by always performing password comparison
+44	    private static final String DUMMY_HASH = "$2a$10$dummydummydummydummydummydummydummydummydummydummy";
+45	
+46	    private final UserRepository userRepository;
+47	
+48	    private final PasswordEncoder passwordEncoder;
+49	
+50	    private final UserMapper userMapper;
+51	
+52	    private final EntityManager entityManager;
+53	
+54	    private final JwtEncoder jwtEncoder;
+55	
+56	    @Value("${jwt.issuer:self}")
+57	    private String jwtIssuer;
+58	
+59	    @Value("${jwt.expiration-hours:6}")
+60	    private long jwtExpirationHours;
+61	
+62	    @Autowired
+63	    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, EntityManager entityManager, JwtEncoder jwtEncoder) {
+64	        this.userRepository = userRepository;
+65	        this.passwordEncoder = passwordEncoder;
+66	        this.userMapper = userMapper;
+67	        this.entityManager = entityManager;
+68	        this.jwtEncoder = jwtEncoder;
+69	    }
+70	
+71	    @Override
+72	    public PagedResponse<UserResponse> listAll(Pageable pageable) {
+73	        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+74	        final List<User> users = userRepository.findAll();
+75	        final List<UserResponse> userResponses = users.stream()
+76	                .map(userMapper::toUserResponse)
+77	                .toList();
+78	
+79	        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
+80	        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+81	        return PagedResponse.fromPage(page);
+82	    }
+83	
+84	    @Override
+85	    public UserResponse getById(final Long id) {
+86	        LOG.debug("--> getById, id: {}", id);
+87	        final User existingUserEntity = userRepository.findById(id)
+88	                .orElseThrow(() -> {
+89	                    LOG.error("<-- getById, User with ID {} not found", id);
+90	                    return new ResourceNotFoundException(USER, "id", id);
+91	                });
+92	
+93	        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
+94	        LOG.debug("<-- getById, user found: {}", userResponse.id());
+95	        return userResponse;
+96	    }
+97	
+98	    @Override
+99	    public UserResponse getByUsername(final String username) {
+100	        LOG.debug("--> getByUsername, username: {}", username);
+101	
+102	        String sql = "SELECT * FROM users WHERE username = '" + username + "'";
+103	        List<User> results = entityManager.createNativeQuery(sql, User.class).getResultList();
+104	        final User existingUserEntity = results.stream().findFirst()
+105	                .orElseThrow(() -> {
+106	                    LOG.error("<-- getByUsername, User '{}' not found", username);
+107	                    return new ResourceNotFoundException(USER, "username", username);
+108	                });
+109	
+110	        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
+111	        LOG.debug("<-- getByUsername, user found: {}", userResponse.id());
+112	        return userResponse;
+113	    }
+114	
+115	    @Transactional
+116	    @Override
+117	    public UserResponse save(final UserRequest userRequest) {
+118	        LOG.debug("--> save, user with name: {} and password: {}", userRequest.username(), userRequest.password());
+119	
+120	        if (userRepository.existsByUsername(userRequest.username())) {
+121	            LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.username());
+122	            throw new ResourceAlreadyExistsException(USER, "username", userRequest.username());
+123	        }
+124	
+125	        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+126	        final User userEntity = userMapper.toUserEntity(userRequest, localPasswordEncoder);
+127	        final User savedUserEntity = userRepository.save(userEntity);
+128	        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
+129	
+130	        LOG.debug("<-- save, user saved with id: {}", userResponse.id());
+131	        return userResponse;
+132	    }
+133	
+134	    @Transactional
+135	    @Override
+136	    public UserResponse update(final Long id, final UserRequest userRequest) {
+137	        LOG.debug("--> update, user with id: {}", id);
+138	
+139	        final User existingUserEntity = userRepository.findById(id)
+140	                .orElseThrow(() -> {
+141	                    LOG.error("<-- update, User with ID {} not found for update", id);
+142	                    return new ResourceNotFoundException(USER, "id", id);
+143	                });
+144	
+145	        final String newName = userRequest.username();
+146	        if (newName != null && !newName.isBlank() && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByUsername(newName)) {
+147	            LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
+148	            throw new ResourceAlreadyExistsException(USER, "username", newName);
+149	        }
+150	
+151	        // Partial update via updateUserEntityFromUserRequest
+152	        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+153	        final User updatedUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, localPasswordEncoder);
+154	        final User savedUserEntity = userRepository.save(updatedUserEntity);
+155	        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
+156	
+157	        LOG.debug("<-- update, user updated with id: {}", userResponse.id());
+158	        return userResponse;
+159	    }
+160	
+161	    @Transactional
+162	    @Override
+163	    public void delete(final Long id) {
+164	        LOG.debug("--> delete, id: {}", id);
+165	
+166	        final User existingUserEntity = userRepository.findById(id)
+167	                .orElseThrow(() -> {
+168	                    LOG.error("<-- delete, User with ID {} not found for deletion", id);
+169	                    return new ResourceNotFoundException(USER, "id", id);
+170	                });
+171	
+172	        LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
+173	    }
+174	
+175	    @Override
+176	    public LoginResponse checkLogin(final LoginRequest loginRequest) {
+177	        LOG.debug("--> checkLogin");
+178	        final String username = loginRequest.username();
+179	        final String password = Objects.requireNonNullElse(loginRequest.password(), "");
+180	
+181	        final User user = userRepository.findByUsername(username).get();
+182	
+183	        final String hashed = user != null ? user.getPassword() : DUMMY_HASH;
+184	        final boolean valid = passwordEncoder.matches(password, hashed);
+185	
+186	        if (user == null || !valid) {
+187	            LOG.warn("<-- checkLogin, FAILED");
+188	            throw new UnauthorizedException(USER, "credentials", "invalid");
+189	        }
+190	
+191	        final LoginResponse loginResponse = createLoginResponse(user);
+192	        LOG.debug("<-- checkLogin");
+193	        return loginResponse;
+194	    }
+195	
+196	    /**
+197	     * Creates a {@link LoginResponse} containing a freshly generated JWT token with expiration metadata.
+198	     * <p>
+199	     * The issued-at and expiration timestamps are calculated once to ensure perfect consistency between
+200	     * the values embedded in the JWT and those returned to the client.
+201	     *
+202	     * @param user the authenticated user
+203	     * @return a {@link LoginResponse} with the JWT token, exact expiration instant and remaining seconds
+204	     */
+205	    private LoginResponse createLoginResponse(final User user) {
+206	        LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
+207	        final Instant issuedAt = Instant.now();
+208	        final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
+209	        final String token = generateJwtToken(user, issuedAt, expiresAt);
+210	        final LoginResponse loginResponse = new LoginResponse(token);
+211	        LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
+212	        return loginResponse;
+213	    }
+214	
+215	    /**
+216	     * Generates a signed HS256 JWT for the given user using the provided timestamps.
+217	     * <p>
+218	     * The token contains:
+219	     * <ul>
+220	     *   <li>{@code iss} – configured issuer</li>
+221	     *   <li>{@code iat} – issued-at timestamp</li>
+222	     *   <li>{@code exp} – expiration timestamp</li>
+223	     *   <li>{@code sub} – user ID</li>
+224	     *   <li>{@code scope} – {@code ROLE_ADMIN} or {@code ROLE_USER}</li>
+225	     * </ul>
+226	     *
+227	     * @param user      the user to issue the token for
+228	     * @param issuedAt  exact issuance instant (must match the one used externally)
+229	     * @param expiresAt exact expiration instant (must match the one used externally)
+230	     * @return the compact JWT string
+231	     */
+232	    private String generateJwtToken(User user, Instant issuedAt, Instant expiresAt) {
+233	        LOG.debug("--> generateJwtToken, for username: {}", user.getUsername());
+234	        final String scope = user.isAdmin() ? Role.ADMIN.name() : Role.USER.name();
+235	
+236	        final JwtClaimsSet claims = JwtClaimsSet.builder()
+237	                .issuer(jwtIssuer)
+238	                .issuedAt(issuedAt)
+239	                .expiresAt(expiresAt)
+240	                .subject(String.valueOf(user.getId()))
+241	                .claim("scope", scope)
+242	                .build();
+243	
+244	        final String token = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+245	        LOG.debug("<-- generateJwtToken, for username: {}", user.getUsername());
+246	        return token;
+247	    }
+248	}
 
 ===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/AddressService.java =====
 

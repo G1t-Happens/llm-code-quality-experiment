@@ -72,6 +72,7 @@ import com.llmquality.baseline.dto.AddressRequest;
 import com.llmquality.baseline.dto.AddressResponse;
 import com.llmquality.baseline.dto.PagedResponse;
 import com.llmquality.baseline.service.interfaces.AddressService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -88,6 +89,7 @@ public class AddressController {
 
     private final AddressService addressService;
 
+    @Autowired
     public AddressController(AddressService addressService) {
         this.addressService = addressService;
     }
@@ -133,6 +135,7 @@ package com.llmquality.baseline.controller;
 import com.llmquality.baseline.dto.*;
 import com.llmquality.baseline.service.interfaces.UserService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -149,6 +152,7 @@ public class UserController {
 
     private final UserService userService;
 
+    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }
@@ -320,8 +324,6 @@ public record LoginRequest(
 package com.llmquality.baseline.dto;
 
 
-import java.time.Instant;
-
 /**
  * Response DTO for login operations.
  * <p>
@@ -332,11 +334,7 @@ import java.time.Instant;
  */
 public record LoginResponse(
 
-        String token,
-
-        Instant expiresAt,
-
-        long expiresInSeconds
+        String token
 ) {
     // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
 }
@@ -1655,7 +1653,6 @@ import com.llmquality.baseline.entity.Address;
 import com.llmquality.baseline.entity.User;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.mapper.AddressMapper;
-import com.llmquality.baseline.mapper.UserMapper;
 import com.llmquality.baseline.repository.AddressRepository;
 import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.AddressService;
@@ -1828,7 +1825,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -2009,9 +2005,8 @@ public class UserServiceImpl implements UserService {
         LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
         final Instant issuedAt = Instant.now();
         final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
-        final long expiresInSeconds = Duration.between(issuedAt, expiresAt).getSeconds();
         final String token = generateJwtToken(user, issuedAt, expiresAt);
-        final LoginResponse loginResponse = new LoginResponse(token, expiresAt, expiresInSeconds);
+        final LoginResponse loginResponse = new LoginResponse(token);
         LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
         return loginResponse;
     }

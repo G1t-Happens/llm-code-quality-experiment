@@ -136,6 +136,8 @@ printf "📄 Gefundene Dateien: %d\n--------------------------------------\n" "$
             continue
         fi
 
+        #Ausgabe mit oder ohne Zeilen
+        #awk '{print $0}' "$file"
         awk '{print NR "\t" $0}' "$file"
     done
 } >> "$OUTPUT_FILE"
