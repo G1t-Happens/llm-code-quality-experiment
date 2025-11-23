@@ -33,14 +33,15 @@ public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
 
-    @Autowired private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private final AddressMapper addressMapper;
 
 
     @Autowired
-    public AddressServiceImpl(AddressRepository addressRepository, AddressMapper addressMapper) {
+    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository, AddressMapper addressMapper) {
         this.addressRepository = addressRepository;
+        this.userRepository = userRepository;
         this.addressMapper = addressMapper;
     }
 
