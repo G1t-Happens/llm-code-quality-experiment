@@ -218,34 +218,44 @@ def run_fault_localization(code: str):
     #  GROK-PARSER -- falls response schema doch nicht 100% durchgeht
     # ===================================================================
     def parse_grok_output(text: str) -> BugList:
-        # 1. Entferne alle Markdown-Codeblocks
-        text = re.sub(r"^```json\s*", "", text, flags=re.MULTILINE | re.IGNORECASE)
-        text = re.sub(r"^```\s*", "", text, flags=re.MULTILINE)
-        text = re.sub(r"```$", "", text, flags=re.MULTILINE)
+        raw = text.strip()
 
-        # 2. Suche das äußere JSON-Objekt mit "bugs": [...]
-        match = re.search(r'\{[\s\S]*"bugs"\s*:\s*\[[\s\S]*\]\s*\}', text)
-        if match:
-            json_str = match.group(0)
-        else:
-            # 3. Fallback: Alles ab erstem { bis letztem }
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start == -1 or end == 0:
-                raise ValueError("Kein JSON-Objekt gefunden")
-            json_str = text[start:end]
+        # 1. Nur den Teil zwischen erstem [ und letztem ] behalten
+        start = raw.find("[")
+        end = raw.rfind("]") + 1
+        if start == -1 or end == 0:
+            raise ValueError("Kein JSON-Array in der Grok-Antwort gefunden!")
 
-        # 4. Parse JSON – und wrappe nackte Liste automatisch!
+        candidate = raw[start:end]
+
+        # 2. Direkt parsen (nackte Liste oder {"bugs": [...]})
         try:
-            parsed_data = json.loads(json_str)
-            if isinstance(parsed_data, list):
-                print("Grok hat nackte Liste ausgegeben → automatisch in {'bugs': [...]} gepackt")
-                parsed_data = {"bugs": parsed_data}
-            elif not isinstance(parsed_data, dict) or "bugs" not in parsed_data:
-                raise ValueError("JSON enthält keinen 'bugs'-Key")
-            return BugList.model_validate(parsed_data)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"JSON immer noch kaputt nach Extraktion: {e}\nLetzte 1000 Zeichen:\n{json_str[-1000:]}")
+            parsed = json.loads(candidate)
+            if isinstance(parsed, list):
+                print("Grok hat nackte Liste geliefert → automatisch in {'bugs': [...]} gewrappt")
+                return BugList.model_validate({"bugs": parsed})
+            elif isinstance(parsed, dict) and "bugs" in parsed:
+                return BugList.model_validate(parsed)
+        except json.JSONDecodeError:
+            pass
+
+        # 3. Notfall-Extraktion: alle { ... }-Objekte rausholen
+        try:
+            objects = re.findall(r'\{[^{}]*"filename"[^{}]*"error_description"[^{}]*\}', candidate, re.DOTALL)
+            if not objects:
+                objects = re.findall(r'\{[^{}]*"filename"[^{}]*\}', candidate, re.DOTALL)
+            if objects:
+                cleaned = "[" + ",".join(objects) + "]"
+                parsed_list = json.loads(cleaned)
+                print(f"Notfall-Reparatur erfolgreich → {len(parsed_list)} Bug(s) gerettet")
+                return BugList.model_validate({"bugs": parsed_list})
+        except Exception as e:
+            print(f"Notfall-Extraktion fehlgeschlagen: {e}")
+
+        raise ValueError(
+            f"Grok-JSON konnte nicht repariert werden!\n"
+            f"Letzte 1000 Zeichen:\n{candidate[-1000:]}"
+        )
 
     # -------------------------------------------------------------------
     try:

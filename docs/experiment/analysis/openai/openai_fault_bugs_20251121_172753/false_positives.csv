@@ -1,6 +1,0 @@
-filename,det_lines,severity,description
-UserServiceImpl.java,"(103, 104)",high,"Direct use of native SQL for user lookup in getByUsername() bypasses JPA and repository-level security, and disables automatic query parameterization, increasing risk of SQL injection and maintainability issues."
-UserMapper.java,"(26, 27)",medium,"UserMapper.toUserEntity() hashes password even if null, which may result in encoding null and storing an invalid hash. Should check for null before encoding."
-UserMapper.java,"(56, 56)",medium,"UserMapper.updateUserEntityFromUserRequest() double-encodes password, which is a major anti-pattern and breaks authentication. Also, does not check for null password before encoding."
-UserServiceImpl.java,"(44, 46)",low,"DUMMY_HASH is hardcoded and may not match the actual password encoder configuration, reducing effectiveness of timing attack mitigation."
-UserServiceImpl.java,"(119, 119)",low,"Logging user passwords in plain text in save() exposes sensitive information in logs, violating confidentiality and security best practices."

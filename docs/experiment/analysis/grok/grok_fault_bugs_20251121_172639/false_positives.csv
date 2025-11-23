@@ -1,6 +1,0 @@
-filename,det_lines,severity,description
-AddressServiceImpl.java,"(96, 96)",high,"Unwrapped .get() on Optional from repository without null check causes NullPointerException crash when address not found during update, violating fault tolerance (Reliability: Fault tolerance, Availability)"
-AddressServiceImpl.java,"(116, 116)",high,"Unwrapped .get() on Optional from repository without null check causes NullPointerException crash when address not found during delete, violating fault tolerance (Reliability: Fault tolerance, Availability)"
-AddressMapper.java,"(32, 32)",medium,"Incorrect mapping of 'someValue' to 'street' creates data inconsistency between DTO and entity, leading to lost address data in persistence (Functional suitability: Functional correctness, Maintainability: Modularity)"
-AddressMapper.java,"(58, 58)",medium,"Incorrect update mapping of 'someValue' to 'street' perpetuates data inconsistency during partial updates, causing silent data corruption (Reliability: Faultlessness, Integrity)"
-UserServiceImpl.java,"(192, 192)",low,"Non-descriptive method name 'do_Some_Stuff' violates Clean Code naming principles, reducing maintainability and readability (Maintainability: Analysability, Modularity)"

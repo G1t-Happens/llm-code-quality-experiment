@@ -1,4 +1,0 @@
-filename,det_lines,severity,description
-UserServiceImpl.java,"(103, 104)",high,"Direct use of native SQL for user lookup in getByUsername, bypassing JPA and security controls. This is a major maintainability and security anti-pattern."
-UserServiceImpl.java,"(103, 104)",medium,"Bypasses repository method findByUsername in getByUsername, reducing maintainability and testability. Violates DRY and Clean Code."
-UserServiceImpl.java,"(47, 47)",low,"DUMMY_HASH is not a valid bcrypt hash, which may cause timing differences and reduce effectiveness of timing attack mitigation. Should use a real bcrypt hash."

@@ -1,7 +1,7 @@
 id,filename,start_line,end_line,iso_category,error_description,injection_method,severity,context_hash
-E001,UserMapper.java,56,56,Functional,Double encryption of the password using a password encoder,manual,medium,70821644b8976ac4
+E001,UserMapper.java,55,55,Functional,Double encryption of the password using a password encoder,manual,medium,70821644b8976ac4
 E002,UserServiceImpl.java,164,174,Functional,Missing delete call in the repository/data access layer,manual,critical,134ab925e954c207
-E003,AddressServiceImpl.java,78,90,Functional,Missing save call in the repository/data access layer,manual,critical,a97b5ef30637f921
+E003,AddressServiceImpl.java,79,91,Functional,Missing save call in the repository/data access layer,manual,critical,a97b5ef30637f921
 E004,UserServiceImpl.java,75,80,Performance,Loading all users before pagination and transform them to DTOs – wrong order,manual,high,2a44ed7f5de6a8fb
 E005,UserServiceImpl.java,126,126,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium,ae484d5966965275
 E006,UserServiceImpl.java,153,153,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium,b3be6dea7eabc7ff
@@ -11,7 +11,7 @@ E009,AddressController.java,42,42,Compatibility,Incorrect MIME type in controlle
 E010,UserController.java,47,47,Usability,"The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",manual,high,c395163bef63859a
 E011,UserServiceImpl.java,182,182,Reliability,Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,manual,critical,26b2e0354dd3aac1
 E012,SecurityConfig.java,107,110,Reliability,"Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",manual,critical,0afd010fd2a3143d
-E013,AddressServiceImpl.java,67,67,Reliability,Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID,manual,critical,f8eed5fce16822bc
+E013,AddressServiceImpl.java,68,68,Reliability,Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID,manual,critical,f8eed5fce16822bc
 E014,UserServiceImpl.java,103,109,Security,"Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",manual,critical,77415ebb544b3be1
 E015,UserServiceImpl.java,119,119,Security,"Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",manual,critical,c4dd250602e75770
 E016,UserController.java,57,58,Security,"Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",manual,critical,f37d9c2f4c94b842

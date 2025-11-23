@@ -1,4 +1,0 @@
-filename,det_lines,severity,description
-UserMapper.java,"(26, 27)",medium,"Password is always encoded on every mapping, even if already hashed, risking double hashing if not controlled at service layer. This can cause authentication failures and maintainability issues."
-UserServiceImpl.java,"(103, 104)",medium,"Direct use of native SQL for user lookup instead of repository or parameterized query, reducing maintainability, portability, and increasing risk of SQL dialect issues."
-UserMapper.java,"(26, 27)",low,"No null check for password in toUserEntity; if password is null, passwordEncoder.encode(null) may throw or produce an invalid hash. Violates Robustness and User error protection."
