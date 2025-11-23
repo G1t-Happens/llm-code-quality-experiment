@@ -1,0 +1,2222 @@
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/build.gradle =====
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.7'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.llmquality'
+version = '0.0.1-SNAPSHOT'
+description = 'Spring Boot reference application for LLM-based software quality experiment (ISO/IEC 25010)'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    runtimeOnly 'org.postgresql:postgresql'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/settings.gradle =====
+
+rootProject.name = 'baseline-project'
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/BaselineProjectApplication.java =====
+
+package com.llmquality.baseline;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+@SpringBootApplication
+@EnableMethodSecurity
+public class BaselineProjectApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BaselineProjectApplication.class, args);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/AddressController.java =====
+
+package com.llmquality.baseline.controller;
+
+import com.llmquality.baseline.dto.AddressRequest;
+import com.llmquality.baseline.dto.AddressResponse;
+import com.llmquality.baseline.dto.PagedResponse;
+import com.llmquality.baseline.service.interfaces.AddressService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
+
+
+@RestController
+@RequestMapping("${api.base-path}/users/{userId}/addresses")
+public class AddressController {
+
+    private final AddressService addressService;
+
+    public AddressController(AddressService addressService) {
+        this.addressService = addressService;
+    }
+
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+    public PagedResponse<AddressResponse> listAll(
+            @PathVariable Long userId,
+            @PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return addressService.listAll(userId, pageable);
+    }
+
+    @GetMapping("/{addressId}")
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+    public AddressResponse getById(@PathVariable Long userId, @PathVariable Long addressId) {
+        return addressService.getById(userId, addressId);
+    }
+
+    @PostMapping(consumes = "text/plain")
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+    public AddressResponse create(@PathVariable Long userId, @RequestBody @Validated(Create.class) AddressRequest addressRequest) {
+        return addressService.save(userId, addressRequest);
+    }
+
+    @PatchMapping("/{addressId}")
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
+        return addressService.update(userId, addressId, addressRequest);
+    }
+
+    @DeleteMapping("/{addressId}")
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
+    public void delete(@PathVariable Long userId, @PathVariable Long addressId) {
+        addressService.delete(userId, addressId);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java =====
+
+package com.llmquality.baseline.controller;
+
+import com.llmquality.baseline.dto.*;
+import com.llmquality.baseline.service.interfaces.UserService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import static com.llmquality.baseline.dto.validation.UserValidationGroups.*;
+
+
+@RestController
+@RequestMapping("${api.base-path}/users")
+public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public PagedResponse<UserResponse> listAll(@PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return userService.listAll(pageable);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#id, authentication)")
+    public UserResponse getById(@PathVariable Long id) {
+        return userService.getById(id);
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse getByUsername(@RequestParam("username") String username) {
+        return userService.getByUsername(username);
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or @sec.canSetAdminFlag(#userRequest.admin, authentication)")
+    public UserResponse create(@RequestBody UserRequest userRequest) {
+        return userService.save(userRequest);
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or (@sec.isOwner(#id, authentication) and @sec.canSetAdminFlag(#userRequest.admin, authentication))")
+    public UserResponse update(@PathVariable Long id, @RequestBody @Validated(Update.class) UserRequest userRequest) {
+        return userService.update(id, userRequest);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        userService.delete(id);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody @Valid LoginRequest loginRequest) {
+        return userService.checkLogin(loginRequest);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/AddressRequest.java =====
+
+package com.llmquality.baseline.dto;
+
+import com.llmquality.baseline.enums.AddressType;
+import jakarta.validation.constraints.*;
+
+import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
+
+
+/**
+ * Request DTO for addresses.
+ * <p>
+ * This is a Java {@code record}, which is immutable and automatically provides
+ * a constructor, getter, {@code equals()}, {@code hashCode()}, and {@code toString()} methods.
+ * Introduced in Java 17.
+ * </p>
+ */
+public record AddressRequest(
+
+        @NotBlank(groups = Create.class, message = "Street is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Street must not be empty or consist only of whitespace")
+        @Size(max = 255, message = "Street must be at most 255 characters long")
+        String street,
+
+        @NotBlank(groups = Create.class, message = "House number is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "House number must not be empty or consist only of whitespace")
+        @Size(max = 255)
+        String houseNumber,
+
+        @NotBlank(groups = Create.class, message = "Postal code is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Postal code must not be empty or consist only of whitespace")
+        @Size(max = 255)
+        String postalCode,
+
+        @NotBlank(groups = Create.class, message = "City is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "City must not be empty or consist only of whitespace")
+        @Size(max = 255)
+        String city,
+
+        @NotBlank(groups = Create.class, message = "Country is required on create")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Country must not be empty or consist only of whitespace")
+        @Size(max = 255)
+        String country,
+
+        @NotNull(groups = Create.class, message = "Address type is required on create")
+        AddressType addressType
+) {
+    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/AddressResponse.java =====
+
+package com.llmquality.baseline.dto;
+
+import com.llmquality.baseline.enums.AddressType;
+
+
+/**
+ * Response DTO for addresses.
+ * <p>
+ * This is a Java {@code record}, which is immutable and automatically provides
+ * a constructor, getter, {@code equals()}, {@code hashCode()}, and {@code toString()} methods.
+ * Introduced in Java 17.
+ * </p>
+ */
+public record AddressResponse(
+
+        Long id,
+
+        String street,
+
+        String houseNumber,
+
+        String postalCode,
+
+        String city,
+
+        String country,
+
+        AddressType addressType,
+
+        Long userId
+) {
+    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/LoginRequest.java =====
+
+package com.llmquality.baseline.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+
+/**
+ * Data Transfer Object (DTO) for user login requests.
+ * <p>
+ * Contains the username and password fields with validation constraints
+ * to ensure non-blank input and enforce maximum length.
+ * </p>
+ */
+public record LoginRequest(
+
+        @NotBlank(message = "Username must not be blank")
+        @Size(max = 255, message = "Username must be at most 255 characters long")
+        String username,
+
+        @NotBlank(message = "Password must not be blank")
+        @Size(max = 255, message = "Password must be at most 255 characters long")
+        String password
+) {
+    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/LoginResponse.java =====
+
+package com.llmquality.baseline.dto;
+
+
+import java.time.Instant;
+
+/**
+ * Response DTO for login operations.
+ * <p>
+ * This is a Java {@code record}, which is immutable and automatically provides
+ * a constructor, getter, {@code equals()}, {@code hashCode()}, and {@code toString()} methods.
+ * Introduced in Java 17.
+ * </p>
+ */
+public record LoginResponse(
+
+        String token,
+
+        Instant expiresAt,
+
+        long expiresInSeconds
+) {
+    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/PagedResponse.java =====
+
+package com.llmquality.baseline.dto;
+
+import org.springframework.data.domain.Page;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+
+/**
+ * Generic pagination DTO for REST API responses.
+ *
+ * <p>This DTO encapsulates paginated content along with metadata
+ * about the current page, page size, total elements, total pages,
+ * and whether the current page is the last one.</p>
+ *
+ * <p>This class provides a static factory method {@link #fromPage(Page)}
+ * to easily convert a {@link Page} from Spring Data JPA into a stable
+ * response structure suitable for REST APIs.</p>
+ *
+ * @param <T> the type of content in the page
+ */
+public record PagedResponse<T>(
+
+        List<T> content,
+
+        int page,
+
+        int size,
+
+        long totalElements,
+
+        int totalPages,
+
+        boolean last
+) {
+
+    /**
+     * Creates a {@code PagedResponse} from a Spring Data {@link Page}.
+     *
+     * @param page the {@link Page} containing content and pagination metadata
+     * @param <T>  the type of the content
+     * @return a new {@link PagedResponse} with content and pagination info
+     */
+    public static <T> PagedResponse<T> fromPage(Page<T> page) {
+        Objects.requireNonNull(page, "Page must not be null");
+        return new PagedResponse<>(
+                Collections.unmodifiableList(page.getContent()),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/UserRequest.java =====
+
+package com.llmquality.baseline.dto;
+
+import jakarta.validation.constraints.*;
+
+import static com.llmquality.baseline.dto.validation.UserValidationGroups.*;
+
+
+/**
+ * Data Transfer Object (DTO) for creating or updating a User.
+ * <p>
+ * Contains user input fields with validation annotations for create and update operations.
+ * </p>
+ */
+public record UserRequest(
+
+        @NotBlank(groups = Create.class, message = "Username is required")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Username must not be empty or consist only of whitespace")
+        String username,
+
+        @NotBlank(groups = Create.class, message = "Password is required on create")
+        @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$",
+                groups = {Create.class, Update.class},
+                message = "Password must be at least 8 characters, contain number, lowercase and uppercase")
+        @Size(min = 8, max = 255, groups = {Create.class, Update.class})
+        String password,
+
+        @NotBlank(groups = Create.class, message = "Email is required on create")
+        @Email(groups = {Create.class, Update.class}, message = "Invalid email format")
+        @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
+                message = "Email must not be empty or consist only of whitespace")
+        String email,
+
+        @NotNull(groups = Create.class, message = "Admin flag is required on create")
+        Boolean admin
+) {
+    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/UserResponse.java =====
+
+package com.llmquality.baseline.dto;
+
+
+/**
+ * Response DTO for User information.
+ * <p>
+ * This is a Java {@code record}, which is immutable and automatically provides
+ * a constructor, getters, {@code equals()}, {@code hashCode()}, and {@code toString()} methods.
+ * Introduced in Java 17.
+ * </p>
+ */
+public record UserResponse(
+
+        Long id,
+
+        String username,
+
+        String email,
+
+        Boolean admin
+
+) {
+    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/validation/AddressValidationGroups.java =====
+
+package com.llmquality.baseline.dto.validation;
+
+
+/**
+ * This class contains a validation group for differentiating between the
+ * validation rules applied during the creation and update of a addresses.
+ * <p>
+ * These groups are used to apply specific validation constraints based on
+ * the operation (create or update) being performed.
+ * </p>
+ *
+ * <p>
+ * The purpose of validation groups is to control which validation rules
+ * are applied depending on the context, preventing unnecessary validations
+ * for operations that don’t require them e.q. update requests
+ * </p>
+ */
+public final class AddressValidationGroups {
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     * Throws UnsupportedOperationException if called.
+     */
+    private AddressValidationGroups() {
+        throw new UnsupportedOperationException("Utility class - should not be instantiated");
+    }
+
+    /**
+     * Validation group for creating a new addresses.
+     * <p>
+     * This interface is used to mark the validation constraints that should
+     * be applied when creating a new address.
+     * </p>
+     */
+    public interface Create {
+    }
+
+    /**
+     * Validation group for updating an existing addresses.
+     * <p>
+     * This interface is used to mark the validation constraints that should
+     * be applied when updating an address.
+     * </p>
+     */
+    public interface Update {
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/validation/UserValidationGroups.java =====
+
+package com.llmquality.baseline.dto.validation;
+
+
+/**
+ * This class contains a validation group for differentiating between the
+ * validation rules applied during the creation and update of a user.
+ * <p>
+ * These groups are used to apply specific validation constraints based on
+ * the operation (create or update) being performed.
+ * </p>
+ *
+ * <p>
+ * The purpose of validation groups is to control which validation rules
+ * are applied depending on the context, preventing unnecessary validations
+ * for operations that don’t require them e.q. update requests
+ * </p>
+ */
+public final class UserValidationGroups {
+
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     * Throws UnsupportedOperationException if called.
+     */
+    private UserValidationGroups() {
+        throw new UnsupportedOperationException("Utility class - should not be instantiated");
+    }
+
+    /**
+     * Validation group for creating a new user.
+     * <p>
+     * This interface is used to mark the validation constraints that should
+     * be applied when creating a new user (e.g., during user registration).
+     * </p>
+     */
+    public interface Create {
+    }
+
+    /**
+     * Validation group for updating an existing user.
+     * <p>
+     * This interface is used to mark the validation constraints that should
+     * be applied when updating a user.
+     * </p>
+     */
+    public interface Update {
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/entity/Address.java =====
+
+package com.llmquality.baseline.entity;
+
+import com.llmquality.baseline.enums.AddressType;
+import jakarta.persistence.*;
+
+import java.util.Objects;
+
+
+@Entity
+@Table(name = "addresses")
+public class Address {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(name = "street", nullable = false)
+    private String street;
+
+    @Column(name = "house_number", nullable = false)
+    private String houseNumber;
+
+    @Column(name = "postal_code", nullable = false)
+    private String postalCode;
+
+    @Column(name = "city", nullable = false)
+    private String city;
+
+    @Column(name = "country", nullable = false)
+    private String country;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "address_type", nullable = false)
+    private AddressType addressType;
+
+    public AddressType getAddressType() {
+        return addressType;
+    }
+
+    public void setAddressType(AddressType addressType) {
+        this.addressType = addressType;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
+    public String getHouseNumber() {
+        return houseNumber;
+    }
+
+    public void setHouseNumber(String houseNumber) {
+        this.houseNumber = houseNumber;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Address address)) return false;
+        return Objects.equals(id, address.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/entity/User.java =====
+
+package com.llmquality.baseline.entity;
+
+import jakarta.persistence.*;
+
+import java.util.Objects;
+
+
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
+
+    @Column(name = "password", nullable = false, length = 60)
+    private String password;
+
+    @Column(name = "email", nullable = false)
+    private String email;
+
+    @Column(name = "isadmin", nullable = false)
+    private boolean admin;
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/enums/AddressType.java =====
+
+package com.llmquality.baseline.enums;
+
+
+/**
+ * Enum representing the different types of addresses that a user can have.
+ * <p>
+ * This enum is used to categorize addresses into various types such as:
+ * <ul>
+ *     <li>{@link #PRIVATE} - A private address</li>
+ *     <li>{@link #BUSINESS} - A business address</li>
+ *     <li>{@link #SHIPPING} - A shipping address</li>
+ *     <li>{@link #BILLING} - A billing address</li>
+ * </ul>
+ * </p>
+ */
+public enum AddressType {
+    PRIVATE,
+    BUSINESS,
+    SHIPPING,
+    BILLING
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/enums/Role.java =====
+
+package com.llmquality.baseline.enums;
+
+
+/**
+ * Enum representing the roles available in the application.
+ * Each role is associated with a string value used for
+ * authorization and security purposes.
+ *
+ * <p>
+ * Available roles:
+ * <ul>
+ *     <li>ADMIN - Represents an administrator with full access (ROLE_ADMIN)</li>
+ *     <li>USER  - Represents a standard user with limited access (ROLE_USER)</li>
+ * </ul>
+ * </p>
+ */
+public enum Role {
+    USER,
+    ADMIN;
+
+    public static final String PREFIX = "ROLE_";
+
+    public String authority() {
+        return PREFIX + name();
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/BaselineProjectWebException.java =====
+
+package com.llmquality.baseline.exception;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+
+/**
+ * Abstract base class for custom exceptions used in the BaselineProject.
+ * <p>
+ * This class serves as the base for exceptions related to resource validation and error handling in the backend.
+ * It holds information about the resource, field, and field value that caused the exception to be thrown.
+ * Subclasses of this class should provide specific exception messages and behaviors.
+ * </p>
+ *
+ * <p>Example:</p>
+ * <pre>
+ * throw new ResourceNotFoundException("not found", "User", "id", userId);
+ * </pre>
+ *
+ * @see ResourceNotFoundException
+ * @see ResourceAlreadyExistsException
+ */
+public abstract class BaselineProjectWebException extends RuntimeException {
+
+    @Serial
+    private static final long serialVersionUID = -2713300573235999908L;
+
+    /**
+     * Constructs a new BackendWebException with the specified message and details.
+     * <p>
+     * The message is formatted to include the resource name, message, field name, and field value.
+     * </p>
+     *
+     * @param msg          the message to be included in the exception
+     * @param resourceName the name of the resource
+     * @param fieldName    the name of the field
+     * @param fieldValue   the value of the field
+     */
+    protected BaselineProjectWebException(String msg, String resourceName, String fieldName, Serializable fieldValue) {
+        super(String.format("%s %s %s : '%s'", resourceName, msg, fieldName, fieldValue));
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/ResourceAlreadyExistsException.java =====
+
+package com.llmquality.baseline.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+
+/**
+ * Exception thrown when an attempt is made to create or modify a resource that already exists.
+ * <p>
+ * This exception is typically used when an attempt is made to create a resource (e.g., user, product) with
+ * a unique field (e.g., email, username) that already exists in the system, violating the uniqueness constraint.
+ * It returns a 409 Conflict HTTP status to indicate a conflict in the request due to existing data.
+ * </p>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * throw new ResourceAlreadyExistsException("User", "email", "test@example.com");
+ * </pre>
+ */
+@ResponseStatus(value = HttpStatus.CONFLICT)
+public class ResourceAlreadyExistsException extends BaselineProjectWebException {
+
+    @Serial
+    private static final long serialVersionUID = 2978506968943653610L;
+
+    /**
+     * Constructs a new ResourceAlreadyExistsException with a specified resource name, field name, and field value.
+     * <p>
+     * The exception message is formatted as "already exists" for the given resource and field.
+     * </p>
+     *
+     * @param resourceName the name of the resource that the exception relates to (e.g., "User", "Product")
+     * @param fieldName    the name of the field that caused the exception (e.g., "email", "username")
+     * @param fieldValue   the value of the field that caused the exception (e.g., "test@example.com", "johndoe")
+     */
+    public ResourceAlreadyExistsException(String resourceName, String fieldName, Serializable fieldValue) {
+        super("already exists", resourceName, fieldName, fieldValue);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/ResourceNotFoundException.java =====
+
+package com.llmquality.baseline.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+
+/**
+ * Exception thrown when a requested resource is not found in the system.
+ * <p>
+ * This exception is used to indicate that a resource, such as an entity or data, could not be found based on
+ * the specified field and value. It returns a 404 Not Found HTTP status code to indicate that the requested
+ * resource does not exist.
+ * </p>
+ *
+ * <p>Example usage:</p>
+ * <pre>
+ * throw new ResourceNotFoundException("User", "id", 123);
+ * </pre>
+ */
+@ResponseStatus(value = HttpStatus.NOT_FOUND)
+public class ResourceNotFoundException extends BaselineProjectWebException {
+
+    @Serial
+    private static final long serialVersionUID = 4703052950035630239L;
+
+    /**
+     * Constructs a new ResourceNotFoundException with a specified resource name, field name, and field value.
+     * <p>
+     * The exception message is formatted as "not found with" for the given resource and field.
+     * </p>
+     *
+     * @param resourceName the name of the resource that could not be found (e.g., "User", "Product")
+     * @param fieldName    the name of the field that was used to search for the resource (e.g., "id", "username")
+     * @param fieldValue   the value of the field that was used to search for the resource (e.g., 123, "john_doe")
+     */
+    public ResourceNotFoundException(String resourceName, String fieldName, Serializable fieldValue) {
+        super("not found with", resourceName, fieldName, fieldValue);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/UnauthorizedException.java =====
+
+package com.llmquality.baseline.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+
+/**
+ * Thrown when authentication fails due to invalid username or password.
+ * <p>
+ * This exception is annotated with {@code @ResponseStatus(HttpStatus.UNAUTHORIZED)} and therefore
+ * automatically returns HTTP 401 Unauthorized without any additional configuration.
+ * </p>
+ * <p>
+ * It is the recommended way in modern Spring Boot 3+ REST APIs to handle failed login attempts.
+ * Using this instead of returning {@code success: false} with 200 OK prevents information leakage
+ * (username enumeration) and follows proper HTTP semantics.
+ * </p>
+ * <p>
+ * Example usage:
+ * <pre>
+ * throw new UnauthorizedException("User", "username", username);
+ * </pre>
+ * </p>
+ */
+@ResponseStatus(value = HttpStatus.UNAUTHORIZED)
+public class UnauthorizedException extends BaselineProjectWebException {
+
+    @Serial
+    private static final long serialVersionUID = -4368911695070591266L;
+
+    /**
+     * Constructs a new UnauthorizedException with details about the authentication failure.
+     * <p>
+     * The exception message is formatted as "access unauthorized for {resourceName} {fieldName} : '{fieldValue}'".
+     * </p>
+     *
+     * @param resourceName the name of the resource that required authentication (e.g., "User")
+     * @param fieldName    the name of the field that caused the failure (e.g., "username" or "credentials")
+     * @param fieldValue   the value of the field that was invalid (e.g., the provided username)
+     */
+    public UnauthorizedException(String resourceName, String fieldName, Serializable fieldValue) {
+        super("access unauthorized for", resourceName, fieldName, fieldValue);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java =====
+
+package com.llmquality.baseline.exception.handler;
+
+import com.llmquality.baseline.exception.BaselineProjectWebException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
+
+
+/**
+ * Global exception handler that converts domain-specific and validation-related
+ * exceptions into clean and consistent API error responses.
+ */
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(BaselineProjectWebException.class)
+    public ResponseEntity<ErrorResponse> handleBaselineException(final BaselineProjectWebException ex) {
+        final ResponseStatus annotation = ex.getClass().getAnnotation(ResponseStatus.class);
+        final HttpStatus httpStatus = (annotation != null) ? annotation.value() : HttpStatus.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(httpStatus)
+                .body(new ErrorResponse(
+                        httpStatus.value(),
+                        ex.getMessage()
+                ));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ValidationErrorResponse> handleValidation(final MethodArgumentNotValidException ex) {
+        final List<ValidationErrorResponse.FieldError> errors =
+                ex.getBindingResult().getFieldErrors()
+                        .stream()
+                        .map(err -> new ValidationErrorResponse.FieldError(
+                                err.getField(),
+                                err.getRejectedValue(),
+                                err.getDefaultMessage()
+                        ))
+                        .toList();
+        return ResponseEntity.badRequest().body(new ValidationErrorResponse(400, "Validation failed", errors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMalformedJson(final HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
+                "Malformed JSON request: " + ex.getMostSpecificCause().getMessage()));
+    }
+
+
+    // Response Records
+    public record ErrorResponse(int status, String message) {
+    }
+
+    public record ValidationErrorResponse(int status, String message, List<FieldError> errors) {
+        public record FieldError(String field, Object rejectedValue, String message) {
+        }
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/logging/LoggingConfig.java =====
+
+package com.llmquality.baseline.logging;
+
+import ch.qos.logback.classic.AsyncAppender;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.rolling.RollingFileAppender;
+import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
+import ch.qos.logback.core.util.FileSize;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TimeZone;
+
+
+/**
+ * Configures programmatic Logback logging for the application.
+ * <p>
+ * Features:
+ * <ul>
+ *     <li>Profile-aware log levels (dev = DEBUG, others = INFO by default)</li>
+ *     <li>Asynchronous file logging with size/time-based rolling</li>
+ * <li>Optional synchronous console logging</li>
+ *     <li>Fully configurable via Spring Boot properties</li>
+ * </ul>
+ * This replaces XML configuration and initializes Logback at startup.
+ */
+@Configuration
+public class LoggingConfig {
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoggingConfig.class);
+
+    private static final String DEFAULT_LOG_DIR = "logs";
+    private static final String DEFAULT_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n";
+    private static final String DEFAULT_ROLLING_PATTERN = "application-%d{yyyy-MM-dd}.%i.log";
+    private static final String DEFAULT_MAX_FILE_SIZE = "10MB";
+    private static final String DEFAULT_TOTAL_SIZE_CAP = "100MB";
+
+    @Value("${logging.file.path:/home/dbe/projects/llm-code-quality-experiment/baseline_project/logs}")
+    private String logDirectoryPath;
+
+    @Value("${logging.file.name:application:errors.log}")
+    private String logFileName;
+
+    @Value("${logging.level.root:#{null}}")
+    private String rootLogLevel;
+
+    @Value("#{${logging.level:{:}}}")
+    private Map<String, String> loggerLevels;
+
+    @Value("${logging.console.enabled:#{null}}")
+    private Boolean consoleEnabled;
+
+    @Value("${logging.pattern:" + DEFAULT_LOG_PATTERN + "}")
+    private String logPattern;
+
+    @Value("${logging.rolling.fileNamePattern:" + DEFAULT_ROLLING_PATTERN + "}")
+    private String rollingFileNamePattern;
+
+    @Value("${logging.rolling.maxFileSize:10MB}")
+    private String maxFileSizeStr;
+
+    @Value("${logging.rolling.maxHistory:30}")
+    private int maxHistory;
+
+    @Value("${logging.rolling.totalSizeCap:100MB}")
+    private String totalSizeCapStr;
+
+    private final Environment environment;
+    private LoggerContext loggerContext;
+    private volatile boolean initialized = false;
+
+    public LoggingConfig(Environment environment) {
+        this.environment = environment;
+    }
+
+    @PostConstruct
+    public synchronized void initializeLogging() {
+        if (initialized) return;
+        initialized = true;
+
+        try {
+            loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            System.setProperty("user.timezone", "UTC");
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+            Path logDir = createLogDirectory(logDirectoryPath);
+
+            String[] activeProfiles = environment.getActiveProfiles();
+            String profile = activeProfiles.length > 0 ? activeProfiles[0] : "dev";
+
+            Level level;
+            boolean console;
+            if (rootLogLevel != null) {
+                level = Level.toLevel(rootLogLevel, Level.INFO);
+            } else if ("dev".equals(profile)) {
+                level = Level.DEBUG;
+            } else {
+                level = Level.INFO;
+            }
+
+            console = Objects.requireNonNullElseGet(consoleEnabled, () -> "dev".equals(profile));
+
+            RollingFileAppender<ILoggingEvent> rollingFileAppender = createRollingFileAppender(logDir);
+
+            AsyncAppender asyncFileAppender = new AsyncAppender();
+            asyncFileAppender.setContext(loggerContext);
+            asyncFileAppender.setName("ASYNC_FILE");
+            asyncFileAppender.addAppender(rollingFileAppender);
+            asyncFileAppender.start();
+
+            ConsoleAppender<ILoggingEvent> consoleAppender = null;
+            if (console) {
+                consoleAppender = createConsoleAppender();
+            }
+
+            configureRootLogger(asyncFileAppender, consoleAppender, level);
+
+            configurePackageSpecificLoggers();
+
+            LOG.info("Logging initialized successfully. Profile: {}. Log directory: {}", profile, logDir.toAbsolutePath());
+
+        } catch (Exception e) {
+            LOG.error("Failed to initialize logging", e);
+        }
+    }
+
+    @PreDestroy
+    public void shutdownLogging() {
+        if (loggerContext != null) {
+            loggerContext.stop();
+        }
+    }
+
+    private Path createLogDirectory(String path) {
+        Objects.requireNonNull(path, "Log directory path must not be null");
+        try {
+            Path logPath = Paths.get(path);
+            if (!Files.exists(logPath)) Files.createDirectories(logPath);
+            return logPath;
+        } catch (Exception e) {
+            LOG.error("Failed to create log directory '{}'. Falling back to '{}'.", path, DEFAULT_LOG_DIR, e);
+            try {
+                Path fallback = Paths.get(DEFAULT_LOG_DIR);
+                Files.createDirectories(fallback);
+                return fallback;
+            } catch (Exception ex) {
+                LOG.error("Fallback directory '{}' failed. Using current dir.", DEFAULT_LOG_DIR, ex);
+                return Paths.get(".");
+            }
+        }
+    }
+
+    private PatternLayoutEncoder createEncoder(String pattern) {
+        if (pattern == null || pattern.isEmpty()) {
+            pattern = DEFAULT_LOG_PATTERN;
+        }
+        PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+        encoder.setContext(loggerContext);
+        encoder.setPattern(pattern);
+        encoder.start();
+        return encoder;
+    }
+
+    private RollingFileAppender<ILoggingEvent> createRollingFileAppender(Path logDir) {
+        PatternLayoutEncoder encoder = createEncoder(logPattern);
+
+        RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
+        rollingFileAppender.setContext(loggerContext);
+        rollingFileAppender.setName("ROLLING_FILE");
+        rollingFileAppender.setFile(logDir.resolve(logFileName).toString());
+        rollingFileAppender.setEncoder(encoder);
+
+        SizeAndTimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new SizeAndTimeBasedRollingPolicy<>();
+        rollingPolicy.setContext(loggerContext);
+        rollingPolicy.setParent(rollingFileAppender);
+
+        if (rollingFileNamePattern == null || rollingFileNamePattern.isEmpty()) {
+            rollingFileNamePattern = DEFAULT_ROLLING_PATTERN;
+        }
+        rollingPolicy.setFileNamePattern(logDir.resolve(rollingFileNamePattern).toString());
+
+        FileSize maxFileSize;
+        try {
+            maxFileSize = FileSize.valueOf(maxFileSizeStr);
+        } catch (Exception e) {
+            LOG.warn("Invalid maxFileSize '{}', using default {}", maxFileSizeStr, DEFAULT_MAX_FILE_SIZE);
+            maxFileSize = FileSize.valueOf(DEFAULT_MAX_FILE_SIZE);
+        }
+        rollingPolicy.setMaxFileSize(maxFileSize);
+
+        rollingPolicy.setMaxHistory(maxHistory);
+
+        FileSize totalSizeCap;
+        try {
+            totalSizeCap = FileSize.valueOf(totalSizeCapStr);
+        } catch (Exception e) {
+            LOG.warn("Invalid totalSizeCap '{}', using default {}", totalSizeCapStr, DEFAULT_TOTAL_SIZE_CAP);
+            totalSizeCap = FileSize.valueOf(DEFAULT_TOTAL_SIZE_CAP);
+        }
+        rollingPolicy.setTotalSizeCap(totalSizeCap);
+
+        rollingPolicy.start();
+        rollingFileAppender.setRollingPolicy(rollingPolicy);
+        rollingFileAppender.start();
+
+        return rollingFileAppender;
+    }
+
+
+    private ConsoleAppender<ILoggingEvent> createConsoleAppender() {
+        PatternLayoutEncoder encoder = createEncoder(logPattern);
+        ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
+        consoleAppender.setContext(loggerContext);
+        consoleAppender.setName("CONSOLE");
+        consoleAppender.setEncoder(encoder);
+        consoleAppender.start();
+        return consoleAppender;
+    }
+
+    private void configureRootLogger(AsyncAppender asyncFileAppender,
+                                     ConsoleAppender<ILoggingEvent> consoleAppender,
+                                     Level level) {
+
+        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        rootLogger.detachAndStopAllAppenders();
+
+        rootLogger.addAppender(asyncFileAppender);
+
+        if (consoleAppender != null) {
+            rootLogger.addAppender(consoleAppender);
+        }
+
+        rootLogger.setLevel(level);
+        rootLogger.setAdditive(false);
+    }
+
+    private void configurePackageSpecificLoggers() {
+        for (Map.Entry<String, String> entry : loggerLevels.entrySet()) {
+            String loggerName = entry.getKey();
+            if ("root".equalsIgnoreCase(loggerName)) {
+                continue; // Root is already configured
+            }
+            Level lvl = Level.toLevel(entry.getValue(), Level.INFO);
+            loggerContext.getLogger(loggerName).setLevel(lvl);
+        }
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/mapper/AddressMapper.java =====
+
+package com.llmquality.baseline.mapper;
+
+import com.llmquality.baseline.dto.AddressRequest;
+import com.llmquality.baseline.dto.AddressResponse;
+import com.llmquality.baseline.entity.Address;
+import com.llmquality.baseline.entity.User;
+import org.mapstruct.*;
+
+
+/**
+ * Mapper interface for converting between {@link Address} entity and Address DTOs.
+ * <p>
+ * This interface defines the mappings to transform the {@link AddressRequest} to an {@link Address} entity,
+ * and vice versa, as well as handling address updates from {@link AddressRequest}.
+ * </p>
+ */
+@Mapper(componentModel = "spring")
+public interface AddressMapper {
+
+    /**
+     * Maps an {@link AddressRequest} DTO and a {@link User} entity to an {@link Address} entity.
+     * The {@code id} field is ignored because it is managed by the database.
+     * The user is mapped as a reference in the entity.
+     *
+     * @param addressRequest the {@link AddressRequest} DTO to map
+     * @param user           the {@link User} entity that the address is associated with
+     * @return the mapped {@link Address} entity
+     */
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", source = "user")
+    Address toAddressEntity(AddressRequest addressRequest, User user);
+
+    /**
+     * Maps an {@link Address} entity to an {@link AddressResponse} DTO.
+     * The user's ID is mapped from the {@link User} entity to the {@link AddressResponse}.
+     *
+     * @param address the {@link Address} entity to map
+     * @return the mapped {@link AddressResponse} DTO
+     */
+    @Mapping(target = "userId", source = "user.id")
+    AddressResponse toAddressResponse(Address address);
+
+    /**
+     * Updates an {@link Address} entity using values from the provided {@link AddressRequest} DTO.
+     * <p>
+     * The {@code id} and {@code user} fields are ignored since they should not be modified.
+     * Only non-null values from the DTO will be mapped onto the existing entity.
+     * </p>
+     *
+     * @param addressRequest the {@link AddressRequest} DTO containing the updated data
+     * @param address        the {@link Address} entity to update
+     * @return the updated {@link Address} entity
+     */
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    Address updateAddressEntityFromAddressRequest(AddressRequest addressRequest, @MappingTarget Address address);
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/mapper/UserMapper.java =====
+
+package com.llmquality.baseline.mapper;
+
+import com.llmquality.baseline.dto.UserRequest;
+import com.llmquality.baseline.dto.UserResponse;
+import com.llmquality.baseline.entity.User;
+import org.mapstruct.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+
+/**
+ * Mapper interface for converting between database entity {@link User} and User DTOs.
+ */
+@Mapper(componentModel = "spring")
+public interface UserMapper {
+
+    /**
+     * Maps a {@link UserRequest} to a {@link User} entity.
+     * The {@code id} is ignored since it is managed by JPA/database.
+     * The password is hashed using the provided {@link PasswordEncoder}.
+     *
+     * @param dto             the DTO to map
+     * @param passwordEncoder the password encoder to hash the password
+     * @return the mapped User entity with hashed password
+     */
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", expression = "java(passwordEncoder.encode(dto.password()))")
+    User toUserEntity(UserRequest dto, @Context PasswordEncoder passwordEncoder);
+
+    /**
+     * Maps a {@link User} entity to a {@link UserResponse}.
+     *
+     * @param user the entity to map
+     * @return the DTO representing the user without sensitive data
+     */
+    UserResponse toUserResponse(User user);
+
+    /**
+     * Updates the fields of the given {@link User} entity using values from the provided {@link UserRequest} DTO.
+     * <p>
+     * The method will map the following fields:
+     * <ul>
+     *     <li> {@code id} is ignored (not mapped) </li>
+     *     <li> {@code username}, {@code email}, {@code password}, and {@code admin} are mapped from the DTO to the entity,
+     *          with any {@code null} values being ignored. </li>
+     * </ul>
+     * The password is hashed using the provided {@link PasswordEncoder}.
+     *
+     * @param dto             the {@link UserRequest} DTO containing the data to update the entity.
+     * @param entity          the {@link User} entity to be updated.
+     * @param passwordEncoder the password encoder to hash the password
+     * @return the mapped User entity with hashed password(if changed)
+     */
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", expression = "java(dto.password() != null ? passwordEncoder.encode(passwordEncoder.encode(dto.password())) : entity.getPassword())")
+    User updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity, @Context PasswordEncoder passwordEncoder);
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/repository/AddressRepository.java =====
+
+package com.llmquality.baseline.repository;
+
+import com.llmquality.baseline.entity.Address;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+
+@Repository
+public interface AddressRepository extends JpaRepository<Address, Long> {
+
+    Page<Address> findAllByUserId(Long userId, Pageable pageable);
+
+    boolean existsByIdAndUserId(Long id, Long userId);
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/repository/UserRepository.java =====
+
+package com.llmquality.baseline.repository;
+
+import com.llmquality.baseline.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/security/SecurityConfig.java =====
+
+package com.llmquality.baseline.security;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
+
+
+/**
+ * Configuration class for application security.
+ * <p>
+ * This class sets up the security filter chain, password encoding, and JWT encoding/decoding
+ * for the application using Spring Security. It configures stateless session management,
+ * disables CSRF protection for simplicity in a REST API context, and sets access rules
+ * for public and authenticated endpoints.
+ * </p>
+ * <p>
+ * The JWT secret key is injected from application properties and used for both encoding
+ * and decoding JWT tokens. A {@link PasswordEncoder} bean is also provided for hashing
+ * user passwords securely.
+ * </p>
+ * <p>
+ * Public endpoints include login and user registration, while all other requests require
+ * authentication. OAuth2 resource server support is enabled for JWT-based authentication.
+ * </p>
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${api.base-path}")
+    private String apiBasePath;
+
+    private static final String JWT_ALGORITHM = "HmacSHA256";
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error", "/error/**").permitAll()
+                        .requestMatchers(apiBasePath + "/users/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, apiBasePath + "/users").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())
+                        )
+                )
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        return http.build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthorityPrefix("ROLE_");
+        authoritiesConverter.setAuthoritiesClaimName("scope");
+
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+        converter.setPrincipalClaimName("sub");
+        return converter;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder() {
+        SecretKey key = createSecretKey(jwtSecret);
+        return new NimbusJwtEncoder(new ImmutableSecret<>(key));
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        SecretKey key = createSecretKey(jwtSecret);
+        return NimbusJwtDecoder.withSecretKey(key).build();
+    }
+
+    private SecretKey createSecretKey(String base64Secret) {
+        byte[] secretBytes = Base64.getDecoder().decode(base64Secret);
+        return new SecretKeySpec(secretBytes, JWT_ALGORITHM);
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/security/SecurityExpressions.java =====
+
+package com.llmquality.baseline.security;
+
+import com.llmquality.baseline.enums.Role;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+
+/**
+ * Custom Spring Security expressions for method security.
+ * <p>
+ * Registered as Spring bean with name "sec" → usable in @PreAuthorize as @sec.xxx()
+ * This is the official and recommended way to keep @PreAuthorize expressions clean and testable.
+ * </p>
+ */
+@Component("sec")
+public class SecurityExpressions {
+
+    public boolean isOwner(Long resourceOwnerId, Authentication auth) {
+        return resourceOwnerId != null
+                && auth != null
+                && auth.getName() != null
+                && resourceOwnerId.toString().equals(auth.getName());
+    }
+
+    public boolean canSetAdminFlag(Boolean newValue, Authentication auth) {
+        return newValue == null || !newValue || isAdmin(auth);
+    }
+
+    public boolean isAdmin(Authentication auth) {
+        if (auth == null || auth.getAuthorities() == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(granted -> Role.ADMIN.authority().equals(granted.getAuthority()));
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java =====
+
+package com.llmquality.baseline.service;
+
+import com.llmquality.baseline.dto.AddressRequest;
+import com.llmquality.baseline.dto.AddressResponse;
+import com.llmquality.baseline.dto.PagedResponse;
+import com.llmquality.baseline.entity.Address;
+import com.llmquality.baseline.entity.User;
+import com.llmquality.baseline.exception.ResourceNotFoundException;
+import com.llmquality.baseline.mapper.AddressMapper;
+import com.llmquality.baseline.mapper.UserMapper;
+import com.llmquality.baseline.repository.AddressRepository;
+import com.llmquality.baseline.repository.UserRepository;
+import com.llmquality.baseline.service.interfaces.AddressService;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
+
+
+@Service
+@Transactional(readOnly = true)
+public class AddressServiceImpl implements AddressService {
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(AddressServiceImpl.class);
+
+    private static final String USER = "User";
+
+    private static final String ADDRESS = "Address";
+
+    private final AddressRepository addressRepository;
+
+    private final UserRepository userRepository;
+
+    private final AddressMapper addressMapper;
+
+
+    @Autowired
+    public AddressServiceImpl(AddressRepository addressRepository, UserRepository userRepository, AddressMapper addressMapper) {
+        this.addressRepository = addressRepository;
+        this.userRepository = userRepository;
+        this.addressMapper = addressMapper;
+    }
+
+    @Override
+    public PagedResponse<AddressResponse> listAll(final Long userId, final Pageable pageable) {
+        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+
+        final User existingUserEntity = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    LOG.error("<-- listAll, User with ID {} not found", userId);
+                    return new ResourceNotFoundException(USER, "id", userId);
+                });
+
+        final Page<AddressResponse> page = addressRepository
+                .findAllByUserId(existingUserEntity.getId(), pageable)
+                .map(addressMapper::toAddressResponse);
+        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+        return PagedResponse.fromPage(page);
+    }
+
+    @Override
+    public AddressResponse getById(Long userId, Long addressId) {
+        LOG.debug("--> getById, userId: {} and addressId: {}", userId, addressId);
+        final Address existingAddressEntity = addressRepository.findById(addressId).get();
+
+        enforceAddressOwnership(existingAddressEntity, userId);
+
+        final AddressResponse addressResponse = addressMapper.toAddressResponse(existingAddressEntity);
+        LOG.debug("<-- getById, userId: {} and addressId: {}", userId, addressResponse.id());
+        return addressResponse;
+    }
+
+    @Transactional
+    @Override
+    public AddressResponse save(final Long userId, final AddressRequest addressRequest) {
+        LOG.debug("--> save, address for user with userId: {}", userId);
+        final User existingUserEntity = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    LOG.error("<-- getById, User with userId {} not found", userId);
+                    return new ResourceNotFoundException(USER, "id", userId);
+                });
+
+        final Address addressEntity = addressMapper.toAddressEntity(addressRequest, existingUserEntity);
+        final AddressResponse addressResponse = addressMapper.toAddressResponse(addressEntity);
+        LOG.debug("<-- save, address saved with id: {}", addressEntity.getId());
+        return addressResponse;
+    }
+
+    @Transactional
+    @Override
+    public AddressResponse update(final Long userId, final Long addressId, final AddressRequest addressRequest) {
+        LOG.debug("--> update, address with addressId: {} by userId: {}", addressId, userId);
+        final Address existingAddressEntity = addressRepository.findById(addressId)
+                .orElseThrow(() -> {
+                    LOG.error("<-- update, Address with ID {} not found", addressId);
+                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
+                });
+
+        enforceAddressOwnership(existingAddressEntity, userId);
+
+        // Partial update via updateAddressEntityFromAddressRequest
+        final Address updatedAddressEntity = addressMapper.updateAddressEntityFromAddressRequest(addressRequest, existingAddressEntity);
+        final Address saveAddressEntity = addressRepository.save(updatedAddressEntity);
+        final AddressResponse addressResponse = addressMapper.toAddressResponse(saveAddressEntity);
+        LOG.debug("<-- update, address with addressId: {} by userId: {}", addressResponse.id(), addressResponse.userId());
+        return addressResponse;
+    }
+
+    @Transactional
+    @Override
+    public void delete(final Long userId, final Long addressId) {
+        LOG.debug("--> delete, addressId: {}", addressId);
+        final Address existingAddressEntity = addressRepository.findById(addressId)
+                .orElseThrow(() -> {
+                    LOG.error("<-- delete, Address with ID {} not found", addressId);
+                    return new ResourceNotFoundException(ADDRESS, "id", addressId);
+                });
+
+        enforceAddressOwnership(existingAddressEntity, userId);
+
+        addressRepository.delete(existingAddressEntity);
+        LOG.debug("<-- delete, address with id {} deleted", existingAddressEntity.getId());
+    }
+
+    /**
+     * Enforces that the given address belongs to the requested user.
+     * <p>
+     * Throws {@link ResourceNotFoundException} (404) on mismatch to prevent information disclosure.
+     * Must be called after loading the address and after coarse-grained {@code @PreAuthorize} check.
+     * </p>
+     *
+     * @param address         the loaded address entity
+     * @param requestedUserId the userId from the request path
+     * @throws ResourceNotFoundException if address does not belong to requestedUserId
+     */
+    private void enforceAddressOwnership(Address address, Long requestedUserId) {
+        LOG.debug("--> enforceAddressOwnership");
+        final Long ownerId = (address.getUser() != null) ? address.getUser().getId() : null;
+
+        if (!Objects.equals(ownerId, requestedUserId)) {
+            LOG.warn("<-- enforceAddressOwnership, Access denied: User {} tried to access address {} (ownerId={})",
+                    requestedUserId, address.getId(), ownerId);
+            throw new ResourceNotFoundException(ADDRESS, "id", address.getId());
+        }
+        LOG.debug("<-- enforceAddressOwnership, Ownership confirmed");
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java =====
+
+package com.llmquality.baseline.service;
+
+import com.llmquality.baseline.dto.*;
+import com.llmquality.baseline.entity.User;
+import com.llmquality.baseline.enums.Role;
+import com.llmquality.baseline.exception.ResourceAlreadyExistsException;
+import com.llmquality.baseline.exception.ResourceNotFoundException;
+import com.llmquality.baseline.exception.UnauthorizedException;
+import com.llmquality.baseline.mapper.UserMapper;
+import com.llmquality.baseline.repository.UserRepository;
+import com.llmquality.baseline.service.interfaces.UserService;
+import jakarta.persistence.EntityManager;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Objects;
+
+
+@Service
+@Transactional(readOnly = true)
+public class UserServiceImpl implements UserService {
+
+    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(UserServiceImpl.class);
+
+    private static final String USER = "User";
+
+    // Prevent timing attack (username enumeration) by always performing password comparison
+    private static final String DUMMY_HASH = "$2a$10$dummydummydummydummydummydummydummydummydummydummy";
+
+    private final UserRepository userRepository;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final UserMapper userMapper;
+
+    private final EntityManager entityManager;
+
+    private final JwtEncoder jwtEncoder;
+
+    @Value("${jwt.issuer:self}")
+    private String jwtIssuer;
+
+    @Value("${jwt.expiration-hours:6}")
+    private long jwtExpirationHours;
+
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, UserMapper userMapper, EntityManager entityManager, JwtEncoder jwtEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userMapper = userMapper;
+        this.entityManager = entityManager;
+        this.jwtEncoder = jwtEncoder;
+    }
+
+    @Override
+    public PagedResponse<UserResponse> listAll(Pageable pageable) {
+        LOG.debug("--> listAll, page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        final List<User> users = userRepository.findAll();
+        final List<UserResponse> userResponses = users.stream()
+                .map(userMapper::toUserResponse)
+                .toList();
+
+        Page<UserResponse> page = new PageImpl<>(userResponses, pageable, userResponses.size());
+        LOG.debug("<-- listAll, total elements={}, total pages={}", page.getTotalElements(), page.getTotalPages());
+        return PagedResponse.fromPage(page);
+    }
+
+    @Override
+    public UserResponse getById(final Long id) {
+        LOG.debug("--> getById, id: {}", id);
+        final User existingUserEntity = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    LOG.error("<-- getById, User with ID {} not found", id);
+                    return new ResourceNotFoundException(USER, "id", id);
+                });
+
+        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
+        LOG.debug("<-- getById, user found: {}", userResponse.id());
+        return userResponse;
+    }
+
+    @Override
+    public UserResponse getByUsername(final String username) {
+        LOG.debug("--> getByUsername, username: {}", username);
+
+        String sql = "SELECT * FROM users WHERE username = '" + username + "'";
+        List<User> results = entityManager.createNativeQuery(sql, User.class).getResultList();
+        final User existingUserEntity = results.stream().findFirst()
+                .orElseThrow(() -> {
+                    LOG.error("<-- getByUsername, User '{}' not found", username);
+                    return new ResourceNotFoundException(USER, "username", username);
+                });
+
+        final UserResponse userResponse = userMapper.toUserResponse(existingUserEntity);
+        LOG.debug("<-- getByUsername, user found: {}", userResponse.id());
+        return userResponse;
+    }
+
+    @Transactional
+    @Override
+    public UserResponse save(final UserRequest userRequest) {
+        LOG.debug("--> save, user with name: {} and password: {}", userRequest.username(), userRequest.password());
+
+        if (userRepository.existsByUsername(userRequest.username())) {
+            LOG.error("<-- save, ResourceAlreadyExistsException for username: {}", userRequest.username());
+            throw new ResourceAlreadyExistsException(USER, "username", userRequest.username());
+        }
+
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User userEntity = userMapper.toUserEntity(userRequest, localPasswordEncoder);
+        final User savedUserEntity = userRepository.save(userEntity);
+        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
+
+        LOG.debug("<-- save, user saved with id: {}", userResponse.id());
+        return userResponse;
+    }
+
+    @Transactional
+    @Override
+    public UserResponse update(final Long id, final UserRequest userRequest) {
+        LOG.debug("--> update, user with id: {}", id);
+
+        final User existingUserEntity = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    LOG.error("<-- update, User with ID {} not found for update", id);
+                    return new ResourceNotFoundException(USER, "id", id);
+                });
+
+        final String newName = userRequest.username();
+        if (newName != null && !newName.isBlank() && !newName.equals(existingUserEntity.getUsername()) && userRepository.existsByUsername(newName)) {
+            LOG.error("<-- update, failed for user with ID {}. Username '{}' already exists", id, newName);
+            throw new ResourceAlreadyExistsException(USER, "username", newName);
+        }
+
+        // Partial update via updateUserEntityFromUserRequest
+        final PasswordEncoder localPasswordEncoder = new BCryptPasswordEncoder();
+        final User updatedUserEntity = userMapper.updateUserEntityFromUserRequest(userRequest, existingUserEntity, localPasswordEncoder);
+        final User savedUserEntity = userRepository.save(updatedUserEntity);
+        final UserResponse userResponse = userMapper.toUserResponse(savedUserEntity);
+
+        LOG.debug("<-- update, user updated with id: {}", userResponse.id());
+        return userResponse;
+    }
+
+    @Transactional
+    @Override
+    public void delete(final Long id) {
+        LOG.debug("--> delete, id: {}", id);
+
+        final User existingUserEntity = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    LOG.error("<-- delete, User with ID {} not found for deletion", id);
+                    return new ResourceNotFoundException(USER, "id", id);
+                });
+
+        LOG.debug("<-- delete, user with id {} deleted", existingUserEntity.getId());
+    }
+
+    @Override
+    public LoginResponse checkLogin(final LoginRequest loginRequest) {
+        LOG.debug("--> checkLogin");
+        final String username = loginRequest.username();
+        final String password = Objects.requireNonNullElse(loginRequest.password(), "");
+
+        final User user = userRepository.findByUsername(username).get();
+
+        final String hashed = user != null ? user.getPassword() : DUMMY_HASH;
+        final boolean valid = passwordEncoder.matches(password, hashed);
+
+        if (user == null || !valid) {
+            LOG.warn("<-- checkLogin, FAILED");
+            throw new UnauthorizedException(USER, "credentials", "invalid");
+        }
+
+        final LoginResponse loginResponse = createLoginResponse(user);
+        LOG.debug("<-- checkLogin");
+        return loginResponse;
+    }
+
+    /**
+     * Creates a {@link LoginResponse} containing a freshly generated JWT token with expiration metadata.
+     * <p>
+     * The issued-at and expiration timestamps are calculated once to ensure perfect consistency between
+     * the values embedded in the JWT and those returned to the client.
+     *
+     * @param user the authenticated user
+     * @return a {@link LoginResponse} with the JWT token, exact expiration instant and remaining seconds
+     */
+    private LoginResponse createLoginResponse(final User user) {
+        LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
+        final Instant issuedAt = Instant.now();
+        final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
+        final long expiresInSeconds = Duration.between(issuedAt, expiresAt).getSeconds();
+        final String token = generateJwtToken(user, issuedAt, expiresAt);
+        final LoginResponse loginResponse = new LoginResponse(token, expiresAt, expiresInSeconds);
+        LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
+        return loginResponse;
+    }
+
+    /**
+     * Generates a signed HS256 JWT for the given user using the provided timestamps.
+     * <p>
+     * The token contains:
+     * <ul>
+     *   <li>{@code iss} – configured issuer</li>
+     *   <li>{@code iat} – issued-at timestamp</li>
+     *   <li>{@code exp} – expiration timestamp</li>
+     *   <li>{@code sub} – user ID</li>
+     *   <li>{@code scope} – {@code ROLE_ADMIN} or {@code ROLE_USER}</li>
+     * </ul>
+     *
+     * @param user      the user to issue the token for
+     * @param issuedAt  exact issuance instant (must match the one used externally)
+     * @param expiresAt exact expiration instant (must match the one used externally)
+     * @return the compact JWT string
+     */
+    private String generateJwtToken(User user, Instant issuedAt, Instant expiresAt) {
+        LOG.debug("--> generateJwtToken, for username: {}", user.getUsername());
+        final String scope = user.isAdmin() ? Role.ADMIN.name() : Role.USER.name();
+
+        final JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(jwtIssuer)
+                .issuedAt(issuedAt)
+                .expiresAt(expiresAt)
+                .subject(String.valueOf(user.getId()))
+                .claim("scope", scope)
+                .build();
+
+        final String token = jwtEncoder.encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+        LOG.debug("<-- generateJwtToken, for username: {}", user.getUsername());
+        return token;
+    }
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/AddressService.java =====
+
+package com.llmquality.baseline.service.interfaces;
+
+import com.llmquality.baseline.dto.AddressRequest;
+import com.llmquality.baseline.dto.AddressResponse;
+import com.llmquality.baseline.dto.PagedResponse;
+import com.llmquality.baseline.entity.Address;
+import org.springframework.data.domain.Pageable;
+
+
+/**
+ * Service interface for managing {@link Address} entities and performing
+ * address-related operations for users, such as creating, updating, retrieving,
+ * and deleting addresses.
+ */
+public interface AddressService {
+
+    /**
+     * Retrieves a paginated list of all addresses for a specific user.
+     *
+     * @param userId   the ID of the user whose addresses are to be fetched
+     * @param pageable pagination details such as page number and size
+     * @return a {@link PagedResponse} containing a list of {@link AddressResponse} objects
+     */
+    PagedResponse<AddressResponse> listAll(Long userId, Pageable pageable);
+
+    /**
+     * Retrieves an address by its ID for a specific user.
+     *
+     * @param userId    the ID of the user whose address is to be retrieved
+     * @param addressId the ID of the address to retrieve
+     * @return the corresponding {@link AddressResponse} for the given address ID
+     */
+    AddressResponse getById(Long userId, Long addressId);
+
+    /**
+     * Creates a new address for a specific user.
+     *
+     * @param userId         the ID of the user for whom the address is to be created
+     * @param addressRequest the request object containing address details to be saved
+     * @return the newly created {@link AddressResponse}
+     */
+    AddressResponse save(Long userId, AddressRequest addressRequest);
+
+    /**
+     * Updates an existing address for a specific user.
+     *
+     * @param userId         the ID of the user whose address is to be updated
+     * @param addressId      the ID of the address to update
+     * @param addressRequest the request object containing updated address details
+     * @return the updated {@link AddressResponse}
+     */
+    AddressResponse update(Long userId, Long addressId, AddressRequest addressRequest);
+
+    /**
+     * Deletes an address for a specific user.
+     *
+     * @param userId    the ID of the user whose address is to be deleted
+     * @param addressId the ID of the address to delete
+     */
+    void delete(Long userId, Long addressId);
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/CRUDable.java =====
+
+package com.llmquality.baseline.service.interfaces;
+
+import com.llmquality.baseline.dto.PagedResponse;
+import org.springframework.data.domain.Pageable;
+
+
+/**
+ * Generic CRUD interface with standard type parameter naming conventions:
+ * <ul>
+ *     <li>R: Request / Input DTO type</li>
+ *     <li>S: Response / Output DTO type</li>
+ * </ul>
+ *
+ * @param <R> the type of the DTO used for create/update requests
+ * @param <S> the type of the DTO returned in responses without sensitive data
+ */
+public interface CRUDable<R, S> {
+
+    /**
+     * Retrieves a paginated list of entities as response DTOs.
+     *
+     * <p>The result includes the content for the requested page along with
+     * pagination metadata such as total elements, total pages, and whether
+     * the current page is the last one.</p>
+     *
+     * <p>Sorting is disabled in this method; only paging parameters (page number
+     * and page size) are considered.</p>
+     *
+     * @param pageable the pagination information (page number and page size)
+     * @return a {@link PagedResponse} containing the content and pagination metadata
+     */
+    PagedResponse<S> listAll(Pageable pageable);
+
+    /**
+     * Retrieves an entity by its unique identifier.
+     *
+     * @param id the ID of the entity to retrieve
+     * @return the entity represented as a response DTO
+     */
+    S getById(Long id);
+
+    /**
+     * Saves a new entity from a request DTO.
+     *
+     * @param requestDTO the DTO containing data to create the entity
+     * @return the saved entity represented as a response DTO
+     */
+    S save(R requestDTO);
+
+    /**
+     * Updates an existing entity by ID using a request DTO.
+     *
+     * @param id         the ID of the entity to update
+     * @param requestDTO the DTO containing updated data
+     * @return the updated entity represented as a response DTO
+     */
+    S update(Long id, R requestDTO);
+
+    /**
+     * Deletes an entity by its unique identifier.
+     *
+     * @param id the ID of the entity to delete
+     */
+    void delete(Long id);
+}
+
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/UserService.java =====
+
+package com.llmquality.baseline.service.interfaces;
+
+import com.llmquality.baseline.dto.LoginRequest;
+import com.llmquality.baseline.dto.LoginResponse;
+import com.llmquality.baseline.dto.UserRequest;
+import com.llmquality.baseline.dto.UserResponse;
+import com.llmquality.baseline.entity.User;
+
+
+/**
+ * Service interface for managing {@link User} entities and performing
+ * user-related operations such as authentication and lookup.
+ * <p>
+ * Extends {@link CRUDable} to provide standard Create, Read, Update,
+ * and Delete operations for {@link UserResponse}/{@link User} objects.
+ * </p>
+ */
+public interface UserService extends CRUDable<UserRequest, UserResponse> {
+
+    /**
+     * Validates user credentials and returns the login result.
+     *
+     * @param loginRequest the login request containing username and password
+     * @return a {@link LoginResponse} indicating whether authentication was successful
+     */
+    LoginResponse checkLogin(LoginRequest loginRequest);
+
+    /**
+     * Retrieves a user by their username.
+     *
+     * @param username username the username to search for
+     * @return the corresponding {@link UserResponse}
+     */
+    UserResponse getByUsername(String username);
+}
