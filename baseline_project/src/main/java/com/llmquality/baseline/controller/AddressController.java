@@ -4,6 +4,7 @@ import com.llmquality.baseline.dto.AddressRequest;
 import com.llmquality.baseline.dto.AddressResponse;
 import com.llmquality.baseline.dto.PagedResponse;
 import com.llmquality.baseline.service.interfaces.AddressService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -20,6 +21,7 @@ public class AddressController {
 
     private final AddressService addressService;
 
+    @Autowired
     public AddressController(AddressService addressService) {
         this.addressService = addressService;
     }
