@@ -1,0 +1,17 @@
+Ein Fault ist die vermutete oder festgestellte Ursache eines Errors im Systemzustand. Er kann intern oder extern, permanent oder transient, absichtlich (malicious) oder unabsichtlich (non-malicious) sein. Ein Fault wird erst dann aktiv und relevant für die Dependability, wenn er durch einen Aktivierungsmuster (activation pattern) zu einem Error führt, der sich ggf. zum Service Interface propagiert und ein Failure verursacht.
+(Avižzienis, Laprie, Randell, Landwehr: „Basic Concepts and Taxonomy of Dependable and Secure Computing“, IEEE TDSC 2004)
+
+= Ein Fault ist immer die Ursache, nicht das Symptom (Error) und nicht das äußere Versagen (Failure).
+  Er muss potenziell einen Error im Systemzustand erzeugen können,
+
+-> Code Smells/Maintainability Verstöße, die aufgrund von fehlerbehaftetem Code verursacht werden, aber zur Laufzeit
+keinen Error und damit auch keinen sichtbaren Failure erzeugen, sind laut Definition KEIN Fault!
+
+Trigger → Fault(Ursache) → Error(interner Fehlerzustand) → Failure(sichtbarer Fehler) → ISO 25010 Observation und Kategorisierung
+
+
+Die ISO 25010 Observation und Kategorisierung schaut sich allerdings nicht nur den Failure(Fehlerwirkung)
+an, sondern betrachtet auch andere Aspekte wie: Eigenschaften des Designs, der Architektur und des Codes, welche
+keinen Error und Failure zur Laufzeit erzeugen können.
+
+-> Solche Codeprobleme dürfen wir nicht als Fault verwenden!
