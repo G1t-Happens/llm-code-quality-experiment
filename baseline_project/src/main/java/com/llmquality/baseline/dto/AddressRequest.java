@@ -16,11 +16,11 @@ import static com.llmquality.baseline.dto.validation.AddressValidationGroups.*;
  */
 public record AddressRequest(
 
-        @NotBlank(groups = Create.class, message = "SomeValue is required on create")
+        @NotBlank(groups = Create.class, message = "Street is required on create")
         @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
-                message = "SomeValue must not be empty or consist only of whitespace")
-        @Size(max = 255, message = "SomeValue must be at most 255 characters long")
-        String someValue,
+                message = "Street must not be empty or consist only of whitespace")
+        @Size(max = 255, message = "Street must be at most 255 characters long")
+        String street,
 
         @NotBlank(groups = Create.class, message = "House number is required on create")
         @Pattern(regexp = "\\S[\\S\\s]*", groups = Update.class,
