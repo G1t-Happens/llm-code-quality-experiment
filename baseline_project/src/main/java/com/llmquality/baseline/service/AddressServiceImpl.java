@@ -7,7 +7,6 @@ import com.llmquality.baseline.entity.Address;
 import com.llmquality.baseline.entity.User;
 import com.llmquality.baseline.exception.ResourceNotFoundException;
 import com.llmquality.baseline.mapper.AddressMapper;
-import com.llmquality.baseline.mapper.UserMapper;
 import com.llmquality.baseline.repository.AddressRepository;
 import com.llmquality.baseline.repository.UserRepository;
 import com.llmquality.baseline.service.interfaces.AddressService;

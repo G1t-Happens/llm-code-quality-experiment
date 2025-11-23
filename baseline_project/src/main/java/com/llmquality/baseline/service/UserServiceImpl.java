@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -207,9 +206,8 @@ public class UserServiceImpl implements UserService {
         LOG.debug("--> createLoginResponse, for username: {}", user.getUsername());
         final Instant issuedAt = Instant.now();
         final Instant expiresAt = issuedAt.plus(jwtExpirationHours, ChronoUnit.HOURS);
-        final long expiresInSeconds = Duration.between(issuedAt, expiresAt).getSeconds();
         final String token = generateJwtToken(user, issuedAt, expiresAt);
-        final LoginResponse loginResponse = new LoginResponse(token, expiresAt, expiresInSeconds);
+        final LoginResponse loginResponse = new LoginResponse(token);
         LOG.debug("<-- createLoginResponse, for username: {}", user.getUsername());
         return loginResponse;
     }
