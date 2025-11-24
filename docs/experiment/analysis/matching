@@ -23,3 +23,23 @@ Fachlich: State-of-the-Art, cheating-resistent, misst echte Lokalisierungspräzi
 
 
 Hintergrund: Wir wollen keine cheatende LLMs/KI-Agents belohnen :)
+
+
+
+EVALUATION – IMPLEMENTIERUNG
+Anforderung                                | Implementiert? | Beweis
+-------------------------------------------|----------------|----------------------------------------
+Greedy First Match pro Datei               | Ja             | gt_by_file + det_by_file + for filename in ...
+Kein Cross-File-Matching                   | Ja             | Jede Datei hat eigene remaining_old / remaining_strict
+Unabhängige Bewertung pro Run              | Ja             | Kein „Klauen“ zwischen Runs → korrekte Varianzmessung
+Loose line-level matching (±tolerance)     | Ja             | lines_overlap() exakt wie in SWE-Bench (loose)
+IoU ≥ 0.30                                 | Ja             | iou = overlap / union + return iou >= 0.30
+Large-span penalty (≤ 40 Zeilen)           | Ja             | if det_size > 40: return False
+Large-span penalty (≤ 6× GT-Größe)         | Ja             | det_size > max(8, gt_size * 6)
+TP nur bei allen drei Bedingungen (strict) | Ja             | Nur wenn strict_ok == True → tp_strict.append()
+Korrekte TP/FP/FN-Zählung                  | Ja             | Greedy 1:1, Duplikate → FP, verpasste → FN
+Precision / Recall / F1 korrekt            | Ja             | Standardformel wie in allen Top-Papers
+F1 pro Run + Mittelwert + Standardabweichung | Ja          | f1_classic_per_run / f1_strict_per_run + mean() + stdev()
+Finale CSV + Markdown                      | Ja             | final_comparison.csv + final_comparison.md
+Keine Seiteneffekte zwischen Runs          | Ja             | Jeder Run sieht die volle Ground Truth
+
