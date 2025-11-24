@@ -1,0 +1,116 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_5485.md",
+    "model": "gpt.5.1",
+    "session_id": "ses_54850caddffeQFcKZ7kuCEQT66",
+    "processed_at": "2025-11-24T22:10:12.718369",
+    "bug_count": 15
+  },
+  "bugs": [
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 72,
+      "end_line": 81,
+      "severity": "medium",
+      "error_description": "listAll(Pageable) ignores paging and sorting and always loads all users via userRepository.findAll(), causing incorrect pagination semantics and potential performance issues on large datasets"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 99,
+      "end_line": 103,
+      "severity": "high",
+      "error_description": "getByUsername(String) constructs a native SQL query via string concatenation (\"SELECT * FROM users WHERE username = '\" + username + \"'\") and executes it through EntityManager, introducing a classic SQL injection vulnerability and breaking for usernames containing quotes"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 117,
+      "end_line": 118,
+      "severity": "high",
+      "error_description": "save(UserRequest) logs the raw password in DEBUG logs (\"user with name: {} and password: {}\"), leaking sensitive credentials to log files and violating basic security and compliance requirements"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 125,
+      "end_line": 126,
+      "severity": "medium",
+      "error_description": "save(UserRequest) bypasses the injected PasswordEncoder bean by instantiating a new BCryptPasswordEncoder locally, coupling password hashing to a fixed algorithm and silently ignoring any global encoder configuration (e.g., strength, algorithm changes)"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 152,
+      "end_line": 153,
+      "severity": "medium",
+      "error_description": "update(Long, UserRequest) again creates a new BCryptPasswordEncoder instead of using the injected PasswordEncoder, leading to inconsistent hashing behavior if the global encoder configuration is changed and violating the single-source-of-truth for password hashing"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 163,
+      "end_line": 173,
+      "severity": "high",
+      "error_description": "delete(Long) loads the user entity but never calls userRepository.delete(...) or equivalent, so no database delete actually occurs despite log messages claiming successful deletion, causing logical inconsistencies between API contract and persisted state"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 176,
+      "end_line": 189,
+      "severity": "high",
+      "error_description": "checkLogin(LoginRequest) calls userRepository.findByUsername(username).get() without checking presence, so missing users cause NoSuchElementException (500 error) instead of a controlled UnauthorizedException; the subsequent null-check on user and DUMMY_HASH fallback are dead code, defeating the intended timing-attack mitigation"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+      "start_line": 53,
+      "end_line": 56,
+      "severity": "high",
+      "error_description": "updateUserEntityFromUserRequest(...) maps the password with expression passwordEncoder.encode(passwordEncoder.encode(dto.password())), double-hashing updated passwords so that future logins using PasswordEncoder.matches(password, storedHash) will fail and effectively lock users out after password changes"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 65,
+      "end_line": 68,
+      "severity": "high",
+      "error_description": "getById(Long, Long) calls addressRepository.findById(addressId).get() without presence check, so non-existent addresses trigger NoSuchElementException and return HTTP 500 instead of the intended 404 ResourceNotFoundException, breaking the API contract"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 78,
+      "end_line": 89,
+      "severity": "high",
+      "error_description": "save(Long, AddressRequest) maps the DTO to an Address entity but never persists it with addressRepository.save(...), yet logs \"address saved\" and returns a response; the address is never written to the database and the returned id will be null, causing silent data loss and client confusion"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "medium",
+      "error_description": "create(UserRequest) lacks @Valid or @Validated(Create.class) on the @RequestBody parameter, so the UserRequest constraints (e.g., nonblank username/password, email format, admin non-null on create) are not enforced at the controller boundary, allowing invalid or incomplete user data into the service layer"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 59,
+      "end_line": 62,
+      "severity": "high",
+      "error_description": "delete(Long) endpoint has no @PreAuthorize constraint, while SecurityConfig only enforces that any request is authenticated; this allows any authenticated user, including non-admins and non-owners, to delete arbitrary user accounts, constituting a broken access control vulnerability"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 47,
+      "severity": "medium",
+      "error_description": "create(Long, AddressRequest) is mapped with @PostMapping(consumes = \"text/plain\") while expecting a JSON AddressRequest body, causing standard application/json clients to receive 415 Unsupported Media Type and making the API contract misleading and fragile"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "low",
+      "error_description": "handleMalformedJson(HttpMessageNotReadableException) returns the result of ex.getMostSpecificCause().getMessage() directly to clients, potentially exposing internal parser or framework error details and implementation hints (information disclosure) instead of a sanitized generic message"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/logging/LoggingConfig.java",
+      "start_line": 51,
+      "end_line": 54,
+      "severity": "low",
+      "error_description": "LoggingConfig hard-codes a default logging.file.path to an absolute project-specific directory and a default logging.file.name containing a colon (\"application:errors.log\"), which reduces portability (especially to Windows) and may cause startup/logging failures on filesystems that disallow such characters or paths"
+    }
+  ]
+}

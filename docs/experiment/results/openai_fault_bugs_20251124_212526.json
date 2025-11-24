@@ -1,0 +1,65 @@
+[
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 99,
+    "end_line": 113,
+    "severity": "critical",
+    "error_description": "SQL injection vulnerability: getByUsername() (lines 99-113) constructs SQL with unescaped user input (username) directly in query string. This is a nonmalicious development fault (design/implementation, software, internal, development phase). If username is attacker-controlled, arbitrary SQL can be executed. Propagation: catastrophic (data leak, privilege escalation, data loss). Prevention: use parameterized queries or JPA repository methods."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 189,
+    "severity": "high",
+    "error_description": "Null dereference/NoSuchElementException risk: checkLogin() (lines 176-194) calls userRepository.findByUsername(username).get() without checking if user is present. If username does not exist, this throws NoSuchElementException. This is a nonmalicious development fault (omission, software, internal, development phase). Propagation: erratic failure (500 error). Prevention: check isPresent() before get()."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 118,
+    "end_line": 132,
+    "severity": "medium",
+    "error_description": "Inconsistent password hashing: save() (lines 117-132) uses a new BCryptPasswordEncoder instance instead of the injected passwordEncoder, which may have different configuration (e.g., strength, salt). This is a nonmalicious development fault (design/implementation, software, internal, development phase). Propagation: latent error; may cause login failures or security inconsistencies. Prevention: always use the injected passwordEncoder."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 153,
+    "end_line": 153,
+    "severity": "medium",
+    "error_description": "Inconsistent password hashing: update() (lines 136-159) uses a new BCryptPasswordEncoder instance instead of the injected passwordEncoder, which may have different configuration. This is a nonmalicious development fault (design/implementation, software, internal, development phase). Propagation: latent error; may cause login failures or security inconsistencies. Prevention: always use the injected passwordEncoder."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 163,
+    "end_line": 173,
+    "severity": "high",
+    "error_description": "User deletion does not actually remove user: delete() (lines 163-173) loads user entity but does not call userRepository.delete() or similar. This is a nonmalicious development fault (omission, software, internal, development phase). Propagation: content failure (user remains in DB despite delete request). Prevention: call userRepository.delete(existingUserEntity)."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 118,
+    "end_line": 118,
+    "severity": "low",
+    "error_description": "Sensitive data exposure in logs: save() (line 118) logs plaintext password in debug message. This is a nonmalicious development fault (omission, software, internal, development phase). Propagation: latent error; may lead to credential exposure if logs are accessed. Prevention: never log sensitive data such as passwords."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 55,
+    "end_line": 55,
+    "severity": "medium",
+    "error_description": "Password double-encoding: UserMapper.updateUserEntityFromUserRequest() (see UserMapper.java line 55) encodes password twice (passwordEncoder.encode(passwordEncoder.encode(dto.password()))). This is a nonmalicious development fault (design/implementation, software, internal, development phase). Propagation: latent error; user will not be able to log in after password update. Prevention: encode password only once."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 65,
+    "end_line": 74,
+    "severity": "high",
+    "error_description": "NoSuchElementException risk: getById() (lines 65-74) calls addressRepository.findById(addressId).get() without checking if address exists. If addressId does not exist, this throws NoSuchElementException. This is a nonmalicious development fault (omission, software, internal, development phase). Propagation: erratic failure (500 error). Prevention: use orElseThrow() with ResourceNotFoundException as in other methods."
+  },
+  {
+    "filename": "/home/dbe/projects/llm-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 87,
+    "end_line": 89,
+    "severity": "high",
+    "error_description": "Address is not persisted: save() (lines 78-90) creates Address entity and maps to AddressResponse, but does not call addressRepository.save(addressEntity). This is a nonmalicious development fault (omission, software, internal, development phase). Propagation: content failure (address not saved in DB). Prevention: call addressRepository.save(addressEntity) before mapping to response."
+  }
+]

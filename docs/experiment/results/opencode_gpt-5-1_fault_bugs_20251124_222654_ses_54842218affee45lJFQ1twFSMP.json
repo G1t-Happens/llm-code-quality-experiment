@@ -1,0 +1,137 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_5484.md",
+    "model": "gpt.5.1",
+    "session_id": "ses_54842218affee45lJFQ1twFSMP",
+    "processed_at": "2025-11-24T22:26:54.729844",
+    "bug_count": 18
+  },
+  "bugs": [
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "high",
+      "error_description": "Nonmalicious development fault: create(UserRequest) lacks @Valid/@Validated(Create.class), so all UserRequest validation constraints are bypassed on registration, allowing invalid usernames/passwords/emails/admin flags to be persisted."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 59,
+      "end_line": 62,
+      "severity": "high",
+      "error_description": "Nonmalicious development fault: delete(Long id) exposes user deletion without any @PreAuthorize guard, so any authenticated principal can delete arbitrary users instead of only owners/admins."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 48,
+      "severity": "medium",
+      "error_description": "Nonmalicious development fault: create(Long userId, AddressRequest) declares consumes=\"text/plain\" while expecting a structured AddressRequest body, causing JSON clients with application/json to receive 415/parse failures and preventing validation from running."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 71,
+      "end_line": 81,
+      "severity": "medium",
+      "error_description": "Nonmalicious design fault: listAll(Pageable pageable) ignores the Pageable and calls userRepository.findAll(), then wraps the full list in a PageImpl without slicing; this breaks true pagination, risks memory issues for large datasets, and violates the CRUDable documentation contract."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 98,
+      "end_line": 103,
+      "severity": "high",
+      "error_description": "Nonmalicious development fault: getByUsername(String username) builds a native SQL string with direct username concatenation (\"SELECT * FROM users WHERE username = '\" + username + \"'\") and executes it via EntityManager, introducing a SQL injection vector instead of using bind parameters."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 117,
+      "end_line": 121,
+      "severity": "high",
+      "error_description": "Nonmalicious development fault: save(UserRequest) logs the raw password in DEBUG (\"user with name: {} and password: {}\"), leaking sensitive credentials into logs and backups, creating a serious confidentiality and compliance risk."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 161,
+      "end_line": 173,
+      "severity": "medium",
+      "error_description": "Nonmalicious development omission fault: delete(Long id) loads the User entity but never calls userRepository.delete(...), so the user is never actually removed despite the controller returning success, leading to persistent data and inconsistent system behavior."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 175,
+      "end_line": 189,
+      "severity": "high",
+      "error_description": "Nonmalicious development fault: checkLogin(LoginRequest) calls userRepository.findByUsername(username).get() without presence check, causing NoSuchElementException and HTTP 500 for unknown users; this also prevents use of the DUMMY_HASH constant and equal-time comparison, reintroducing username-enumeration and inconsistent 401 handling."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+      "start_line": 53,
+      "end_line": 56,
+      "severity": "high",
+      "error_description": "Nonmalicious development fault: updateUserEntityFromUserRequest(...) double-hashes new passwords (passwordEncoder.encode(passwordEncoder.encode(dto.password()))) so updated users receive a non-checkable password and can no longer authenticate using the standard PasswordEncoder.matches(raw, stored)."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 65,
+      "end_line": 73,
+      "severity": "medium",
+      "error_description": "Nonmalicious development fault: getById(Long userId, Long addressId) uses addressRepository.findById(addressId).get() without Optional presence handling, yielding NoSuchElementException and HTTP 500 instead of a controlled 404/ownership-checked response when the address is missing."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 78,
+      "end_line": 89,
+      "severity": "high",
+      "error_description": "Nonmalicious development omission fault: save(Long userId, AddressRequest) maps AddressRequest to an Address and returns a DTO but never persists via addressRepository.save(...), so addresses are never stored while the API claims success, and logged IDs remain null."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/logging/LoggingConfig.java",
+      "start_line": 51,
+      "end_line": 56,
+      "severity": "low",
+      "error_description": "Nonmalicious configuration design fault: LoggingConfig defaults logging.file.path to a hard-coded absolute developer path and logging.file.name to \"application:errors.log\"; this risks directory-permission failures, non-portable paths, or invalid filenames on some platforms before the fallback logic can compensate."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "low",
+      "error_description": "Nonmalicious design fault: handleMalformedJson(HttpMessageNotReadableException) echoes ex.getMostSpecificCause().getMessage() directly to clients, potentially leaking low-level parser/internal details that aid attackers in crafting malformed inputs."
+    },
+    {
+      "filename": "src/main/resources/application.properties",
+      "start_line": 21,
+      "end_line": 24,
+      "severity": "medium",
+      "error_description": "Nonmalicious configuration/design fault: spring.jpa.hibernate.ddl-auto=update is enabled alongside explicit Flyway migrations (V1__create_tables.sql, V2__insert_data.sql), allowing Hibernate to mutate the schema at runtime and drift from the migration baseline, jeopardizing reproducibility and long-term schema integrity."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/security/SecurityConfig.java",
+      "start_line": 95,
+      "end_line": 110,
+      "severity": "medium",
+      "error_description": "Nonmalicious configuration design fault: jwtEncoder/jwtDecoder createSecretKey(String base64Secret) unconditionally Base64-decodes jwt.secret, but application.properties and .env documentation do not require JWT_SECRET to be Base64; a non-Base64 secret will cause startup-time decoding failures and service outage."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 80,
+      "end_line": 83,
+      "severity": "low",
+      "error_description": "Nonmalicious development fault: in save(Long userId, AddressRequest), the error log message on missing user is copy-pasted as \"<-- getById, User with userId {} not found\", which mislabels the failing operation and complicates operational debugging."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/entity/User.java",
+      "start_line": 68,
+      "end_line": 77,
+      "severity": "medium",
+      "error_description": "Nonmalicious design fault: User.equals/hashCode rely solely on id, so two transient User instances with null ids compare equal and share the same hash, which can corrupt Sets/Maps and cause subtle persistence bugs when handling unsaved entities."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/entity/Address.java",
+      "start_line": 104,
+      "end_line": 113,
+      "severity": "medium",
+      "error_description": "Nonmalicious design fault: Address.equals/hashCode also rely only on id, making multiple transient Address instances with null ids equal and hash-colliding, which can break collection semantics and lead to lost or overwritten addresses before persistence."
+    }
+  ]
+}

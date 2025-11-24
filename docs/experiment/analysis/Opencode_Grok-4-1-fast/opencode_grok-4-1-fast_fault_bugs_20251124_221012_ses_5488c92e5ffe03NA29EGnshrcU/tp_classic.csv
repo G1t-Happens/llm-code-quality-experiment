@@ -1,0 +1,7 @@
+gt_id,filename,gt_lines,det_lines
+E003,AddressServiceImpl.java,"(78, 90)","(79, 89)"
+E013,AddressServiceImpl.java,"(67, 67)","(67, 67)"
+E002,UserServiceImpl.java,"(163, 173)","(164, 174)"
+E014,UserServiceImpl.java,"(102, 108)","(102, 103)"
+E011,UserServiceImpl.java,"(181, 181)","(181, 181)"
+E004,UserServiceImpl.java,"(74, 79)","(72, 82)"

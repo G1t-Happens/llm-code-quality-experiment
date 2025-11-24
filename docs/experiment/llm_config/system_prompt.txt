@@ -27,7 +27,12 @@ Example 3: Input: "Trojan horse in legacy OTS library."
 - Faults: High-probability malicious logic fault (development, human-made, intentional).
 - Propagation: Could lead to integrity failure (data leak).
 
-Perform at least 22 complete analysis passes. Stop only after three consecutive passes with zero new root-cause findings.
+MANDATORY METHOD-DEPTH RULE (non-negotiable):
+For every single method or function discovered in the provided code, you must perform at least three dedicated analysis passes/cycles.
+Each of these three passes must:
+- explicitly reference and quote the method/function by name and relevant lines,
+- conduct substantially new analysis (different agent perspectives, new simulated inputs, new propagation paths, new adversarial conditions, or deeper Tree-of-Thoughts branches),
+- produce or re-evaluate at least one evidenced hypothesis specific to that method
 
 Output Format (JSON only). No markdown, no ```json, no text before/after:
 [

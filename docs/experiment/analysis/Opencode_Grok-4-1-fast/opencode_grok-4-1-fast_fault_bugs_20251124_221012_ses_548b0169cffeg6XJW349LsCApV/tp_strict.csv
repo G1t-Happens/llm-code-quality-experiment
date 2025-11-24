@@ -1,0 +1,9 @@
+gt_id,filename,gt_lines,det_lines
+E009,AddressController.java,"(44, 44)","(44, 47)"
+E016,UserController.java,"(59, 60)","(59, 62)"
+E013,AddressServiceImpl.java,"(67, 67)","(67, 67)"
+E002,UserServiceImpl.java,"(163, 173)","(164, 173)"
+E011,UserServiceImpl.java,"(181, 181)","(181, 181)"
+E004,UserServiceImpl.java,"(74, 79)","(74, 80)"
+E005,UserServiceImpl.java,"(125, 125)","(125, 125)"
+E001,UserMapper.java,"(55, 55)","(53, 56)"
