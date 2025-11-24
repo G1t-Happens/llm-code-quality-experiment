@@ -1,0 +1,7 @@
+gt_id,filename,gt_lines,det_lines,error_description
+E014,UserServiceImpl.java,"(102, 108)","(102, 104)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
+E005,UserServiceImpl.java,"(125, 125)","(125, 126)",PasswordEncoder created per request rather than as a singleton
+E006,UserServiceImpl.java,"(152, 152)","(152, 153)",PasswordEncoder created per request rather than as a singleton
+E002,UserServiceImpl.java,"(163, 173)","(163, 173)",Missing delete call in the repository/data access layer
+E013,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E001,UserMapper.java,"(55, 55)","(55, 55)",Double encryption of the password using a password encoder

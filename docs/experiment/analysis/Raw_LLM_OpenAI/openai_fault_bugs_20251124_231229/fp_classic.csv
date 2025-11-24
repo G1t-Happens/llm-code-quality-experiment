@@ -1,0 +1,2 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(136, 159)","Sensitive data exposure in logs: update() logs username and potentially other sensitive fields at DEBUG level. This is a nonmalicious development fault (implementation, software, internal). Could lead to confidentiality failure if logs are accessed by unauthorized parties."

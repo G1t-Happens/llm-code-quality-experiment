@@ -1,3 +1,3 @@
-filename,det_lines
-AddressServiceImpl.java,"(87, 88)"
-UserServiceImpl.java,"(102, 103)"
+filename,det_lines,error_description
+UserServiceImpl.java,"(102, 103)","SQL injection vulnerability: getByUsername() constructs SQL with unescaped user input (username) directly concatenated into query string. This is a nonmalicious development fault (design/implementation, software, internal, dormant until attacker supplies crafted username). High risk of data breach or privilege escalation if activated."
+AddressServiceImpl.java,"(87, 88)","Entity not persisted: save() creates Address entity from DTO and user, but does not persist it (missing addressRepository.save(addressEntity)). Only mapping and response are returned. This is a nonmalicious development fault (implementation, software, internal). Latent error: address is not stored in DB, but response implies success."

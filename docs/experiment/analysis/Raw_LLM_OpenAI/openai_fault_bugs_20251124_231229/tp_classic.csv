@@ -1,0 +1,10 @@
+gt_id,filename,gt_lines,det_lines,error_description
+E014,UserServiceImpl.java,"(102, 108)","(102, 104)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
+E011,UserServiceImpl.java,"(181, 181)","(181, 189)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
+E005,UserServiceImpl.java,"(125, 125)","(125, 126)",PasswordEncoder created per request rather than as a singleton
+E006,UserServiceImpl.java,"(152, 152)","(152, 153)",PasswordEncoder created per request rather than as a singleton
+E002,UserServiceImpl.java,"(163, 173)","(163, 173)",Missing delete call in the repository/data access layer
+E015,UserServiceImpl.java,"(118, 118)","(118, 132)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
+E013,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E003,AddressServiceImpl.java,"(78, 90)","(87, 89)",Missing save call in the repository/data access layer
+E001,UserMapper.java,"(55, 55)","(55, 55)",Double encryption of the password using a password encoder

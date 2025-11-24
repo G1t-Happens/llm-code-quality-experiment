@@ -1,4 +1,4 @@
-gt_id,filename,gt_lines,det_lines
-E014,UserServiceImpl.java,"(102, 108)","(99, 113)"
-E006,UserServiceImpl.java,"(152, 152)","(153, 153)"
-E002,UserServiceImpl.java,"(163, 173)","(163, 173)"
+gt_id,filename,gt_lines,det_lines,error_description
+E014,UserServiceImpl.java,"(102, 108)","(99, 113)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
+E006,UserServiceImpl.java,"(152, 152)","(153, 153)",PasswordEncoder created per request rather than as a singleton
+E002,UserServiceImpl.java,"(163, 173)","(163, 173)",Missing delete call in the repository/data access layer

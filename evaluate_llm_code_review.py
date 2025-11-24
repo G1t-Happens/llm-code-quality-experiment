@@ -162,6 +162,7 @@ def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[Detect
             matched_old = False
             matched_strict = False
             gt_matched_idx = -1
+            matched_gt = None
 
             for i in range(len(remaining_old) - 1, -1, -1):
                 gt = remaining_old[i]
@@ -169,16 +170,25 @@ def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[Detect
                 strict_ok = strict_match(gt, det, tol=tolerance)
 
                 if old_ok:
-                    tp_old_all.append({"gt_id": gt.id, "filename": gt.filename,
-                                       "gt_lines": (gt.start_line, gt.end_line),
-                                       "det_lines": (det.start_line, det.end_line)})
+                    matched_gt = gt
+                    tp_old_all.append({
+                        "gt_id": gt.id,
+                        "filename": gt.filename,
+                        "gt_lines": (gt.start_line, gt.end_line),
+                        "det_lines": (det.start_line, det.end_line),
+                        "error_description": gt.error_description   # <-- neu
+                    })
                     matched_old = True
                     gt_matched_idx = i
 
                     if strict_ok:
-                        tp_strict_all.append({"gt_id": gt.id, "filename": gt.filename,
-                                              "gt_lines": (gt.start_line, gt.end_line),
-                                              "det_lines": (det.start_line, det.end_line)})
+                        tp_strict_all.append({
+                            "gt_id": gt.id,
+                            "filename": gt.filename,
+                            "gt_lines": (gt.start_line, gt.end_line),
+                            "det_lines": (det.start_line, det.end_line),
+                            "error_description": gt.error_description   # <-- neu
+                        })
                         matched_strict = True
                         remaining_strict.pop(i)
                     break
@@ -187,14 +197,32 @@ def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[Detect
                 remaining_old.pop(gt_matched_idx)
 
             if not matched_old:
-                fp_old_all.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
+                fp_old_all.append({
+                    "filename": det.filename,
+                    "det_lines": (det.start_line, det.end_line),
+                    "error_description": det.error_description   # <-- neu (aus Detection)
+                })
             if not matched_strict:
-                fp_strict_all.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
+                fp_strict_all.append({
+                    "filename": det.filename,
+                    "det_lines": (det.start_line, det.end_line),
+                    "error_description": det.error_description   # <-- neu (aus Detection)
+                })
 
         for gt in remaining_old:
-            fn_old_all.append({"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)})
+            fn_old_all.append({
+                "gt_id": gt.id,
+                "filename": gt.filename,
+                "gt_lines": (gt.start_line, gt.end_line),
+                "error_description": gt.error_description   # <-- neu
+            })
         for gt in remaining_strict:
-            fn_strict_all.append({"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)})
+            fn_strict_all.append({
+                "gt_id": gt.id,
+                "filename": gt.filename,
+                "gt_lines": (gt.start_line, gt.end_line),
+                "error_description": gt.error_description   # <-- neu
+            })
 
     return (tp_old_all, fp_old_all, fn_old_all), (tp_strict_all, fp_strict_all, fn_strict_all)
 
