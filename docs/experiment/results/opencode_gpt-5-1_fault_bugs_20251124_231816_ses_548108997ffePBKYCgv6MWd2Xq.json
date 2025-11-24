@@ -1,0 +1,102 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_5481.md",
+    "model": "gpt.5.1",
+    "session_id": "ses_548108997ffePBKYCgv6MWd2Xq",
+    "processed_at": "2025-11-24T23:18:16.016015",
+    "bug_count": 13
+  },
+  "bugs": [
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 72,
+      "end_line": 81,
+      "severity": "medium",
+      "error_description": "Nonmalicious human-made development software design fault: listAll(Pageable) (lines 72–81) calls userRepository.findAll() and wraps the full, unpaged result list into a PageImpl while accepting a Pageable parameter, so the returned content ignores requested page/size and always contains all users. This dormant fault can activate under large data volumes, causing memory exhaustion and violating the API’s pagination contract (content failure and potential performance degradation)."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 98,
+      "end_line": 108,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development software fault enabling SQL injection: getByUsername(String username) (lines 98–108) constructs a native SQL string via concatenation (\"SELECT * FROM users WHERE username = '\" + username + \"'\") and passes it to entityManager.createNativeQuery without parameter binding. An attacker controlling the username request parameter can inject arbitrary SQL (e.g., ' OR '1'='1), leading to unauthorized data access or modification, i.e., integrity and confidentiality failures at the service interface."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 117,
+      "end_line": 119,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development software fault leaking sensitive data: save(UserRequest) (lines 117–119) logs the raw password in DEBUG logs (\"password: {}\", userRequest.password()). If logging is enabled or misconfigured, this creates a persistent confidentiality breach (passwords readable in log files) and increases impact of any log compromise, a high-severity security failure mode."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 125,
+      "end_line": 153,
+      "severity": "low",
+      "error_description": "Nonmalicious human-made development software design/maintainability fault: save(UserRequest) and update(Long, UserRequest) (lines 125–126 and 152–153) instantiate new BCryptPasswordEncoder instances instead of consistently using the injected PasswordEncoder bean configured in SecurityConfig. While behavior currently matches, this duplication is a dormant fault that can activate if the global encoder configuration changes (e.g., different algorithm or strength), leading to mismatched password hashes and authentication failures for newly created/updated users versus existing ones."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 163,
+      "end_line": 172,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development omission fault: delete(Long id) (lines 163–172) loads the user via userRepository.findById(id) and logs a \"deleted\" message but never calls userRepository.delete(...). This causes a latent error where the internal state (database) is unchanged while the service reports successful deletion, leading to content and consistency failures (users persist despite 200/204-like delete responses)."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 176,
+      "end_line": 189,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development logic fault in authentication flow: checkLogin(LoginRequest) (lines 176–189) calls userRepository.findByUsername(username).get() on an Optional without presence check (line 181). For unknown usernames, this throws NoSuchElementException before hashing, bypassing the intended DUMMY_HASH timing-attack mitigation. The resulting unhandled exception surfaces as HTTP 500 instead of 401, enabling username enumeration (different timing/HTTP code) and causing erratic failures instead of controlled UnauthorizedException-based responses."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 65,
+      "end_line": 73,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development logic fault in resource lookup: getById(Long userId, Long addressId) (lines 65–73) dereferences addressRepository.findById(addressId).get() without an orElseThrow wrapper. When addressId does not exist, this causes NoSuchElementException, yielding an HTTP 500 via the default error handling instead of a controlled 404 ResourceNotFoundException, leading to erratic failure and potential information leakage about internal exception types."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 78,
+      "end_line": 89,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development omission fault in persistence: save(Long userId, AddressRequest) (lines 78–89) creates an Address entity via addressMapper.toAddressEntity(...) and immediately maps it back to AddressResponse without ever calling addressRepository.save(...). The method logs \"address saved\" with addressEntity.getId(), but the entity is not persisted and its ID is likely null. This yields a latent error where the API reports successful creation yet the database state remains unchanged (content and consistency failure)."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 47,
+      "severity": "medium",
+      "error_description": "Nonmalicious human-made development configuration fault on HTTP contract: AddressController.create(...) (lines 44–47) is annotated with @PostMapping(consumes = \"text/plain\") while expecting a structured AddressRequest body. Typical clients send JSON with Content-Type application/json, which will be rejected with 415 Unsupported Media Type, causing systematic failure of address creation despite correct payloads and turning a valid business request into a protocol-level failure."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "medium",
+      "error_description": "Nonmalicious human-made development validation omission fault: UserController.create(...) (lines 47–51) accepts a UserRequest body without @Valid/@Validated(Create.class), unlike update(...) which uses @Validated(Update.class). As a result, bean validation constraints on UserRequest are not enforced on user creation, allowing structurally invalid or constraint-violating data to reach the service and database, potentially causing downstream errors or data-quality failures."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 59,
+      "end_line": 61,
+      "severity": "high",
+      "error_description": "Nonmalicious human-made development access-control fault: UserController.delete(...) (lines 59–61) lacks any @PreAuthorize constraint. Given SecurityConfig requires authentication for non-whitelisted endpoints, any authenticated user—regardless of role or ownership—can invoke userService.delete(id). Once delete(...) is corrected to actually delete, this dormant fault will activate as an authorization failure, enabling arbitrary account deletions by non-admin, non-owner users (integrity and availability failure)."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "low",
+      "error_description": "Nonmalicious human-made development fault with potential information disclosure: handleMalformedJson(HttpMessageNotReadableException) (lines 47–51) returns an ErrorResponse message concatenating ex.getMostSpecificCause().getMessage(). Parser messages may include internal class names, field paths, or unexpected input fragments, which can leak implementation details or sensitive snippets back to clients. This is a dormant confidentiality risk that may activate when malformed JSON is sent maliciously for reconnaissance."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/security/SecurityConfig.java",
+      "start_line": 66,
+      "end_line": 67,
+      "severity": "medium",
+      "error_description": "Nonmalicious human-made configuration/development fault around JWT secret handling: SecurityConfig.securityFilterChain plus createSecretKey(String base64Secret) (lines 66–67 and 107–109) assume jwt.secret is a Base64-encoded key. If operators follow typical documentation patterns and configure a raw string (not Base64), Base64.getDecoder().decode(jwtSecret) will throw IllegalArgumentException at startup, preventing the application from booting (halt failure). This is a latent configuration fault whose activation depends on deployment practices and documentation clarity."
+    }
+  ]
+}
