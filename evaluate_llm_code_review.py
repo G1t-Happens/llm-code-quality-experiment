@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 from dataclasses import dataclass
 import argparse
 from collections import defaultdict
+from statistics import mean, stdev
 
 
 @dataclass
@@ -150,57 +151,79 @@ def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 2) -> bool
 
 
 # ──────────────────────────────────────────────────────────────
-# Beide Matcher parallel (greedy 1:1)
+# KORREKT: Greedy First Match pro Datei – unabhängig pro Run!
 # ──────────────────────────────────────────────────────────────
 def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[DetectedError], tolerance: int):
-    tp_old, fp_old = [], []
-    tp_strict, fp_strict = [], []
-    remaining_old = gt_errors.copy()
-    remaining_strict = gt_errors.copy()
+    from collections import defaultdict
 
+    # Gruppiere Ground Truth und Detections nach Datei
+    gt_by_file = defaultdict(list)
+    det_by_file = defaultdict(list)
+
+    for gt in gt_errors:
+        gt_by_file[gt.filename].append(gt)
     for det in det_errors:
-        matched_old = False
-        matched_strict = False
-        gt_matched_idx = -1
+        det_by_file[det.filename].append(det)
 
-        for i in range(len(remaining_old) - 1, -1, -1):
-            gt = remaining_old[i]
+    # Ergebnislisten
+    tp_old_all, fp_old_all = [], []
+    tp_strict_all, fp_strict_all = [], []
+    fn_old_all, fn_strict_all = [], []
 
-            old_ok = (gt.filename == det.filename and
-                      lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance))
-            strict_ok = strict_match(gt, det, tol=tolerance)
+    # Für jede Datei separat matchen
+    for filename in set(gt_by_file.keys()) | set(det_by_file.keys()):
+        current_gt = gt_by_file[filename]
+        current_det = det_by_file.get(filename, [])
 
-            if old_ok:
-                tp_old.append({
-                    "gt_id": gt.id, "filename": gt.filename,
-                    "gt_lines": (gt.start_line, gt.end_line),
-                    "det_lines": (det.start_line, det.end_line)
-                })
-                matched_old = True
-                gt_matched_idx = i
+        # Kopien für dieses File – pro Datei frisch!
+        remaining_old = current_gt.copy()
+        remaining_strict = current_gt.copy()
 
-                if strict_ok:
-                    tp_strict.append({
+        for det in current_det:
+            matched_old = False
+            matched_strict = False
+            gt_matched_idx = -1
+
+            for i in range(len(remaining_old) - 1, -1, -1):
+                gt = remaining_old[i]
+
+                old_ok = lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance)
+                strict_ok = strict_match(gt, det, tol=tolerance)
+
+                if old_ok:
+                    tp_old_all.append({
                         "gt_id": gt.id, "filename": gt.filename,
                         "gt_lines": (gt.start_line, gt.end_line),
                         "det_lines": (det.start_line, det.end_line)
                     })
-                    matched_strict = True
-                    remaining_strict.pop(i)
-                break
+                    matched_old = True
+                    gt_matched_idx = i
 
-        if matched_old:
-            remaining_old.pop(gt_matched_idx)
+                    if strict_ok:
+                        tp_strict_all.append({
+                            "gt_id": gt.id, "filename": gt.filename,
+                            "gt_lines": (gt.start_line, gt.end_line),
+                            "det_lines": (det.start_line, det.end_line)
+                        })
+                        matched_strict = True
+                        remaining_strict.pop(i)
+                    break
 
-        if not matched_old:
-            fp_old.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
-        if not matched_strict:
-            fp_strict.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
+            if matched_old:
+                remaining_old.pop(gt_matched_idx)
 
-    fn_old = [{"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)} for gt in remaining_old]
-    fn_strict = [{"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)} for gt in remaining_strict]
+            if not matched_old:
+                fp_old_all.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
+            if not matched_strict:
+                fp_strict_all.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
 
-    return (tp_old, fp_old, fn_old), (tp_strict, fp_strict, fn_strict)
+        # Verbleibende GT-Bugs → FN
+        for gt in remaining_old:
+            fn_old_all.append({"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)})
+        for gt in remaining_strict:
+            fn_strict_all.append({"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)})
+
+    return (tp_old_all, fp_old_all, fn_old_all), (tp_strict_all, fp_strict_all, fn_strict_all)
 
 
 # ──────────────────────────────────────────────────────────────
@@ -291,6 +314,10 @@ def main():
     output_dir = base_path / "analysis"
     output_dir.mkdir(exist_ok=True)
 
+    # Sammle F1-Werte pro Run (für Mittelwert + Std)
+    f1_classic_per_run = {}
+    f1_strict_per_run = {}
+
     overall_classic = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
     overall_strict = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
 
@@ -312,6 +339,8 @@ def main():
 
         to, fo, fno = old_res
         ts, fs, fns = strict_res
+
+        # Gesamt summieren
         overall_classic[category]["tp"] += len(to)
         overall_classic[category]["fp"] += len(fo)
         overall_classic[category]["fn"] += len(fno)
@@ -322,19 +351,40 @@ def main():
         overall_strict[category]["fn"] += len(fns)
         overall_strict[category]["runs"] += 1
 
-    # Gesamtvergleich
+        # --- Pro Run F1 speichern ---
+        f1_c = calculate_metrics(len(to), len(fo), len(fno))["f1"]
+        f1_s = calculate_metrics(len(ts), len(fs), len(fns))["f1"]
+
+        f1_classic_per_run.setdefault(category, []).append(f1_c)
+        f1_strict_per_run.setdefault(category, []).append(f1_s)
+
+    # ───────────────────────────────────────
+    # Gesamtvergleich + Mittelwert ± Std
+    # ───────────────────────────────────────
     print("\n" + "═"*120)
     print(" GESAMTVERGLEICH – KLASSISCH vs. STRENG (IoU≥0.3 + Anti-Cheating) ".center(120))
     print("═"*120)
-    print(f"{'Kategorie':<35} {'Typ':<12} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>8}")
+    print(f"{'Kategorie':<35} {'Typ':<12} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>12} {'F1 ±σ':<12}")
     print("─"*120)
 
     for cat in sorted(set(overall_classic.keys()) | set(overall_strict.keys())):
         mc = calculate_metrics(overall_classic[cat]["tp"], overall_classic[cat]["fp"], overall_classic[cat]["fn"])
         ms = calculate_metrics(overall_strict[cat]["tp"], overall_strict[cat]["fp"], overall_strict[cat]["fn"])
         runs = overall_classic[cat]["runs"]
-        print(f"{cat:<35} {'Klassisch':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} {mc['precision']:8.3f} {mc['recall']:8.3f} {mc['f1']:8.3f}")
-        print(f"{'':<35} {'Streng':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:8.3f} {ms['recall']:8.3f} {ms['f1']:8.3f}")
+
+        # Mittelwert und Std pro Run
+        f1_c_list = f1_classic_per_run.get(cat, [])
+        f1_s_list = f1_strict_per_run.get(cat, [])
+
+        f1_c_mean = mean(f1_c_list) if f1_c_list else 0
+        f1_s_mean = mean(f1_s_list) if f1_s_list else 0
+        f1_c_std = stdev(f1_c_list) if len(f1_c_list) > 1 else 0
+        f1_s_std = stdev(f1_s_list) if len(f1_s_list) > 1 else 0
+
+        print(f"{cat:<35} {'Klassisch':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} "
+              f"{mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c_mean:8.3f}   ±{f1_c_std:4.3f}")
+        print(f"{'':<35} {'Streng':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} "
+              f"{ms['precision']:8.3f} {ms['recall']:8.3f} {f1_s_mean:8.3f}   ±{f1_s_std:4.3f}")
         print("─"*120)
 
     print(f"\nFertig! Alle Ergebnisse in: {output_dir}")
