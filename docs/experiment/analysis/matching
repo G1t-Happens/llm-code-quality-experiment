@@ -10,7 +10,7 @@ Fachlich: Sehr nachsichtig, belohnt jede grobe Lokalisierung, bestraft keine rie
 
 
 oU-based strict matching with large-span penalty
-(deine „Streng“-Metrik)
+(„Streng“-Metrik)
 Datenerhebung:
 Genau dieselben Felder wie oben (kein Mehraufwand).
 Berechnung (TP-Bedingung – alle drei müssen erfüllt sein):

@@ -54,17 +54,6 @@
           }
         }
       },
-
-      "output": {
-        "structured": {
-          "path": "{project}/docs/experiment/results/llm/{provider}/parsed/fault_bugs_{timestamp}.json",
-          "create_dirs": true
-        },
-        "transcript": {
-          "path": "{project}/docs/experiment/results/llm/{provider}/raw/fault_transcript_{timestamp}.md"
-        }
-      },
-
       "tools": {
         "write": false,
         "edit": false,

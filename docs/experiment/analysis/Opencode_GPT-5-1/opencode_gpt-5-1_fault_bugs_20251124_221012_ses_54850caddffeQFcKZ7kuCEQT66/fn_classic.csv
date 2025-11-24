@@ -1,5 +1,5 @@
 gt_id,filename,gt_lines
-E012,SecurityConfig.java,"(107, 110)"
 E007,LoggingConfig.java,"(237, 237)"
 E008,LoggingConfig.java,"(96, 97)"
 E017,LoggingConfig.java,"(54, 55)"
+E012,SecurityConfig.java,"(107, 110)"
