@@ -8,17 +8,72 @@
       "top_p": 0.90,
       "max_tokens": 32768,
       "timeout": 600,
+      "response_format": {
+        "type": "json_schema",
+        "strict": true,
+        "schema": {
+          "name": "bug_list",
+          "description": "Liste gefundener Bugs im Code",
+          "strict": true,
+          "schema": {
+            "type": "object",
+            "properties": {
+              "bugs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "filename": {
+                      "type": "string",
+                      "description": "Dateiname relativ zum Projektroot"
+                    },
+                    "start_line": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "end_line": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": ["critical", "high", "medium", "low"]
+                    },
+                    "error_description": {
+                      "type": "string",
+                      "minLength": 10
+                    }
+                  },
+                  "required": ["filename", "start_line", "end_line", "severity", "error_description"],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": ["bugs"],
+            "additionalProperties": false
+          }
+        }
+      },
+
+      "output": {
+        "structured": {
+          "path": "{project}/docs/experiment/results/llm/{provider}/parsed/fault_bugs_{timestamp}.json",
+          "create_dirs": true
+        },
+        "transcript": {
+          "path": "{project}/docs/experiment/results/llm/{provider}/raw/fault_transcript_{timestamp}.md"
+        }
+      },
+
       "tools": {
         "write": false,
         "edit": false,
-        "patch": false,
         "bash": true,
         "read": true,
         "glob": true,
-        "list": true
+        "list": true,
+        "task": true
       }
     }
   }
 }
-
-
