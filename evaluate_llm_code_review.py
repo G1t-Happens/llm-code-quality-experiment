@@ -34,11 +34,9 @@ def extract_class_name(filename: str) -> str:
     return Path(filename).name
 
 
-def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tolerance: int = 1) -> bool:
-    return not ((gt_end + tolerance) < (det_start - tolerance) or
-                (det_end + tolerance) < (gt_start - tolerance))
-
-
+# ──────────────────────────────────────────────────────────────
+# Laden der Ground Truth
+# ──────────────────────────────────────────────────────────────
 def load_ground_truth(csv_path: Path) -> List[GroundTruthError]:
     df = pd.read_csv(csv_path)
     required = {"id", "filename", "start_line", "end_line", "iso_category", "error_description", "severity"}
@@ -61,6 +59,9 @@ def load_ground_truth(csv_path: Path) -> List[GroundTruthError]:
     ]
 
 
+# ──────────────────────────────────────────────────────────────
+# Laden der LLM-Ergebnisse
+# ──────────────────────────────────────────────────────────────
 def load_llm_detections(json_path: Path) -> List[DetectedError]:
     errors: List[DetectedError] = []
     try:
@@ -113,42 +114,98 @@ def load_llm_detections(json_path: Path) -> List[DetectedError]:
     return errors
 
 
-def match_errors(gt_errors: List[GroundTruthError], det_errors: List[DetectedError], tolerance: int):
-    tp, fp = [], []
-    fn = gt_errors.copy()
+# ──────────────────────────────────────────────────────────────
+# 1. Klassische Überlappung (±tolerance)
+# ──────────────────────────────────────────────────────────────
+def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tolerance: int = 1) -> bool:
+    return not ((gt_end + tolerance) < (det_start - tolerance) or
+                (det_end + tolerance) < (gt_start - tolerance))
+
+
+# ──────────────────────────────────────────────────────────────
+# 2. Strenge Lokalisierung (IoU + Anti-Cheating)
+# ──────────────────────────────────────────────────────────────
+def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 2) -> bool:
+    if gt.filename != det.filename:
+        return False
+
+    gs, ge = gt.start_line - tol, gt.end_line + tol
+    ds, de = det.start_line, det.end_line
+
+    if de < gs or ds > ge:
+        return False
+
+    overlap = min(ge, de) - max(gs, ds) + 1
+    union = max(ge, de) - min(gs, ds) + 1
+    iou = overlap / union if union > 0 else 0
+
+    gt_size = gt.end_line - gt.start_line + 1
+    det_size = de - ds + 1
+
+    # Strafe für riesige Bereiche
+    if det_size > 40 or det_size > max(8, gt_size * 6):
+        return False
+
+    return iou >= 0.30
+
+
+# ──────────────────────────────────────────────────────────────
+# Beide Matcher parallel (greedy 1:1)
+# ──────────────────────────────────────────────────────────────
+def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[DetectedError], tolerance: int):
+    tp_old, fp_old = [], []
+    tp_strict, fp_strict = [], []
+    remaining_old = gt_errors.copy()
+    remaining_strict = gt_errors.copy()
 
     for det in det_errors:
-        matched = False
-        for i in range(len(fn) - 1, -1, -1):
-            gt = fn[i]
-            if (gt.filename == det.filename and
-                    lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance)):
-                tp.append({
-                    "gt_id": gt.id,
-                    "filename": gt.filename,
+        matched_old = False
+        matched_strict = False
+        gt_matched_idx = -1
+
+        for i in range(len(remaining_old) - 1, -1, -1):
+            gt = remaining_old[i]
+
+            old_ok = (gt.filename == det.filename and
+                      lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance))
+            strict_ok = strict_match(gt, det, tol=tolerance)
+
+            if old_ok:
+                tp_old.append({
+                    "gt_id": gt.id, "filename": gt.filename,
                     "gt_lines": (gt.start_line, gt.end_line),
-                    "det_lines": (det.start_line, det.end_line),
-                    "severity_gt": gt.severity,
-                    "severity_det": det.severity,
-                    "gt_description": gt.error_description,
-                    "det_description": det.error_description
+                    "det_lines": (det.start_line, det.end_line)
                 })
-                del fn[i]
-                matched = True
+                matched_old = True
+                gt_matched_idx = i
+
+                if strict_ok:
+                    tp_strict.append({
+                        "gt_id": gt.id, "filename": gt.filename,
+                        "gt_lines": (gt.start_line, gt.end_line),
+                        "det_lines": (det.start_line, det.end_line)
+                    })
+                    matched_strict = True
+                    remaining_strict.pop(i)
                 break
-        if not matched:
-            fp.append({
-                "filename": det.filename,
-                "det_lines": (det.start_line, det.end_line),
-                "severity": det.severity,
-                "description": det.error_description
-            })
 
-    fn_list = [{"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line),
-                "severity": gt.severity, "description": gt.error_description} for gt in fn]
-    return tp, fp, fn_list
+        if matched_old:
+            remaining_old.pop(gt_matched_idx)
+
+        if not matched_old:
+            fp_old.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
+        if not matched_strict:
+            fp_strict.append({"filename": det.filename, "det_lines": (det.start_line, det.end_line)})
+
+    fn_old = [{"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)} for gt in remaining_old]
+    fn_strict = [{"gt_id": gt.id, "filename": gt.filename, "gt_lines": (gt.start_line, gt.end_line)} for gt in remaining_strict]
+
+    return (tp_old, fp_old, fn_old), (tp_strict, fp_strict, fn_strict)
 
 
+# ──────────────────────────────────────────────────────────────
+# Metriken & Ausgabe
+# ──────────────────────────────────────────────────────────────
 def calculate_metrics(tp: int, fp: int, fn: int) -> Dict[str, Any]:
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
@@ -156,58 +213,65 @@ def calculate_metrics(tp: int, fp: int, fn: int) -> Dict[str, Any]:
     return {"tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall, "f1": f1}
 
 
-def print_report(title: str, tp_list: List, fp_list: List, fn_list: List, tolerance: int):
-    m = calculate_metrics(len(tp_list), len(fp_list), len(fn_list))
-    print("\n" + "═"*92)
-    print(f" EVALUATION: {title.upper()} ".center(92))
-    print("═"*92)
+def print_dual_report(category: str, old: tuple, strict: tuple, tolerance: int):
+    (tp_o, fp_o, fn_o), (tp_s, fp_s, fn_s) = old, strict
+    mo = calculate_metrics(len(tp_o), len(fp_o), len(fn_o))
+    ms = calculate_metrics(len(tp_s), len(fp_s), len(fn_s))
+
+    print("\n" + "═"*100)
+    print(f" EVALUATION: {category} ".center(100))
+    print("═"*100)
     print(f"Toleranz: ±{tolerance} Zeilen")
-    print(f"{'TP':>6} {'FP':>6} {'FN':>6}   Precision   Recall     F1")
-    print(f"{m['tp']:6} {m['fp']:6} {m['fn']:6}   {m['precision']:8.3f}   {m['recall']:8.3f}   {m['f1']:8.3f}")
-    print("═"*92)
+    print(f"{'Methode':<18} {'TP':>6} {'FP':>6} {'FN':>6} {'Precision':>10} {'Recall':>10} {'F1':>10}")
+    print("─"*100)
+    print(f"{'Klassisch (±1)':<18} {mo['tp']:6} {mo['fp']:6} {mo['fn']:6} {mo['precision']:10.3f} {mo['recall']:10.3f} {mo['f1']:10.3f}")
+    print(f"{'Streng (IoU≥0.3)':<18} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:10.3f} {ms['recall']:10.3f} {ms['f1']:10.3f}")
+    print("═"*100)
 
 
-def save_run_results(category: str, run_name: str, tp, fp, fn, output_dir: Path):
-    safe_category = category.replace("(", "").replace(")", "").replace(" ", "_")
-    run_dir = output_dir / safe_category / run_name
+def save_dual_results(category: str, run_name: str, old_res: tuple, strict_res: tuple, output_dir: Path):
+    safe_cat = category.replace("(", "").replace(")", "").replace(" ", "_")
+    run_dir = output_dir / safe_cat / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
-    if tp: pd.DataFrame(tp).to_csv(run_dir / "true_positives.csv", index=False)
-    if fp: pd.DataFrame(fp).to_csv(run_dir / "false_positives.csv", index=False)
-    if fn: pd.DataFrame(fn).to_csv(run_dir / "false_negatives.csv", index=False)
-    summary = calculate_metrics(len(tp), len(fp), len(fn))
-    summary["category"] = category
-    summary["run"] = run_name
-    (run_dir / "summary.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    (tp_o, fp_o, fn_o), (tp_s, fp_s, fn_s) = old_res, strict_res
+
+    if tp_o: pd.DataFrame(tp_o).to_csv(run_dir / "tp_classic.csv", index=False)
+    if fp_o: pd.DataFrame(fp_o).to_csv(run_dir / "fp_classic.csv", index=False)
+    if fn_o: pd.DataFrame(fn_o).to_csv(run_dir / "fn_classic.csv", index=False)
+
+    if tp_s: pd.DataFrame(tp_s).to_csv(run_dir / "tp_strict.csv", index=False)
+    if fp_s: pd.DataFrame(fp_s).to_csv(run_dir / "fp_strict.csv", index=False)
+    if fn_s: pd.DataFrame(fn_s).to_csv(run_dir / "fn_strict.csv", index=False)
+
+    summary = {
+        "classic": calculate_metrics(len(tp_o), len(fp_o), len(fn_o)),
+        "strict": calculate_metrics(len(tp_s), len(fp_s), len(fn_s)),
+        "category": category,
+        "run": run_name
+    }
+    (run_dir / "summary_dual.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
 
 
 def detect_category(filename: str) -> str:
     name = filename.lower()
-
     if name.startswith("opencode_"):
         rest = filename[len("opencode_"):] if filename.startswith("opencode_") else filename
         model_part = rest.split("_", 1)[0]
-
         if model_part.lower().startswith("grok"):
             model_part = "Grok" + model_part[4:]
         elif model_part.lower().startswith("gpt"):
             model_part = "GPT" + model_part[3:]
-        elif "o1" in model_part.lower():
-            model_part = "o1" + model_part[2:] if not model_part.lower().startswith("o1") else model_part
-        else:
-            model_part = model_part.replace("-", " ").title()
-
         return f"Opencode ({model_part})"
-
     if "grok" in name:
         return "Raw LLM (Grok)"
     elif re.search(r"gpt|openai|o1", name):
         return "Raw LLM (OpenAI)"
-    else:
-        return "Raw LLM (Unknown)"
+    return "Raw LLM (Unknown)"
 
 
 def main():
-    parser = argparse.ArgumentParser(description="LLM Code Review Evaluation")
+    parser = argparse.ArgumentParser(description="LLM Code Review Evaluation – Dual Mode (Klassisch + Streng)")
     parser.add_argument("--experiment-dir", type=str, default="docs/experiment")
     parser.add_argument("--tolerance", type=int, default=1)
     parser.add_argument("--gt-csv", type=str, default="ground_truth/seeded_errors_iso25010.csv")
@@ -227,13 +291,13 @@ def main():
     output_dir = base_path / "analysis"
     output_dir.mkdir(exist_ok=True)
 
-    overall_stats = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
+    overall_classic = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
+    overall_strict = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
 
     print(f"Gefundene Runs: {len(result_files)}\n")
 
     for json_file in result_files:
         category = detect_category(json_file.name)
-
         if args.model and args.model.lower() not in category.lower():
             continue
 
@@ -241,34 +305,37 @@ def main():
         print(f"→ {json_file.name}  →  {category}")
 
         det_errors = load_llm_detections(json_file)
-        tp, fp, fn_list = match_errors(gt_errors, det_errors, tolerance=args.tolerance)
+        old_res, strict_res = match_errors_both(gt_errors, det_errors, tolerance=args.tolerance)
 
-        print_report(category, tp, fp, fn_list, args.tolerance)
-        save_run_results(category, run_name, tp, fp, fn_list, output_dir)
+        print_dual_report(category, old_res, strict_res, args.tolerance)
+        save_dual_results(category, run_name, old_res, strict_res, output_dir)
 
-        overall_stats[category]["tp"] += len(tp)
-        overall_stats[category]["fp"] += len(fp)
-        overall_stats[category]["fn"] += len(fn_list)
-        overall_stats[category]["runs"] += 1
+        to, fo, fno = old_res
+        ts, fs, fns = strict_res
+        overall_classic[category]["tp"] += len(to)
+        overall_classic[category]["fp"] += len(fo)
+        overall_classic[category]["fn"] += len(fno)
+        overall_classic[category]["runs"] += 1
 
-    print("\n" + "═"*100)
-    print("                GESAMTVERGLEICH: AGENT + MODELL")
-    print("═"*100)
-    print(f"{'Kategorie':<35} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Precision':>10} {'Recall':>10} {'F1':>10}")
-    print("─"*100)
+        overall_strict[category]["tp"] += len(ts)
+        overall_strict[category]["fp"] += len(fs)
+        overall_strict[category]["fn"] += len(fns)
+        overall_strict[category]["runs"] += 1
 
-    for cat, stats in sorted(overall_stats.items()):
-        m = calculate_metrics(stats["tp"], stats["fp"], stats["fn"])
-        print(f"{cat:<35} {stats['runs']:5} {stats['tp']:6} {stats['fp']:6} {stats['fn']:6} "
-              f"{m['precision']:10.3f} {m['recall']:10.3f} {m['f1']:10.3f}")
+    # Gesamtvergleich
+    print("\n" + "═"*120)
+    print(" GESAMTVERGLEICH – KLASSISCH vs. STRENG (IoU≥0.3 + Anti-Cheating) ".center(120))
+    print("═"*120)
+    print(f"{'Kategorie':<35} {'Typ':<12} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>8}")
+    print("─"*120)
 
-    if overall_stats:
-        df = pd.DataFrame([
-            {"category": cat, "runs": s["runs"], **calculate_metrics(s["tp"], s["fp"], s["fn"])}
-            for cat, s in overall_stats.items()
-        ]).sort_values("f1", ascending=False)
-        df.to_csv(output_dir / "comparison_agent_model.csv", index=False)
-        print(f"\nSieger: {df.iloc[0]['category']} mit F1 = {df.iloc[0]['f1']:.3f}")
+    for cat in sorted(set(overall_classic.keys()) | set(overall_strict.keys())):
+        mc = calculate_metrics(overall_classic[cat]["tp"], overall_classic[cat]["fp"], overall_classic[cat]["fn"])
+        ms = calculate_metrics(overall_strict[cat]["tp"], overall_strict[cat]["fp"], overall_strict[cat]["fn"])
+        runs = overall_classic[cat]["runs"]
+        print(f"{cat:<35} {'Klassisch':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} {mc['precision']:8.3f} {mc['recall']:8.3f} {mc['f1']:8.3f}")
+        print(f"{'':<35} {'Streng':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:8.3f} {ms['recall']:8.3f} {ms['f1']:8.3f}")
+        print("─"*120)
 
     print(f"\nFertig! Alle Ergebnisse in: {output_dir}")
 

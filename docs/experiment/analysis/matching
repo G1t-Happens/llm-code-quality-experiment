@@ -1,0 +1,25 @@
+Wir verwenden bei der Auswerung:
+
+
+1. Loose line-level matching
+(auch: „Classic ±tolerance“)
+Datenerhebung: Ground Truth und Detection enthalten jeweils filename, start_line, end_line.
+Berechnung (TP-Bedingung): Ein Detection ist TP, wenn Dateiname identisch ist und die Zeilenbereiche sich
+um maximal ±tolerance Zeilen überschneiden → lines_overlap() mit tolerance = 1 (oder 2, 5 …).
+Fachlich: Sehr nachsichtig, belohnt jede grobe Lokalisierung, bestraft keine riesigen Bereiche → anfällig für „broad-span cheating“.
+
+
+oU-based strict matching with large-span penalty
+(deine „Streng“-Metrik)
+Datenerhebung:
+Genau dieselben Felder wie oben (kein Mehraufwand).
+Berechnung (TP-Bedingung – alle drei müssen erfüllt sein):
+
+Dateiname identisch
+Intersection-over-Union (IoU) der Zeilenbereiche ≥ 0.30 → overlap / union ≥ 0.30
+Large-span penalty: det_end – det_start + 1 ≤ 40 und det_size ≤ max(8, gt_size × 6)
+
+Fachlich: State-of-the-Art, cheating-resistent, misst echte Lokalisierungspräzision.
+
+
+Hintergrund: Wir wollen keine cheatende LLMs/KI-Agents belohnen :)
