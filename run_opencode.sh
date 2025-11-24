@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # run_opencode.sh
+# Extract OpenCode Response for automation
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -15,7 +16,16 @@ echo "Ergebnisse → $RESULTS_ROOT"
 echo
 
 # Session vor Start merken
-LATEST_BEFORE=$(ls -dt ~/.local/share/opencode/storage/message/ses_* 2>/dev/null | head -n1 || echo "none")
+LATEST_BEFORE=$(find ~/.local/share/opencode/storage/message \
+    -maxdepth 1 \
+    -type d \
+    -name 'ses_*' \
+    -printf '%T@ %p\n' 2>/dev/null | \
+    sort -nr | \
+    head -n1 | \
+    cut -d' ' -f2-)
+
+LATEST_BEFORE=${LATEST_BEFORE:-none}
 
 cd "$PROJECT_DIR"
 opencode "$@"
@@ -25,7 +35,17 @@ echo
 echo "Session beendet – warte auf neue Session..."
 sleep 10
 
-LATEST_AFTER=$(ls -dt ~/.local/share/opencode/storage/message/ses_* 2>/dev/null | head -n1)
+LATEST_AFTER=$(find ~/.local/share/opencode/storage/message \
+    -maxdepth 1 \
+    -type d \
+    -name 'ses_*' \
+    -printf '%T@ %p\n' 2>/dev/null | \
+    sort -nr | \
+    head -n1 | \
+    cut -d' ' -f2-)
+
+# Falls nichts gefunden ansonsten leer
+LATEST_AFTER=${LATEST_AFTER:-}
 
 if [ -z "$LATEST_AFTER" ] || [ "$LATEST_AFTER" = "$LATEST_BEFORE" ]; then
     echo "Keine neue Session gefunden – Abbruch."

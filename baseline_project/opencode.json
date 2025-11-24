@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "fault_localization": {
+      "mode": "primary",
+      "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt.txt}",
+      "temperature": 0.0,
+      "top_p": 0.90,
+      "max_tokens": 32768,
+      "timeout": 600,
+      "tools": {
+        "write": false,
+        "edit": false,
+        "patch": false,
+        "bash": true,
+        "read": true,
+        "glob": true,
+        "list": true
+      }
+    }
+  }
+}
+
+
