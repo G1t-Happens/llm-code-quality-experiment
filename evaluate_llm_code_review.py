@@ -275,19 +275,13 @@ def save_dual_results(category: str, run_name: str, old_res: tuple, strict_res: 
 
 def detect_category(filename: str) -> str:
     name = filename.lower()
+
     if name.startswith("opencode_"):
-        rest = filename[len("opencode_"):] if filename.startswith("opencode_") else filename
-        model_part = rest.split("_", 1)[0]
-        if model_part.lower().startswith("grok"):
-            model_part = "Grok" + model_part[4:]
-        elif model_part.lower().startswith("gpt"):
-            model_part = "GPT" + model_part[3:]
-        return f"Opencode ({model_part})"
-    if "grok" in name:
-        return "Raw LLM (Grok)"
-    elif re.search(r"gpt|openai|o1", name):
-        return "Raw LLM (OpenAI)"
-    return "Raw LLM (Unknown)"
+        model = name[len("opencode_"):].split("_fault_bugs_")[0]
+        return f"Opencode ({model})"
+    else:
+        model = name.split("_fault_bugs_")[0]
+        return f"Raw LLM ({model})"
 
 
 def main():

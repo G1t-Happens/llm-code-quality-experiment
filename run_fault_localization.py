@@ -314,7 +314,7 @@ def run_fault_localization(code: str):
     bugs = [bug.model_dump() for bug in parsed.bugs]
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    short_model = "-".join(MODEL.split("-")[:2])
+    short_model = MODEL.replace("/", "-").replace(":", "-").replace(" ", "_")
     prefix = f"{short_model}_fault"
 
     raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
@@ -363,7 +363,7 @@ def run_test_generation(code: str, clear_first: bool):
     content = data["choices"][0]["message"]["content"]
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    short_model = "-".join(MODEL.split("-")[:2])
+    short_model = MODEL.replace("/", "-").replace(" ", "_").replace(":", "-")
 
     full_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{ts}.json"
     full_raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
