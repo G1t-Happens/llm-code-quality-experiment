@@ -1,4 +1,0 @@
-filename,det_lines,error_description
-SecurityConfig.java,"(64, 68)","Overly permissive permitAll on user creation: Allows unauthenticated POST /users without rate limiting, hypothesizing a nonmalicious development fault (insufficient access control) with medium probability, enabling spam or DoS via mass user creation."
-AddressServiceImpl.java,"(96, 97)","Inconsistent error handling in update: Uses orElseThrow for Address but not in getById, hypothesizing a nonmalicious development fault (incomplete refactoring) with medium probability, leading to potential NPE in one path while properly handling in another."
-AddressServiceImpl.java,"(115, 116)","NullPointerException in delete: addressRepository.findById(addressId) without handling non-existent ID, hypothesizing a nonmalicious development fault (copy-paste error from other methods) with high probability, failing before ownership check."

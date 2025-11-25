@@ -1,0 +1,72 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "severity": "critical",
+    "error_description": "SQL injection vulnerability in getByUsername method: raw string concatenation in native query 'SELECT * FROM users WHERE username = \\'' + username + '\\'' allows malicious username input to execute arbitrary SQL (human-made development fault: unsafe query construction, high propagation risk to data integrity failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 60,
+    "end_line": 62,
+    "severity": "high",
+    "error_description": "Missing @PreAuthorize on delete endpoint: any authenticated user can delete any user by ID without ownership or admin check (human-made development fault: authorization omission lines 60-62, enables privilege escalation failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "severity": "high",
+    "error_description": "NullPointerException risk in getById: addressRepository.findById(addressId).get() assumes existence without null check (human-made development fault: unchecked Optional.get() line 67, high propagation to erratic failure)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 181,
+    "severity": "high",
+    "error_description": "NullPointerException risk in checkLogin: userRepository.findByUsername(username).get() assumes user exists (human-made development fault: unchecked Optional.get() line 181 despite timing attack mitigation intent)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "severity": "high",
+    "error_description": "Double password hashing bug in updateUserEntityFromUserRequest: passwordEncoder.encode(passwordEncoder.encode(dto.password())) applies BCrypt twice (human-made development fault: incorrect expression line 55, produces invalid password hashes)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 152,
+    "severity": "medium",
+    "error_description": "Inconsistent PasswordEncoder usage: creates new BCryptPasswordEncoder() instances instead of injected bean (human-made development fault: redundant object creation lines 125 & 152, potential inconsistency if encoder config changes)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 87,
+    "end_line": 87,
+    "severity": "medium",
+    "error_description": "Premature mapping in save: addressMapper.toAddressResponse(addressEntity) called before addressRepository.save() (human-made development fault: maps unsaved entity line 87, returns ID=null in response)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 72,
+    "end_line": 82,
+    "severity": "medium",
+    "error_description": "Inefficient listAll pagination: loads ALL users then creates PageImpl (human-made development fault: N+1 problem lines 74-80, causes performance failure under load)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 46,
+    "end_line": 46,
+    "severity": "low",
+    "error_description": "Missing @Valid on create endpoint despite @Validated(Create.class): validation groups may not trigger (human-made development fault: annotation inconsistency line 46)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/security/SecurityConfig.java",
+    "start_line": 108,
+    "end_line": 109,
+    "severity": "medium",
+    "error_description": "Weak JWT secret handling: Base64-decoded secret may be too short for HS256 (human-made configuration fault: inadequate key length validation lines 108-109, risks token forgery)"
+  }
+]

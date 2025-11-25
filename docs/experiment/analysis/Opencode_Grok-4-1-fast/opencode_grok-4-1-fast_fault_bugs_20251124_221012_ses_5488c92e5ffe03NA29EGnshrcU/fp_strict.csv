@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(102, 103)","Commission fault (human-made, development phase, nonmalicious, software type): unsafe native SQL concatenation '"" + username + ""'"" enables SQL injection → activates on malicious username input, error in computation state (arbitrary DB access), high risk propagation to integrity/halt failure"

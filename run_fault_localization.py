@@ -21,7 +21,7 @@ CODE_FILE = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_co
 SYSTEM_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_fault.txt"
 SYSTEM_PROMPT_TEST_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_test.txt"
 USER_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_fault.txt"
-USER_PROMPT_TEST_FILE  = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_test.txt"
+USER_PROMPT_TEST_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_test.txt"
 ENV_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
 RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
 GENERATED_TESTS_DIR = BASE_DIR / "baseline_project" / "src" / "test" / "java"
@@ -31,13 +31,18 @@ GENERATED_TESTS_DIR.mkdir(parents=True, exist_ok=True)
 
 dotenv.load_dotenv(ENV_FILE)
 
-# ----------------------------- Environment -----------------------------
+# ----------------------------- Reproduzierbarkeit Setup -----------------------------
+code_content = CODE_FILE.read_text(encoding="utf-8")
+CODE_MD5 = hashlib.md5(code_content.encode()).hexdigest()
+
+# Umgebungsvariablen laden
 PROVIDER = os.getenv("PROVIDER", "grok").lower()
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.0"))
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "32768"))
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "600"))
 TOP_P = float(os.getenv("TOP_P", "0.90"))
 
+# Provider-spezifische Konfiguration
 if PROVIDER == "grok":
     API_KEY = os.getenv("GROK_API_KEY")
     MODEL = os.getenv("GROK_MODEL", "grok-4-fast-non-reasoning")
@@ -52,15 +57,28 @@ else:
 if not API_KEY:
     raise ValueError(f"{PROVIDER.upper()}_API_KEY fehlt in der .env!")
 
+# Reproduzierbarkeit erzwingen
+if TEMPERATURE != 0.0:
+    raise ValueError("Für 100% reproduzierbare Ergebnisse muss TEMPERATURE=0.0 in der .env stehen!")
+
+# Deterministischer Run-Hash (gleiche Parameter = gleicher Hash = gleicher Dateiname)
+run_hash = hashlib.sha1(
+    f"{PROVIDER}|{MODEL}|{TEMPERATURE}|{TOP_P}|{MAX_TOKENS}|{CODE_MD5}".encode()
+).hexdigest()[:12]
+
+short_model = MODEL.replace("/", "-").replace(":", "-").replace(" ", "_")
+ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+file_suffix = f"{ts}_{run_hash}"
+
 # ----------------------------- Pydantic Models -----------------------------
 SeverityLevel = Literal["critical", "high", "medium", "low"]
 
 class SeededBug(BaseModel):
     filename: str = Field(..., description="Filename relative to the project root")
-    start_line: int = Field(..., ge=1, description="First affected line (1-based)")
-    end_line: int = Field(..., ge=1, description="Last affected line (1-based)")
-    severity: SeverityLevel = Field(..., description="Severity level of the bug")
-    error_description: str = Field(..., min_length=10, description="Detailed description of the error")
+    start_line: int = Field(..., ge=1)
+    end_line: int = Field(..., ge=1)
+    severity: SeverityLevel = Field(...)
+    error_description: str = Field(..., min_length=10)
 
 class BugList(BaseModel):
     bugs: List[SeededBug]
@@ -86,7 +104,6 @@ def clear_generated_tests():
 
 def resolve_test_path(marker_path: str) -> Path:
     path = Path(marker_path.strip())
-
     try:
         com_index = list(path.parts).index("com")
         relative_parts = path.parts[com_index:]
@@ -98,24 +115,20 @@ def resolve_test_path(marker_path: str) -> Path:
             raise ValueError(f"Kann Package nicht finden in Pfad: {marker_path}")
 
     test_path = GENERATED_TESTS_DIR.joinpath(*relative_parts)
-
     if not test_path.name.endswith("Test.java"):
         stem = test_path.stem
         if not stem.endswith("Test"):
             stem += "Test"
         test_path = test_path.with_name(f"{stem}.java")
-
     test_path.parent.mkdir(parents=True, exist_ok=True)
     return test_path
 
 def save_generated_test(file_marker: str, content: str) -> bool:
     if not file_marker.strip().startswith("===== FILE:"):
         return False
-
     path_str = file_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
     if not path_str:
         return False
-
     try:
         test_path = resolve_test_path(path_str)
     except Exception as e:
@@ -130,8 +143,6 @@ def save_generated_test(file_marker: str, content: str) -> bool:
         package = "com.llmquality.baseline"
 
     java_content = content.strip()
-
-    # Nur einfügen, wenn noch KEINE package-Zeile existiert (robust gegen LLM-Doppelungen)
     if not java_content.lstrip().startswith("package "):
         java_content = f"package {package};\n\n{java_content}"
 
@@ -237,7 +248,6 @@ class GrokClient:
                     "schema": schema.model_json_schema()
                 }
             }
-
         resp = self.session.post(f"{API_BASE}/chat/completions", json=payload, timeout=REQUEST_TIMEOUT)
         resp.raise_for_status()
         return resp.json()
@@ -245,10 +255,11 @@ class GrokClient:
     def close(self):
         self.session.close()
 
-# ----------------------------- Core Logic -----------------------------
+# ----------------------------- Core Logic Static -----------------------------
+# ----------------------------- Core Logic: Fault Localization -----------------------------
 def run_fault_localization(code: str):
     system_prompt = load_file(SYSTEM_PROMPT_FAULT_FILE)
-    user_prompt   = load_file(USER_PROMPT_FAULT_FILE).format(code=code)
+    user_prompt = load_file(USER_PROMPT_FAULT_FILE).format(code=code)
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -257,6 +268,7 @@ def run_fault_localization(code: str):
 
     print(f"Starte Fault Localization → {PROVIDER.upper():6} | {MODEL:30} | "
           f"temp={TEMPERATURE:.1f} | top_p={TOP_P:.2f} | max_tokens={MAX_TOKENS}")
+
     if PROVIDER == "grok":
         client = GrokClient()
         try:
@@ -313,27 +325,42 @@ def run_fault_localization(code: str):
 
     bugs = [bug.model_dump() for bug in parsed.bugs]
 
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    short_model = MODEL.replace("/", "-").replace(":", "-").replace(" ", "_")
     prefix = f"{short_model}_fault"
-
-    raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
-    bugs_file = RESULTS_DIR / f"{prefix}_bugs_{ts}.json"
+    raw_file = RESULTS_DIR / f"{prefix}_raw_{file_suffix}.json"
+    bugs_file = RESULTS_DIR / f"{prefix}_bugs_{file_suffix}.json"
 
     raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     bugs_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # METADATA
+    metadata = {
+        "provider": PROVIDER,
+        "model": MODEL,
+        "temperature": TEMPERATURE,
+        "top_p": TOP_P,
+        "max_tokens": MAX_TOKENS,
+        "code_md5": CODE_MD5,
+        "code_length": len(code_content),
+        "timestamp": datetime.now().isoformat(),
+        "run_hash": run_hash,
+        "system_prompt_md5": hashlib.md5(system_prompt.encode()).hexdigest(),
+        "user_prompt_md5": hashlib.md5(user_prompt.encode()).hexdigest(),
+    }
+    meta_file = RESULTS_DIR / f"{prefix}_meta_{file_suffix}.json"
+    meta_file.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"   Meta → {meta_file}")
 
     print(f"\nFault Localization abgeschlossen! {len(bugs)} Bug(s) gefunden.")
     print(f"   Raw  → {raw_file}")
     print(f"   Bugs → {bugs_file}\n")
 
-# ----------------------------- Test Generation -----------------------------
+# ----------------------------- Core Logic: Test Generation -----------------------------
 def run_test_generation(code: str, clear_first: bool):
     if clear_first:
         clear_generated_tests()
 
     system_prompt = load_file(SYSTEM_PROMPT_TEST_FILE)
-    user_prompt   = load_file(USER_PROMPT_TEST_FILE).format(code=code)
+    user_prompt = load_file(USER_PROMPT_TEST_FILE).format(code=code)
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -362,13 +389,9 @@ def run_test_generation(code: str, clear_first: bool):
 
     content = data["choices"][0]["message"]["content"]
 
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    short_model = MODEL.replace("/", "-").replace(" ", "_").replace(":", "-")
-
-    full_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{ts}.json"
+    full_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{file_suffix}.json"
+    txt_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{file_suffix}.txt"
     full_raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    txt_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{ts}.txt"
     txt_raw_file.write_text(content, encoding="utf-8")
 
     print(f"Full API-Response  → {full_raw_file}")
@@ -414,8 +437,26 @@ def run_test_generation(code: str, clear_first: bool):
             print(f"  → LEERER TEST nach Bereinigung → übersprungen: {path_str}")
 
     # Geparste JSON-Datei speichern
-    parsed_file = RESULTS_DIR / f"{short_model}_tests_parsed_{ts}.json"
+    parsed_file = RESULTS_DIR / f"{short_model}_tests_parsed_{file_suffix}.json"
     parsed_file.write_text(json.dumps(parsed_tests, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # METADATA
+    metadata = {
+        "provider": PROVIDER,
+        "model": MODEL,
+        "temperature": TEMPERATURE,
+        "top_p": TOP_P,
+        "max_tokens": MAX_TOKENS,
+        "code_md5": CODE_MD5,
+        "code_length": len(code_content),
+        "timestamp": datetime.now().isoformat(),
+        "run_hash": run_hash,
+        "system_prompt_md5": hashlib.md5(system_prompt.encode()).hexdigest(),
+        "user_prompt_md5": hashlib.md5(user_prompt.encode()).hexdigest(),
+    }
+    meta_file = RESULTS_DIR / f"{short_model}_tests_meta_{file_suffix}.json"
+    meta_file.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"   Meta → {meta_file}")
 
     print(f"Geparste Tests     → {parsed_file} ({len(parsed_tests)} Dateien)")
     print(f"\nTestgenerierung abgeschlossen!")

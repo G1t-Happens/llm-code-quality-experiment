@@ -1,19 +1,19 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "agent": {
-    "fault_localization": {
+    "fault_localization_fault": {
       "mode": "primary",
-      "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt.txt}",
+      "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt_fault.txt}",
       "temperature": 0.0,
       "top_p": 0.90,
-      "max_tokens": 32768,
+      "max_tokens": 60000,
       "timeout": 600,
       "response_format": {
         "type": "json_schema",
         "strict": true,
         "schema": {
           "name": "bug_list",
-          "description": "Liste gefundener Bugs im Code",
+          "description": "List of discovered faults in the code",
           "strict": true,
           "schema": {
             "type": "object",
@@ -25,26 +25,25 @@
                   "properties": {
                     "filename": {
                       "type": "string",
-                      "description": "Dateiname relativ zum Projektroot"
+                      "description": "File name relative to the project root"
                     },
                     "start_line": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "Start line of the detected fault"
                     },
                     "end_line": {
                       "type": "integer",
-                      "minimum": 1
-                    },
-                    "severity": {
-                      "type": "string",
-                      "enum": ["critical", "high", "medium", "low"]
+                      "minimum": 1,
+                      "description": "End line of the detected fault"
                     },
                     "error_description": {
                       "type": "string",
-                      "minLength": 10
+                      "minLength": 10,
+                      "description": "Short description of the detected fault"
                     }
                   },
-                  "required": ["filename", "start_line", "end_line", "severity", "error_description"],
+                  "required": ["filename", "start_line", "end_line", "error_description"],
                   "additionalProperties": false
                 }
               }
@@ -54,6 +53,23 @@
           }
         }
       },
+      "tools": {
+        "write": false,
+        "edit": false,
+        "bash": true,
+        "read": true,
+        "glob": true,
+        "list": true,
+        "task": true
+      }
+    },
+    "fault_localization_test": {
+      "mode": "primary",
+      "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt_test.txt}",
+      "temperature": 0.0,
+      "top_p": 0.90,
+      "max_tokens": 32768,
+      "timeout": 600,
       "tools": {
         "write": false,
         "edit": false,

@@ -1,4 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(102, 103)","Development design fault (nonmalicious, software): raw SQL concatenation 'SELECT * FROM users WHERE username = \'' + username + '\'' → SQL injection vulnerability (interaction fault potential, high propagation to data breach failure)"
-UserController.java,"(49, 50)","Development omission fault (nonmalicious, software): missing @Valid/@Validated on @RequestBody UserRequest in create → unvalidated input persists (potential data integrity error)"
-AddressServiceImpl.java,"(86, 88)","Development omission fault (nonmalicious, software): missing addressRepository.save(addressEntity) → address not persisted, returns un-saved entity (error in stored info state, content failure)"

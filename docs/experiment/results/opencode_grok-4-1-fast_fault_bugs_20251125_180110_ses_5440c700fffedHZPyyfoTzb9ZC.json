@@ -1,0 +1,74 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_5440.md",
+    "model": "grok.4.1.fast",
+    "session_id": "ses_5440c700fffedHZPyyfoTzb9ZC",
+    "processed_at": "2025-11-25T18:01:10.886034",
+    "bug_count": 9
+  },
+  "bugs": [
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 164,
+      "end_line": 174,
+      "severity": "high",
+      "error_description": "Omission fault (development phase, human-made, nonmalicious, software): missing userRepository.delete(existingUserEntity); user fetched but not deleted, causing persistent database state deviation (dormant error activates on delete requests)"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 102,
+      "end_line": 103,
+      "severity": "high",
+      "error_description": "Commission fault (development phase, human-made, nonmalicious, software): native SQL 'SELECT * FROM users WHERE username = \\'' + username + '\\'' vulnerable to SQL injection; external malicious input can alter query, leading to unauthorized access or data leak failures"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 181,
+      "end_line": 181,
+      "severity": "high",
+      "error_description": "Commission fault (development phase, human-made, nonmalicious, software): userRepository.findByUsername(username).get() throws NoSuchElementException on non-existent user instead of null/Unauthorized; deviates from secure login flow, causes erratic runtime failure"
+    },
+    {
+      "filename": "AddressServiceImpl.java",
+      "start_line": 78,
+      "end_line": 89,
+      "severity": "high",
+      "error_description": "Omission fault (development phase, human-made, nonmalicious, software): missing addressRepository.save(addressEntity); address prepared but not persisted, causing database state omission error on create requests"
+    },
+    {
+      "filename": "AddressServiceImpl.java",
+      "start_line": 68,
+      "end_line": 68,
+      "severity": "medium",
+      "error_description": "Commission fault (development phase, human-made, nonmalicious, software): addressRepository.findById(addressId).get() assumes existence; throws unchecked exception instead of ResourceNotFoundException, inconsistent error handling"
+    },
+    {
+      "filename": "UserController.java",
+      "start_line": 59,
+      "end_line": 62,
+      "severity": "high",
+      "error_description": "Omission fault (development phase, human-made, nonmalicious, interaction): missing @PreAuthorize on delete endpoint; permits any authenticated user to delete any user, violating authorization policy (high propagation to integrity failure)"
+    },
+    {
+      "filename": "UserController.java",
+      "start_line": 48,
+      "end_line": 51,
+      "severity": "high",
+      "error_description": "Omission fault (development phase, human-made, nonmalicious, software): missing @Valid or @Validated on @RequestBody UserRequest in create; bypasses DTO validation, allows invalid data persistence"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 72,
+      "end_line": 82,
+      "severity": "medium",
+      "error_description": "Design fault (development phase, human-made, nonmalicious, performance): userRepository.findAll() ignores Pageable, loads entire dataset into memory; risks out-of-memory errors for large user bases (latent under high load)"
+    },
+    {
+      "filename": "AddressController.java",
+      "start_line": 44,
+      "end_line": 47,
+      "severity": "medium",
+      "error_description": "Commission fault (development phase, human-made, nonmalicious, software): @PostMapping(consumes = \"text/plain\") incompatible with @RequestBody AddressRequest (expects JSON); prevents proper request parsing, causes 400 errors on valid JSON"
+    }
+  ]
+}

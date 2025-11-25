@@ -1,4 +1,0 @@
-filename,det_lines,error_description
-Address.java,"(105, 114)","Incomplete equals/hashCode: only considers id, ignoring other fields for business equality (e.g., duplicate addresses); hypothesizing nonmalicious development fault (shallow entity comparison), low propagation but risks inconsistency in collections."
-AddressServiceImpl.java,"(96, 100)","Inconsistent error logging in update: LOG.error called inside orElseThrow lambda without execution guarantee if entity found, potentially missing logs; hypothesizing low-probability development fault (logging placement), low propagation but reduces dependability in operational phase."
-AddressServiceImpl.java,"(116, 120)","Repeated findById in delete: addressRepository.findById(addressId) without caching or batching, inefficient for high-load; hypothesizing nonmalicious development fault (performance omission), low propagation to timing failure under load."

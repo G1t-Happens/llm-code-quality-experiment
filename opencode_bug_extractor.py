@@ -41,37 +41,34 @@ def extract_bug_json(content: str):
     if start == -1:
         return None
 
+    # Alles ab dem ersten [ nehmen
+    text = content[start:]
+
+    # Nur komplette Objekte behalten
     bracket_level = 0
-    in_string = False
-    escape = False
+    objects = []
+    current_pos = 0
 
-    for i in range(start, len(content)):
-        char = content[i]
-        if escape:
-            escape = False
-            continue
-        if char == "\\":
-            escape = True
-            continue
-        if char in ('"', "'"):
-            in_string = not in_string
-            continue
-        if in_string:
-            continue
-
-        if char == "[":
+    for i, char in enumerate(text):
+        if char == '{':
+            if bracket_level == 0:
+                current_pos = i
             bracket_level += 1
-        elif char == "]":
+        elif char == '}':
             bracket_level -= 1
             if bracket_level == 0:
-                candidate = content[start:i+1]
+                obj_text = text[current_pos:i+1]
                 try:
-                    data = json.loads(candidate)
-                    if isinstance(data, list) and data and "filename" in data[0]:
-                        return data
+                    obj = json.loads(obj_text)
+                    objects.append(obj)
                 except:
-                    continue
-    return None
+                    pass
+
+    if not objects:
+        return None
+
+    print(f"   → {len(objects)} reparierte Bug-Einträge aus trunkierter Ausgabe wiederhergestellt!")
+    return objects
 
 
 def main():

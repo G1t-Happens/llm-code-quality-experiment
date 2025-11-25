@@ -1,0 +1,86 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "severity": "critical",
+    "error_description": "SQL injection vulnerability in getByUsername method: raw string concatenation 'SELECT * FROM users WHERE username = \\'' + username + '\\'' directly into native query enables malicious username payloads to extract/alter data (human-made development fault: omission of parameterization)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 60,
+    "end_line": 62,
+    "severity": "high",
+    "error_description": "Missing @PreAuthorize on delete method: any authenticated user can delete any user by ID without ownership or admin check (design fault: authorization omission violates principle of least privilege)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "severity": "high",
+    "error_description": "NullPointerException risk in getById: addressRepository.findById(addressId).get() assumes existence without Optional handling before enforceAddressOwnership call (development fault: unchecked repository call)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 181,
+    "severity": "high",
+    "error_description": "NullPointerException risk in checkLogin: userRepository.findByUsername(username).get() assumes user exists before null check (development fault: premature .get() call on Optional)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 87,
+    "severity": "high",
+    "error_description": "Premature mapping in save: addressMapper.toAddressResponse called on unsaved addressEntity before repository.save(), returns null ID in response (development fault: incorrect service contract implementation)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "severity": "critical",
+    "error_description": "Double password hashing in updateUserEntityFromUserRequest: passwordEncoder.encode(passwordEncoder.encode(dto.password())) applies BCrypt twice creating incompatible hash (development fault: mapper expression error)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 152,
+    "severity": "medium",
+    "error_description": "Redundant PasswordEncoder instantiation: new BCryptPasswordEncoder() created locally in save() and update() instead of using injected singleton (performance fault: unnecessary object creation)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 72,
+    "end_line": 82,
+    "severity": "medium",
+    "error_description": "Inefficient listAll pagination: findAll() loads ALL users into memory then creates PageImpl, fails for large datasets (performance fault: missing native pagination via Pageable)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 96,
+    "end_line": 100,
+    "severity": "medium",
+    "error_description": "Inconsistent Optional handling in update: uses orElseThrow unlike getById's .get() pattern (code smell/maintainability fault: inconsistent error handling)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 48,
+    "severity": "medium",
+    "error_description": "Unusual consumes='text/plain' on POST create: mismatches typical JSON application/json expectation, may confuse API clients (design fault: non-standard content negotiation)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/security/SecurityConfig.java",
+    "start_line": 65,
+    "end_line": 67,
+    "severity": "medium",
+    "error_description": "Public POST /users endpoint lacks rate limiting: enables username enumeration and brute force attacks (security fault: missing throttling on registration)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 139,
+    "end_line": 149,
+    "severity": "low",
+    "error_description": "LazyInitializationException risk in enforceAddressOwnership: address.getUser() with FetchType.LAZY may fail outside transaction if user not preloaded (interaction fault: JPA fetch strategy mismatch)"
+  }
+]

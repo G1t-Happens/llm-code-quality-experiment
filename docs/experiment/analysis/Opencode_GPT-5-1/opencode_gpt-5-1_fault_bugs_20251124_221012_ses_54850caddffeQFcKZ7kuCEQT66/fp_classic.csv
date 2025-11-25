@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-GlobalExceptionHandler.java,"(47, 51)","handleMalformedJson(HttpMessageNotReadableException) returns the result of ex.getMostSpecificCause().getMessage() directly to clients, potentially exposing internal parser or framework error details and implementation hints (information disclosure) instead of a sanitized generic message"

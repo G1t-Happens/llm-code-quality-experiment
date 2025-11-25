@@ -1,0 +1,107 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 108,
+    "severity": "critical",
+    "error_description": "SQL injection vulnerability in getByUsername method: Raw SQL concatenation with user input 'username' without parameterization, allowing malicious input to alter query structure and extract/modify data. High-probability nonmalicious development fault (omission of prepared statements), operational phase, human-made. Could propagate to integrity failure (data breach) under adversarial input."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 126,
+    "severity": "medium",
+    "error_description": "Redundant PasswordEncoder instantiation in save method: Creates new BCryptPasswordEncoder() instead of using injected bean, potentially leading to inconsistent hashing if configurations differ. Medium-probability nonmalicious development fault (design flaw: unnecessary local creation), development phase. Low propagation risk but could cause erratic authentication failures."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 152,
+    "end_line": 153,
+    "severity": "high",
+    "error_description": "Incorrect password hashing in update method: Double-encodes password with passwordEncoder.encode(passwordEncoder.encode(dto.password())), resulting in invalid hashes that break authentication. High-probability nonmalicious development fault (algorithmic error in MapStruct expression), development phase. Propagates to erratic failure (login failures post-update), catastrophic for user access."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 182,
+    "severity": "high",
+    "error_description": "NullPointerException risk in checkLogin method: Calls userRepository.findByUsername(username).get() without null check, crashing if user not found before password validation. High-probability nonmalicious development fault (omission of defensive check), operational phase. Could lead to halt failure (500 errors) on invalid logins, exposing internal errors."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 68,
+    "severity": "high",
+    "error_description": "NullPointerException in getById method: Uses addressRepository.findById(addressId).get() without handling Optional.empty(), crashing if address not found. High-probability nonmalicious development fault (unchecked Optional), operational phase. Propagates to halt failure, inconsistent with other methods using orElseThrow."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 87,
+    "severity": "medium",
+    "error_description": "Premature mapping in save method: Calls addressMapper.toAddressResponse before saving entity, returning unsaved ID (null) in response. Medium-probability nonmalicious development fault (timing error: mapping pre-persist), development phase. Leads to content failure (incorrect ID in response), confusing clients."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 96,
+    "end_line": 100,
+    "severity": "medium",
+    "error_description": "Inconsistent error handling in update method: Uses orElseThrow for address but logs error message with '<-- update', potentially misleading logs. Low-probability nonmalicious development fault (logging inconsistency), operational phase. Minor propagation to erratic logging, but aids fault diagnosis."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "severity": "high",
+    "error_description": "Missing authorization on delete endpoint: No @PreAuthorize, allowing any authenticated user to delete any user (mass deletion risk). High-probability nonmalicious development fault (omission of security annotation), development phase. Propagates to availability/integrity failure (unauthorized deletions), critical security hole."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 56,
+    "severity": "high",
+    "error_description": "Flawed password update logic in updateUserEntityFromUserRequest: Double-hashes and ignores nulls incorrectly, preventing password changes or causing invalid hashes. High-probability nonmalicious development fault (incorrect expression in @Mapping), development phase. Leads to erratic failure (broken updates), as confirmed in service usage."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/security/SecurityConfig.java",
+    "start_line": 108,
+    "end_line": 110,
+    "severity": "medium",
+    "error_description": "Weak JWT secret handling: Decodes base64Secret without length validation, allowing short keys vulnerable to brute-force. Medium-probability nonmalicious development fault (omission of key strength check), operational phase. Could propagate to security failure (token forgery) if weak secret configured."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 73,
+    "end_line": 82,
+    "severity": "low",
+    "error_description": "Inefficient pagination in listAll: Loads all users into memory then creates PageImpl, risking OOM for large datasets. Low-probability nonmalicious development fault (performance oversight), operational phase. Propagates to performance failure (high memory use), minor unless scaled."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 48,
+    "severity": "low",
+    "error_description": "Unusual consumes='text/plain' on POST: May reject standard JSON bodies, limiting client compatibility. Low-probability nonmalicious development fault (misconfigured media type), development phase. Could cause erratic failure (400 errors on valid JSON), but validation still applies."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/logging/LoggingConfig.java",
+    "start_line": 95,
+    "end_line": 137,
+    "severity": "medium",
+    "error_description": "Race condition in initializeLogging: Synchronized but volatile flag may allow multiple initializations under concurrent startup. Medium-probability nonmalicious development fault (insufficient synchronization), operational phase. Potential erratic failure (duplicate appenders), low impact with Spring singleton."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 139,
+    "end_line": 149,
+    "severity": "low",
+    "error_description": "Potential NPE in enforceAddressOwnership: Accesses address.getUser().getId() without null check on user (though LAZY fetch may proxy). Low-probability interaction fault (JPA lazy loading timing), operational phase. Could propagate to erratic failure if user detached."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/dto/UserRequest.java",
+    "start_line": 22,
+    "end_line": 26,
+    "severity": "medium",
+    "error_description": "Weak password validation: Regex allows passwords without special characters, below modern security standards. Medium-probability nonmalicious development fault (inadequate constraint), development phase. Propagates to security failure (weak credentials exploitable via brute-force)."
+  }
+]

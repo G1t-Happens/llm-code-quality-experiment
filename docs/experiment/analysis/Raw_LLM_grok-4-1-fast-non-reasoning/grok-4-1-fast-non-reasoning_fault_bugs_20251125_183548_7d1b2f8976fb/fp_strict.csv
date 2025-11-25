@@ -1,0 +1,4 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(125, 152)","Redundant BCryptPasswordEncoder instantiation (lines 125,152): Creates new encoder instances instead of using injected field, wastes CPU cycles and risks inconsistent hashing parameters, medium-probability performance fault (resource inefficiency)"
+AddressServiceImpl.java,"(86, 87)","Missing persistence in save method (lines 86-87): Creates entity via mapper but never calls addressRepository.save(), address data lost after transaction, critical development fault (omission) causes silent data loss failure despite successful HTTP 200"
+AddressServiceImpl.java,"(96, 100)","Inconsistent Optional handling in update: Uses orElseThrow (lines 96-100) unlike getById's unsafe .get(), inconsistent error handling patterns increase maintenance faults, medium-probability development fault (code smell)"

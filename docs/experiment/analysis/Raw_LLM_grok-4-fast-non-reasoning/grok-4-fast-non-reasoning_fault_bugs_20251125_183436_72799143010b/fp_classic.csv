@@ -1,0 +1,3 @@
+filename,det_lines,error_description
+AddressServiceImpl.java,"(96, 96)","NullPointerException risk in update: addressRepository.findById(addressId).orElseThrow(...) but subsequent enforceAddressOwnership may fail if user relation lazy-loaded and not initialized, hypothesizing interaction fault (JPA lazy loading timing issue), medium propagation to LazyInitializationException failure"
+AddressServiceImpl.java,"(116, 116)","NullPointerException risk in delete: addressRepository.findById(addressId).orElseThrow but ownership check accesses user.id without null safety, hypothesizing nonmalicious development fault (incomplete null handling in enforceAddressOwnership), medium propagation to NPE if user relation null"

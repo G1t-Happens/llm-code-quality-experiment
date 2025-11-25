@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(102, 103)",SQL injection vulnerability in native query: direct concatenation of user-supplied username without parameterization (human-made development software interaction fault)

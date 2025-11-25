@@ -1,0 +1,88 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_543f.md",
+    "model": "grok.4.1.fast.non.reasoning",
+    "session_id": "ses_543f45c84ffe6NgM8ltZELdozP",
+    "processed_at": "2025-11-25T18:25:28.819452",
+    "bug_count": 11
+  },
+  "bugs": [
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 102,
+      "end_line": 103,
+      "severity": "high",
+      "error_description": "SQL injection vulnerability in getByUsername(): raw username concatenation in native query 'SELECT * FROM users WHERE username = \\'' + username + '\\'' hypothesizes nonmalicious development fault (lines 102-103); error: unescaped user input activates to arbitrary SQL execution; high propagation risk to data breach failure"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 81,
+      "end_line": 82,
+      "severity": "high",
+      "error_description": "NullPointerException in checkLogin(): userRepository.findByUsername(username).get() without null check (line 81) hypothesizes nonmalicious development omission fault; error: NoSuchElementException when user not found propagates to service failure despite timing attack protection intent"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 25,
+      "end_line": 125,
+      "severity": "medium",
+      "error_description": "Inconsistent PasswordEncoder usage in save(): creates new BCryptPasswordEncoder() (line 125) instead of injected field hypothesizes design inconsistency fault; error: potential timing/strength differences vs. checkLogin() field encoder; medium risk to authentication integrity"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 67,
+      "end_line": 68,
+      "severity": "high",
+      "error_description": "NullPointerException in getById(): addressRepository.findById(addressId).get() assumes existence (line 67) hypothesizes development fault (unchecked Optional); error: NPE crash when address not found before ownership check; propagates to erratic service failure"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 96,
+      "end_line": 96,
+      "severity": "medium",
+      "error_description": "Missing user existence check in update(): no userRepository.findById(userId) before address operations hypothesizes interaction fault; error: proceeds with invalid userId; relies solely on @PreAuthorize which may bypass"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 41,
+      "end_line": 46,
+      "severity": "medium",
+      "error_description": "Lazy loading risk in enforceAddressOwnership(): address.getUser().getId() (line 41) outside transaction hypothesizes operational timing fault; error: LazyInitializationException if user not eager-fetched; dormant until no-session access"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 60,
+      "end_line": 62,
+      "severity": "high",
+      "error_description": "Missing @PreAuthorize on delete(): any authenticated user can delete any user (lines 60-62) hypothesizes security design fault; error: unauthorized mass deletion possible; catastrophic propagation to data loss failure"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 48,
+      "end_line": 51,
+      "severity": "medium",
+      "error_description": "Missing @Valid on create(): UserRequest lacks validation annotation (line 49) hypothesizes validation omission fault; error: unvalidated input reaches service layer; medium risk to constraint violations"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/resources/application.properties",
+      "start_line": 22,
+      "end_line": 22,
+      "severity": "high",
+      "error_description": "spring.jpa.hibernate.ddl-auto=update in production config (line 22) hypothesizes operational misconfiguration fault; error: unintended schema changes/destruction; high risk to data integrity failure in deployment"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/security/SecurityConfig.java",
+      "start_line": 108,
+      "end_line": 109,
+      "severity": "medium",
+      "error_description": "No secret key length validation in createSecretKey(): Base64.decode(jwtSecret) (lines 108-109) hypothesizes input validation fault; error: InvalidKeyException or weak crypto if secret malformed/short; dormant cryptographic weakness"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 73,
+      "end_line": 82,
+      "severity": "low",
+      "error_description": "Inefficient pagination in listAll(): findAll() loads all users then creates PageImpl (lines 73-82) hypothesizes performance design fault; error: OOM for large datasets; low immediate risk but scales to halt failure"
+    }
+  ]
+}

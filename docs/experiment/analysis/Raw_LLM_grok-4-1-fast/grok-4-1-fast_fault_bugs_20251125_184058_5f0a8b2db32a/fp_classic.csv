@@ -1,0 +1,3 @@
+filename,det_lines,error_description
+AddressServiceImpl.java,"(96, 97)","Unsafe Optional.get() in update method: assumes address exists, throws unchecked exception if not found (pass 2: adversarial non-existent ID)"
+AddressServiceImpl.java,"(116, 117)",Unsafe Optional.get() in delete method: runtime exception on missing address (pass 3: propagation to halt failure mode)

@@ -1,0 +1,3 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(102, 103)","Software commission fault (unsafe native query concatenation): 'SELECT * FROM users WHERE username = \'' + username + '\'' → SQL injection vulnerability, potential external malicious input exploitation"
+application.properties,"(22, 22)","Configuration fault (operational phase): spring.jpa.hibernate.ddl-auto=update → unintended schema changes, potential data loss"

@@ -1,0 +1,2 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(102, 103)","Commission fault (development phase, human-made, nonmalicious, software): native SQL 'SELECT * FROM users WHERE username = \'' + username + '\'' vulnerable to SQL injection; external malicious input can alter query, leading to unauthorized access or data leak failures"

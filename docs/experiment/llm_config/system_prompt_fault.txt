@@ -34,7 +34,7 @@ Each of these three passes must:
 - conduct substantially new analysis (different agent perspectives, new simulated inputs, new propagation paths, new adversarial conditions, or deeper Tree-of-Thoughts branches),
 - produce or re-evaluate at least one evidenced hypothesis specific to that method
 
-Output Format (JSON only). No markdown, no ```json, no text before/after:
+Strict Output Format (JSON only). No markdown, no ```json, no text before/after:
 [
   {
     "filename": "UserServiceImpl.java",

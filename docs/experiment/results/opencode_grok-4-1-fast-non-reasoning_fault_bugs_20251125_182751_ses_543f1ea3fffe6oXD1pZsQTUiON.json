@@ -1,0 +1,95 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_543f.md",
+    "model": "grok.4.1.fast.non.reasoning",
+    "session_id": "ses_543f1ea3fffe6oXD1pZsQTUiON",
+    "processed_at": "2025-11-25T18:27:51.745954",
+    "bug_count": 12
+  },
+  "bugs": [
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 102,
+      "end_line": 103,
+      "severity": "critical",
+      "error_description": "SQL injection vulnerability in getByUsername: raw username concatenation in native query 'SELECT * FROM users WHERE username = \\'' + username + '\\'' (lines 102-103) hypothesizes nonmalicious development fault (design flaw: failure to use parameterized query), high-probability activation via malicious username input → SQL error or unauthorized data access failure"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 67,
+      "end_line": 69,
+      "severity": "high",
+      "error_description": "Constructor injection violation: @Autowired on constructor (line 62) despite DI guidelines specifying constructor injection without @Autowired hypothesizes nonmalicious development fault (inconsistency with coding standards), low propagation risk but indicates systemic quality control fault"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 81,
+      "end_line": 94,
+      "severity": "high",
+      "error_description": "NullPointerException risk in checkLogin: userRepository.findByUsername(username).get() (line 81) assumes Optional presence without orElse/orElseThrow hypothesizes nonmalicious development fault (unchecked repository return), medium-probability NPE error → erratic failure under non-existent username"
+    },
+    {
+      "filename": "AddressServiceImpl.java",
+      "start_line": 67,
+      "end_line": 68,
+      "severity": "high",
+      "error_description": "NullPointerException in getById: addressRepository.findById(addressId).get() (line 67) without null check hypothesizes nonmalicious development fault (unchecked Optional), high-probability NPE if address not found before enforceAddressOwnership call → erratic failure"
+    },
+    {
+      "filename": "AddressServiceImpl.java",
+      "start_line": 40,
+      "end_line": 45,
+      "severity": "high",
+      "error_description": "Constructor @Autowired usage violates DI guidelines (line 40) hypothesizes nonmalicious development fault (standards non-compliance), low direct risk but flags potential for field injection faults elsewhere"
+    },
+    {
+      "filename": "AddressServiceImpl.java",
+      "start_line": 139,
+      "end_line": 146,
+      "severity": "medium",
+      "error_description": "Potential NPE in enforceAddressOwnership: address.getUser() unchecked before getId() (line 141) hypothesizes dormant nonmalicious development fault (defensive programming omission), low-probability if FK enforced but possible under DB corruption → erratic failure"
+    },
+    {
+      "filename": "UserController.java",
+      "start_line": 60,
+      "end_line": 62,
+      "severity": "critical",
+      "error_description": "Missing @PreAuthorize on DELETE /{id} (lines 60-62) allows unauthenticated/unauthorized user deletion hypothesizes nonmalicious development fault (security omission), high-probability unauthorized access failure violating ownership model"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 25,
+      "end_line": 26,
+      "severity": "medium",
+      "error_description": "Redundant PasswordEncoder instantiation in save/update (lines 25,52) instead of injected instance hypothesizes nonmalicious development fault (resource inefficiency), minor performance degradation under high load"
+    },
+    {
+      "filename": "src/main/resources/db/migration/V2__insert_data.sql",
+      "start_line": 1,
+      "end_line": 12,
+      "severity": "high",
+      "error_description": "Hardcoded production passwords in migration script (lines 3-12) hypothesizes malicious operational fault risk (credential exposure in source control), high-probability compromise if repo leaked → full system access failure"
+    },
+    {
+      "filename": "src/main/resources/application.properties",
+      "start_line": 22,
+      "end_line": 24,
+      "severity": "medium",
+      "error_description": "spring.jpa.show-sql=true in production config (line 23) leaks schema/queries hypothesizes nonmalicious configuration fault (debug mode exposure), medium-probability reconnaissance aid for attackers"
+    },
+    {
+      "filename": "UserServiceImpl.java",
+      "start_line": 72,
+      "end_line": 82,
+      "severity": "high",
+      "error_description": "Ineffective pagination in listAll: findAll() ignores Pageable, manual PageImpl construction (lines 74-79) hypothesizes nonmalicious development fault (paging logic flaw), leads to memory exhaustion failure under large datasets"
+    },
+    {
+      "filename": "AddressServiceImpl.java",
+      "start_line": 86,
+      "end_line": 89,
+      "severity": "high",
+      "error_description": "Missing repository save in save(): maps to entity/response but never persists (lines 86-89) hypothesizes critical nonmalicious development fault (transactional omission), data loss failure - addresses never saved to DB"
+    }
+  ]
+}

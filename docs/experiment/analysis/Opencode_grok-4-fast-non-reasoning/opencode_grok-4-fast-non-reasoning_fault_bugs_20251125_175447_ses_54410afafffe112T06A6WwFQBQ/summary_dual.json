@@ -1,0 +1,20 @@
+{
+  "classic": {
+    "tp": 6,
+    "fp": 36,
+    "fn": 12,
+    "precision": 0.14285714285714285,
+    "recall": 0.3333333333333333,
+    "f1": 0.2
+  },
+  "strict": {
+    "tp": 0,
+    "fp": 42,
+    "fn": 18,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "category": "Opencode (grok-4-fast-non-reasoning)",
+  "run": "opencode_grok-4-fast-non-reasoning_fault_bugs_20251125_175447_ses_54410afafffe112T06A6WwFQBQ"
+}

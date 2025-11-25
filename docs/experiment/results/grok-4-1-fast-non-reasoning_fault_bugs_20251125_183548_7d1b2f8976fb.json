@@ -1,0 +1,72 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 108,
+    "severity": "critical",
+    "error_description": "SQL injection vulnerability in getByUsername method: direct string concatenation in native query 'SELECT * FROM users WHERE username = \\'' + username + '\\'' (lines 102-103) enables malicious username input to execute arbitrary SQL, high-probability human-made development fault (nonmalicious software fault: improper input sanitization)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "severity": "high",
+    "error_description": "Missing @PreAuthorize on delete method (lines 59-62): any authenticated user can delete any user via DELETE /users/{id}, violates ownership principle, medium-probability design fault (omission of authorization check) could lead to unauthorized data destruction failure"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "severity": "high",
+    "error_description": "Unsafe findById().get() in getById method (line 67): No Optional handling before ownership check, will throw NoSuchElementException if address not found before enforceAddressOwnership executes, high-probability development fault (incorrect exception handling) masks true 404 error state"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 181,
+    "severity": "high",
+    "error_description": "Unsafe findByUsername().get() in checkLogin (line 181): Assumes user exists without Optional handling, will throw NoSuchElementException before timing-attack protection executes, high-probability software fault (unchecked Optional) disrupts authentication flow"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 87,
+    "severity": "high",
+    "error_description": "Missing persistence in save method (lines 86-87): Creates entity via mapper but never calls addressRepository.save(), address data lost after transaction, critical development fault (omission) causes silent data loss failure despite successful HTTP 200"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "severity": "high",
+    "error_description": "Double password hashing in updateUserEntityFromUserRequest (line 55): 'passwordEncoder.encode(passwordEncoder.encode(dto.password()))' hashes already-hashed password, corrupts credentials irreversibly, high-probability algorithmic fault (incorrect encoding logic)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 152,
+    "severity": "medium",
+    "error_description": "Redundant BCryptPasswordEncoder instantiation (lines 125,152): Creates new encoder instances instead of using injected field, wastes CPU cycles and risks inconsistent hashing parameters, medium-probability performance fault (resource inefficiency)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 72,
+    "end_line": 82,
+    "severity": "medium",
+    "error_description": "Inefficient listAll pagination (lines 72-82): Loads ALL users into memory via findAll() then creates fake PageImpl, causes OOM under load, medium-probability scalability fault (incorrect Pageable usage) leads to memory exhaustion failure"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 48,
+    "severity": "medium",
+    "error_description": "Unusual consumes='text/plain' on POST /addresses (line 44): Expects plain text body for structured JSON DTO, likely validation bypass or copy-paste error, low-probability interaction fault (mismatched content negotiation)"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 96,
+    "end_line": 100,
+    "severity": "medium",
+    "error_description": "Inconsistent Optional handling in update: Uses orElseThrow (lines 96-100) unlike getById's unsafe .get(), inconsistent error handling patterns increase maintenance faults, medium-probability development fault (code smell)"
+  }
+]

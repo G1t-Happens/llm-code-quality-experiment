@@ -1,9 +1,17 @@
 Kategorie,Typ,Runs,TP,FP,FN,Precision,Recall,F1,F1_Std
-Opencode (GPT-5-1),Klassisch,3,38,8,16,0.826,0.704,0.76,0.077
-,Streng,3,29,17,25,0.63,0.537,0.581,0.127
-Opencode (Grok-4-1-fast),Klassisch,3,27,0,27,1.0,0.5,0.658,0.138
-,Streng,3,22,5,32,0.815,0.407,0.537,0.114
-Raw LLM (Grok),Klassisch,3,24,9,30,0.727,0.444,0.548,0.09
-,Streng,3,22,11,32,0.667,0.407,0.504,0.084
-Raw LLM (OpenAI),Klassisch,3,24,3,30,0.889,0.444,0.592,0.065
-,Streng,3,15,12,39,0.556,0.278,0.371,0.13
+Opencode (gpt-5-1),Klassisch,1,13,5,5,0.722,0.722,0.722,0.0
+,Streng,1,11,7,7,0.611,0.611,0.611,0.0
+Opencode (grok-4-1-fast),Klassisch,3,28,1,26,0.966,0.519,0.675,0.036
+,Streng,3,25,4,29,0.862,0.463,0.602,0.037
+Opencode (grok-4-1-fast-non-reasoning),Klassisch,3,17,16,37,0.515,0.315,0.391,0.08
+,Streng,3,9,24,45,0.273,0.167,0.208,0.071
+Opencode (grok-4-fast-non-reasoning),Klassisch,3,17,88,37,0.162,0.315,0.215,0.018
+,Streng,3,0,105,54,0.0,0.0,0.0,0.0
+Raw LLM (gpt-5.1),Klassisch,1,12,6,6,0.667,0.667,0.667,0.0
+,Streng,1,7,11,11,0.389,0.389,0.389,0.0
+Raw LLM (grok-4-1-fast),Klassisch,3,29,3,25,0.906,0.537,0.673,0.034
+,Streng,3,21,11,33,0.656,0.389,0.489,0.071
+Raw LLM (grok-4-1-fast-non-reasoning),Klassisch,3,28,4,26,0.875,0.519,0.652,0.058
+,Streng,3,19,13,35,0.594,0.352,0.443,0.052
+Raw LLM (grok-4-fast-non-reasoning),Klassisch,3,31,6,23,0.838,0.574,0.679,0.044
+,Streng,3,26,11,28,0.703,0.481,0.569,0.06
