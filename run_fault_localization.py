@@ -61,7 +61,6 @@ class SeededBug(BaseModel):
     severity: SeverityLevel = Field(..., description="Severity level of the bug")
     error_description: str = Field(..., min_length=10, description="Detailed description of the error")
 
-
 class BugList(BaseModel):
     bugs: List[SeededBug]
 
@@ -130,12 +129,55 @@ def save_generated_test(file_marker: str, content: str) -> bool:
         package = "com.llmquality.baseline"
 
     java_content = content.strip()
-    if not java_content.startswith("package "):
+
+    # Nur einfügen, wenn noch KEINE package-Zeile existiert (robust gegen LLM-Doppelungen)
+    if not java_content.lstrip().startswith("package "):
         java_content = f"package {package};\n\n{java_content}"
 
     test_path.write_text(java_content, encoding="utf-8")
     print(f"Test gespeichert → {test_path}")
     return True
+
+# ----------------------------- Markdown & Garbage Cleaner -----------------------------
+def clean_java_content(raw_content: str, file_path: str = "") -> str:
+    lines = raw_content.splitlines()
+    cleaned = []
+    in_code_block = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            continue
+
+        if in_code_block:
+            continue
+
+        garbage_patterns = [
+            "Here is the",
+            "Here are the",
+            "This is the",
+            "The test class",
+            "The following test",
+            "Below is the",
+            "Following is the",
+            "Unit test class",
+            "JUnit test class",
+            "Test class for",
+            "```java", "```kotlin", "```python", "```text",
+        ]
+        if any(stripped.startswith(p) for p in garbage_patterns):
+            continue
+
+        cleaned.append(line)
+
+    result = "\n".join(cleaned).strip()
+
+    if "```" in raw_content or any(p in raw_content for p in garbage_patterns):
+        print(f"  → Bereinigt (Markdown/Garbage entfernt): {Path(file_path).name}")
+
+    return result + ("\n" if result else "")
 
 # ----------------------------- LLM Clients -----------------------------
 class GrokClient:
@@ -181,7 +223,8 @@ def run_fault_localization(code: str):
         {"role": "user", "content": user_prompt}
     ]
 
-    print(f"Starre statische Fault Localization mit {PROVIDER.upper()} ({MODEL})...")
+    print(f"Starte Fault Localization → {PROVIDER.upper():6} | {MODEL:30} | "
+          f"temp={TEMPERATURE:.1f} | top_p={TOP_P:.2f} | max_tokens={MAX_TOKENS}")
     if PROVIDER == "grok":
         client = GrokClient()
         try:
@@ -200,10 +243,8 @@ def run_fault_localization(code: str):
 
     raw_content = data["choices"][0]["message"]["content"].strip()
 
-    # Grok fallback parser
     def parse_grok_output(text: str) -> BugList:
         raw = text.strip()
-
         start = raw.find("[")
         end = raw.rfind("]") + 1
         if start == -1 or end == 0:
@@ -220,7 +261,6 @@ def run_fault_localization(code: str):
         except json.JSONDecodeError:
             pass
 
-        # Notfall-Reparatur
         objects = re.findall(r'\{[^{}]*"filename"[^{}]*"error_description"[^{}]*\}', candidate, re.DOTALL)
         if not objects:
             objects = re.findall(r'\{[^{}]*"filename"[^{}]*\}', candidate, re.DOTALL)
@@ -268,7 +308,8 @@ def run_test_generation(code: str, clear_first: bool):
         {"role": "user", "content": user_prompt + "\n\nGeneriere vollständige JUnit 5 Testklassen mit korrekten Dateimarkern."}
     ]
 
-    print(f"Starte Testgenerierung mit {PROVIDER.upper()} ({MODEL})...")
+    print(f"Starte Testgenerierung → {PROVIDER.upper():6} | {MODEL:30} | "
+          f"temp={TEMPERATURE:.1f} | top_p={TOP_P:.2f} | max_tokens={MAX_TOKENS}")
 
     if PROVIDER == "grok":
         client = GrokClient()
@@ -281,7 +322,8 @@ def run_test_generation(code: str, clear_first: bool):
         completion = client.chat.completions.create(
             model=MODEL,
             messages=messages,
-            temperature=0.7,
+            temperature=TEMPERATURE,
+            top_p=TOP_P,
             max_completion_tokens=MAX_TOKENS,
         )
         data = completion.model_dump()
@@ -291,18 +333,16 @@ def run_test_generation(code: str, clear_first: bool):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     short_model = "-".join(MODEL.split("-")[:2])
 
-    # 1. Volle API-Response
     full_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{ts}.json"
     full_raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # 2. Nur der reine Text
     txt_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{ts}.txt"
     txt_raw_file.write_text(content, encoding="utf-8")
 
     print(f"Full API-Response  → {full_raw_file}")
     print(f"Roh-Text (Debug)   → {txt_raw_file}")
 
-    # 3. Parsen und als JSON speichern + Dateien schreiben
+    # ------------------ ROBUSTER PARSER (kein doppeltes Append!) ------------------
     parsed_tests = []
     current_marker = None
     current_content = ""
@@ -311,28 +351,37 @@ def run_test_generation(code: str, clear_first: bool):
         if raw_line.strip().startswith("===== FILE:"):
             if current_marker and current_content.strip():
                 path_str = current_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
-                parsed_tests.append({
-                    "file_path": path_str,
-                    "content": current_content.strip()
-                })
-                save_generated_test(current_marker, current_content)
+                cleaned_content = clean_java_content(current_content, path_str)
 
-            clean_path = raw_line.split("===== FILE:", 1)[1].split("=====", 1)[0].strip()
-            current_marker = "===== FILE: " + clean_path
+                if cleaned_content.strip():
+                    save_generated_test(current_marker, cleaned_content)
+                    parsed_tests.append({
+                        "file_path": path_str,
+                        "content": cleaned_content
+                    })
+                else:
+                    print(f"  → LEERER TEST nach Bereinigung → übersprungen: {path_str}")
+
+            current_marker = raw_line.strip()
             current_content = ""
         else:
             current_content += raw_line
 
-    # Letzter Block
+    # Letzte Datei verarbeiten
     if current_marker and current_content.strip():
         path_str = current_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
-        parsed_tests.append({
-            "file_path": path_str,
-            "content": current_content.strip()
-        })
-        save_generated_test(current_marker, current_content)
+        cleaned_content = clean_java_content(current_content, path_str)
 
-    # Geparste JSON-Datei
+        if cleaned_content.strip():
+            save_generated_test(current_marker, cleaned_content)
+            parsed_tests.append({
+                "file_path": path_str,
+                "content": cleaned_content
+            })
+        else:
+            print(f"  → LEERER TEST nach Bereinigung → übersprungen: {path_str}")
+
+    # Geparste JSON-Datei speichern
     parsed_file = RESULTS_DIR / f"{short_model}_tests_parsed_{ts}.json"
     parsed_file.write_text(json.dumps(parsed_tests, indent=2, ensure_ascii=False), encoding="utf-8")
 
