@@ -1,0 +1,3 @@
+Begin static analysis of the whole following Project. Output only the JSON result.
+
+{code}

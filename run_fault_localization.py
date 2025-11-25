@@ -18,9 +18,10 @@ from openai import OpenAI
 BASE_DIR = Path(__file__).parent.resolve()
 
 CODE_FILE = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_code.txt"
-SYSTEM_PROMPT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt.txt"
+SYSTEM_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_fault.txt"
 SYSTEM_PROMPT_TEST_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_test.txt"
-USER_PROMPT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt.txt"
+USER_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_fault.txt"
+USER_PROMPT_TEST_FILE  = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_test.txt"
 ENV_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
 RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
 GENERATED_TESTS_DIR = BASE_DIR / "baseline_project" / "src" / "test" / "java"
@@ -140,42 +141,73 @@ def save_generated_test(file_marker: str, content: str) -> bool:
 
 # ----------------------------- Markdown & Garbage Cleaner -----------------------------
 def clean_java_content(raw_content: str, file_path: str = "") -> str:
-    lines = raw_content.splitlines()
-    cleaned = []
-    in_code_block = False
+    original = raw_content
+    cleaned = raw_content.strip()
 
+    code_block_patterns = [
+        "```java", "```kotlin", "```python", "```javascript", "```js", "```ts",
+        "```xml", "```json", "```yaml", "```yml", "```text", "```bash", "```sh", "```"
+    ]
+    for pattern in code_block_patterns:
+        if cleaned.startswith(pattern):
+            rest = cleaned[len(pattern):].lstrip("\n")
+            cleaned = rest
+            break
+
+    while cleaned.endswith("```"):
+        cleaned = cleaned[:-3].rstrip()
+
+    garbage_prefixes = [
+        "Here is the", "Here are the", "Here's the", "Here is a", "Here are some",
+        "This is the", "These are the", "Below is the", "Following is the",
+        "The following", "Provided below", "Here you go", "Sure, here is",
+        "As requested", "Here is your", "I have generated", "Generated test",
+        "The generated test", "The test class", "The unit test", "The JUnit test",
+        "Unit test class", "JUnit test class", "Test class for", "Tests for",
+        "Here is the complete", "Here is the full", "Here is the updated",
+        "I've created the", "I've written the", "I have written the",
+        "Please find the", "Attached is the", "Enclosed is the",
+        "The code is as follows", "The implementation is",
+        # Deutsch
+        "Hier ist der", "Hier sind die", "Hier ist eine", "Unten findest du",
+        "Der folgende Code", "Der generierte Test", "Die Testklasse",
+        # Sonstiges
+        "Explanation:", "Note:", "Important:", "Warning:", "Hinweis:",
+        "```", "<!--", "#", "//", "/*", "*"
+    ]
+
+    lines = cleaned.splitlines()
+    filtered = []
     for line in lines:
         stripped = line.strip()
 
-        if stripped.startswith("```"):
-            in_code_block = not in_code_block
+        if not stripped and not filtered:
             continue
 
-        if in_code_block:
+        if any(stripped.startswith(prefix) for prefix in garbage_prefixes):
             continue
 
-        garbage_patterns = [
-            "Here is the",
-            "Here are the",
-            "This is the",
-            "The test class",
-            "The following test",
-            "Below is the",
-            "Following is the",
-            "Unit test class",
-            "JUnit test class",
-            "Test class for",
-            "```java", "```kotlin", "```python", "```text",
-        ]
-        if any(stripped.startswith(p) for p in garbage_patterns):
+        if stripped.startswith((">", "|", "Diff", "diff --git", "---", "+++")):
+            continue
+        if stripped.isdigit() and len(stripped) <= 4:
+            continue
+        if stripped.startswith(("Example:", "Beispiel:", "Output:", "Result:")):
             continue
 
-        cleaned.append(line)
+        filtered.append(line)
 
-    result = "\n".join(cleaned).strip()
+    result = "\n".join(filtered).strip()
 
-    if "```" in raw_content or any(p in raw_content for p in garbage_patterns):
-        print(f"  → Bereinigt (Markdown/Garbage entfernt): {Path(file_path).name}")
+    if "```" in result:
+        start = result.find("```")
+        end = result.rfind("```")
+        if start != -1 and end != -1 and start < end:
+            result = result[:start] + result[end + 3 :]
+        result = result.strip()
+
+    if original != result + "\n":
+        fname = Path(file_path).name if file_path else "unknown"
+        print(f"  → Bereinigt (Markdown/Garbage entfernt): {fname}")
 
     return result + ("\n" if result else "")
 
@@ -215,8 +247,8 @@ class GrokClient:
 
 # ----------------------------- Core Logic -----------------------------
 def run_fault_localization(code: str):
-    system_prompt = load_file(SYSTEM_PROMPT_FILE)
-    user_prompt = load_file(USER_PROMPT_FILE).format(code=code)
+    system_prompt = load_file(SYSTEM_PROMPT_FAULT_FILE)
+    user_prompt   = load_file(USER_PROMPT_FAULT_FILE).format(code=code)
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -301,7 +333,7 @@ def run_test_generation(code: str, clear_first: bool):
         clear_generated_tests()
 
     system_prompt = load_file(SYSTEM_PROMPT_TEST_FILE)
-    user_prompt = load_file(USER_PROMPT_FILE).format(code=code)
+    user_prompt   = load_file(USER_PROMPT_TEST_FILE).format(code=code)
 
     messages = [
         {"role": "system", "content": system_prompt},

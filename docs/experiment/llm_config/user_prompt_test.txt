@@ -1,0 +1,3 @@
+Begin generating bug-exposing tests immediately for this whole Project:
+
+{code}
