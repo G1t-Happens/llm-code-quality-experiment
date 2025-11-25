@@ -1,8 +1,8 @@
 gt_id,filename,gt_lines,det_lines,error_description
-E009,AddressController.java,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
 E001,UserMapper.java,"(55, 55)","(55, 55)",Double encryption of the password using a password encoder
-E013,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E004,UserServiceImpl.java,"(74, 79)","(72, 82)",Loading all users before pagination and transform them to DTOs – wrong order
 E014,UserServiceImpl.java,"(102, 108)","(102, 108)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
 E011,UserServiceImpl.java,"(181, 181)","(181, 181)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
-E004,UserServiceImpl.java,"(74, 79)","(72, 82)",Loading all users before pagination and transform them to DTOs – wrong order
+E013,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E009,AddressController.java,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
 E016,UserController.java,"(59, 60)","(59, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

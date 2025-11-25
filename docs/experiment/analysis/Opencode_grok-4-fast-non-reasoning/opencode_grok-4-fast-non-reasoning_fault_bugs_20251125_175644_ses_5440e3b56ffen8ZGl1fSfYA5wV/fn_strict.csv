@@ -1,5 +1,5 @@
 gt_id,filename,gt_lines,error_description
-E009,AddressController.java,"(44, 44)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
+E001,UserMapper.java,"(55, 55)",Double encryption of the password using a password encoder
 E002,UserServiceImpl.java,"(163, 173)",Missing delete call in the repository/data access layer
 E004,UserServiceImpl.java,"(74, 79)",Loading all users before pagination and transform them to DTOs – wrong order
 E005,UserServiceImpl.java,"(125, 125)",PasswordEncoder created per request rather than as a singleton
@@ -7,8 +7,8 @@ E006,UserServiceImpl.java,"(152, 152)",PasswordEncoder created per request rathe
 E011,UserServiceImpl.java,"(181, 181)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
 E014,UserServiceImpl.java,"(102, 108)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
 E015,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
+E009,AddressController.java,"(44, 44)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
 E012,SecurityConfig.java,"(107, 110)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
-E001,UserMapper.java,"(55, 55)",Double encryption of the password using a password encoder
 E003,AddressServiceImpl.java,"(78, 90)",Missing save call in the repository/data access layer
 E013,AddressServiceImpl.java,"(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
 E007,LoggingConfig.java,"(237, 237)","Appender and log level are set on ROOT_LOGGER, affecting all components and modules globally"

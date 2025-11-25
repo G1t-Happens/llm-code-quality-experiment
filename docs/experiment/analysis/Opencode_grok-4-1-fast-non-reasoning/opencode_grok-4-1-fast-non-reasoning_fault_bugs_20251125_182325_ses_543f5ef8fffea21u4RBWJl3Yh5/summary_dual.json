@@ -8,12 +8,12 @@
     "f1": 0.35714285714285715
   },
   "strict": {
-    "tp": 3,
-    "fp": 7,
-    "fn": 15,
-    "precision": 0.3,
-    "recall": 0.16666666666666666,
-    "f1": 0.21428571428571427
+    "tp": 4,
+    "fp": 6,
+    "fn": 14,
+    "precision": 0.4,
+    "recall": 0.2222222222222222,
+    "f1": 0.2857142857142857
   },
   "category": "Opencode (grok-4-1-fast-non-reasoning)",
   "run": "opencode_grok-4-1-fast-non-reasoning_fault_bugs_20251125_182325_ses_543f5ef8fffea21u4RBWJl3Yh5"

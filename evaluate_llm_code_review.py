@@ -34,7 +34,7 @@ class DetectedError:
 def extract_class_name(filename: str) -> str:
     return Path(filename).name
 
-
+# Load manually verified seeded errors (ground truth) from CSV.
 def load_ground_truth(csv_path: Path) -> List[GroundTruthError]:
     df = pd.read_csv(csv_path)
     required = {"id", "filename", "start_line", "end_line", "iso_category", "error_description", "severity"}
@@ -57,6 +57,17 @@ def load_ground_truth(csv_path: Path) -> List[GroundTruthError]:
     ]
 
 
+"""
+Robustly parse LLM-generated bug reports.
+Handles many real-world output formats:
+• Plain JSON array
+• { "bugs": [...] }
+• Single object (converted to 1-element list)
+• JSON embedded in markdown/text (common with chat models)
+• Various field names: filename/file, start_line, end_line/last_line, description/error_description
+
+This function is tested against most openai & xai models.
+"""
 def load_llm_detections(json_path: Path) -> List[DetectedError]:
     errors: List[DetectedError] = []
     try:
@@ -109,11 +120,25 @@ def load_llm_detections(json_path: Path) -> List[DetectedError]:
     return errors
 
 
+"""
+Classic lenient matching criterion used in nearly all code review and bug detection papers.
+Returns True if the detection overlaps with the ground-truth interval after expanding GT by ±tolerance lines.
+Equivalent to: at least one line in common after tolerance expansion.
+"""
 def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tolerance: int = 1) -> bool:
     return not ((gt_end + tolerance) < (det_start - tolerance) or
                 (det_end + tolerance) < (gt_start - tolerance))
 
 
+"""
+Strict matching with anti-hallucination / anti-overclaiming safeguards (state-of-the-art 2025).
+Conditions (all must hold):
+• Overlap after ±tol line tolerance
+• IoU ≥ 0.30 over the tolerance-expanded ground truth
+• Detection span ≤ 40 lines
+• Detection span ≤ max(8, 6 × ground-truth span)   ← prevents marking whole functions as buggy
+This significantly reduces credit for vague or overly large spans typical of hallucinating LLMs.
+"""
 def strict_match(gt: GroundTruthError, det: DetectedError, tol: int) -> bool:
     if gt.filename != det.filename:
         return False
@@ -137,10 +162,13 @@ def strict_match(gt: GroundTruthError, det: DetectedError, tol: int) -> bool:
     return iou >= 0.30
 
 
-# KORREKT: Greedy First Match pro Datei!
+"""
+Core evaluation logic – performs TWO metrics in a single, correct, hierarchical pass:
+1. Classic (lenient): lines_overlap with ±1 line tolerance + greedy backward assignment
+2. Strict (IoU≥0.3 + size limits): only applied to predictions that already passed classic matching
+→ any classic TP in classic that fails strict criteria is counted as FP in the strict metric.
+"""
 def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[DetectedError], tolerance: int):
-    from collections import defaultdict
-
     gt_by_file = defaultdict(list)
     det_by_file = defaultdict(list)
     for gt in gt_errors:
@@ -148,13 +176,16 @@ def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[Detect
     for det in det_errors:
         det_by_file[det.filename].append(det)
 
+    # Containers for both evaluation regimes
     tp_old_all, fp_old_all, fn_old_all = [], [], []
     tp_strict_all, fp_strict_all, fn_strict_all = [], [], []
 
     for filename in set(gt_by_file.keys()) | set(det_by_file.keys()):
         current_gt = gt_by_file[filename]
         current_det = det_by_file.get(filename, [])
+        current_det = sorted(current_det, key=lambda x: x.start_line)
 
+        # Two independent remaining lists – one for each metric
         remaining_old = current_gt.copy()
         remaining_strict = current_gt.copy()
 
@@ -164,11 +195,13 @@ def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[Detect
             gt_matched_idx = -1
             matched_gt = None
 
+            # Greedy backward: try to match the last (highest line) remaining GT first
             for i in range(len(remaining_old) - 1, -1, -1):
                 gt = remaining_old[i]
                 old_ok = lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance)
                 strict_ok = strict_match(gt, det, tol=tolerance)
 
+                # Classic True Positive
                 if old_ok:
                     matched_gt = gt
                     tp_old_all.append({
@@ -176,64 +209,69 @@ def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[Detect
                         "filename": gt.filename,
                         "gt_lines": (gt.start_line, gt.end_line),
                         "det_lines": (det.start_line, det.end_line),
-                        "error_description": gt.error_description   # <-- neu
+                        "error_description": gt.error_description
                     })
                     matched_old = True
                     gt_matched_idx = i
 
+                    # Strict True Positive only if strict criteria are met
                     if strict_ok:
                         tp_strict_all.append({
                             "gt_id": gt.id,
                             "filename": gt.filename,
                             "gt_lines": (gt.start_line, gt.end_line),
                             "det_lines": (det.start_line, det.end_line),
-                            "error_description": gt.error_description   # <-- neu
+                            "error_description": gt.error_description
                         })
                         matched_strict = True
                         remaining_strict.pop(i)
-                    break
+                    break   # greedy: stop at first (last) compatible GT
 
+            # Consume GT for classic metric if matched
             if matched_old:
                 remaining_old.pop(gt_matched_idx)
 
+            # False positives
             if not matched_old:
                 fp_old_all.append({
                     "filename": det.filename,
                     "det_lines": (det.start_line, det.end_line),
-                    "error_description": det.error_description   # <-- neu (aus Detection)
+                    "error_description": det.error_description
                 })
+            # includes cases where classic TP but strict fails,...correctly counted as strict FP
             if not matched_strict:
                 fp_strict_all.append({
                     "filename": det.filename,
                     "det_lines": (det.start_line, det.end_line),
-                    "error_description": det.error_description   # <-- neu (aus Detection)
+                    "error_description": det.error_description
                 })
 
+        # False negatives = remaining unmatched ground-truth errors
         for gt in remaining_old:
             fn_old_all.append({
                 "gt_id": gt.id,
                 "filename": gt.filename,
                 "gt_lines": (gt.start_line, gt.end_line),
-                "error_description": gt.error_description   # <-- neu
+                "error_description": gt.error_description
             })
         for gt in remaining_strict:
             fn_strict_all.append({
                 "gt_id": gt.id,
                 "filename": gt.filename,
                 "gt_lines": (gt.start_line, gt.end_line),
-                "error_description": gt.error_description   # <-- neu
+                "error_description": gt.error_description
             })
 
     return (tp_old_all, fp_old_all, fn_old_all), (tp_strict_all, fp_strict_all, fn_strict_all)
 
-
+# Metric calculation
 def calculate_metrics(tp: int, fp: int, fn: int) -> Dict[str, Any]:
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
     return {"tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall, "f1": f1}
 
-
+# Print Report
 def print_dual_report(category: str, old: tuple, strict: tuple, tolerance: int):
     (tp_o, fp_o, fn_o), (tp_s, fp_s, fn_s) = old, strict
     mo = calculate_metrics(len(tp_o), len(fp_o), len(fn_o))
@@ -249,7 +287,7 @@ def print_dual_report(category: str, old: tuple, strict: tuple, tolerance: int):
     print(f"{'Streng (IoU≥0.3)':<18} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:10.3f} {ms['recall']:10.3f} {ms['f1']:10.3f}")
     print("═"*100)
 
-
+# Save Report
 def save_dual_results(category: str, run_name: str, old_res: tuple, strict_res: tuple, output_dir: Path):
     safe_cat = category.replace("(", "").replace(")", "").replace(" ", "_")
     run_dir = output_dir / safe_cat / run_name
@@ -272,7 +310,7 @@ def save_dual_results(category: str, run_name: str, old_res: tuple, strict_res: 
     }
     (run_dir / "summary_dual.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
 
-
+# Detect category by filename
 def detect_category(filename: str) -> str:
     name = filename.lower()
 

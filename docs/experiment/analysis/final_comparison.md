@@ -5,7 +5,7 @@
 | Opencode (grok-4-1-fast)               | Klassisch |      3 |   28 |    1 |   26 |       0.966 |    0.519 | 0.675 |    0.036 |
 |                                        | Streng    |      3 |   25 |    4 |   29 |       0.862 |    0.463 | 0.602 |    0.037 |
 | Opencode (grok-4-1-fast-non-reasoning) | Klassisch |      3 |   17 |   16 |   37 |       0.515 |    0.315 | 0.391 |    0.08  |
-|                                        | Streng    |      3 |    9 |   24 |   45 |       0.273 |    0.167 | 0.208 |    0.071 |
+|                                        | Streng    |      3 |   12 |   21 |   42 |       0.364 |    0.222 | 0.277 |    0.073 |
 | Opencode (grok-4-fast-non-reasoning)   | Klassisch |      3 |   17 |   88 |   37 |       0.162 |    0.315 | 0.215 |    0.018 |
 |                                        | Streng    |      3 |    0 |  105 |   54 |       0     |    0     | 0     |    0     |
 | Raw LLM (gpt-5.1)                      | Klassisch |      1 |   12 |    6 |    6 |       0.667 |    0.667 | 0.667 |    0     |

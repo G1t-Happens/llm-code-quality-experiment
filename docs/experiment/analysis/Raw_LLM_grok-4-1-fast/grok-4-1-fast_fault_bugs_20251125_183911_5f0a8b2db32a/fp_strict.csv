@@ -1,4 +1,4 @@
 filename,det_lines,error_description
-AddressServiceImpl.java,"(86, 89)",Omission of addressRepository.save(addressEntity) in save method causes addresses to not persist to database and returns null ID (development fault: accidental removal or omission of persistence call)
 UserServiceImpl.java,"(102, 102)","SQL injection vulnerability in getByUsername method via unsafe native query string concatenation '"" + username + ""' (human-made development fault: improper input sanitization)"
 UserServiceImpl.java,"(172, 173)",Missing userRepository.delete(existingUserEntity) in delete method: logs deletion but leaves user in database (development fault: incomplete implementation)
+AddressServiceImpl.java,"(86, 89)",Omission of addressRepository.save(addressEntity) in save method causes addresses to not persist to database and returns null ID (development fault: accidental removal or omission of persistence call)
