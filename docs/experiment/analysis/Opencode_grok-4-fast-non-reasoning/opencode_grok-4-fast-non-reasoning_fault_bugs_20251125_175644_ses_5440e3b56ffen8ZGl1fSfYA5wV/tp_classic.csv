@@ -1,7 +1,7 @@
 gt_id,filename,gt_lines,det_lines,error_description
-E013,AddressServiceImpl.java,"(67, 67)","(1, 100)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
-E003,AddressServiceImpl.java,"(78, 90)","(1, 100)",Missing save call in the repository/data access layer
 E009,AddressController.java,"(44, 44)","(1, 50)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
-E010,UserController.java,"(48, 48)","(1, 50)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
 E014,UserServiceImpl.java,"(102, 108)","(1, 100)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
 E004,UserServiceImpl.java,"(74, 79)","(1, 100)",Loading all users before pagination and transform them to DTOs – wrong order
+E013,AddressServiceImpl.java,"(67, 67)","(1, 100)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E003,AddressServiceImpl.java,"(78, 90)","(1, 100)",Missing save call in the repository/data access layer
+E010,UserController.java,"(48, 48)","(1, 50)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"

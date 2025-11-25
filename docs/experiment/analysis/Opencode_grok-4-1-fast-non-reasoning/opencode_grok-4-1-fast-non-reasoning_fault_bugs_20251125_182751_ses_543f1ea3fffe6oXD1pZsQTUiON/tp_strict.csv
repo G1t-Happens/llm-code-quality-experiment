@@ -1,3 +1,3 @@
 gt_id,filename,gt_lines,det_lines,error_description
-E016,UserController.java,"(59, 60)","(60, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
 E013,AddressServiceImpl.java,"(67, 67)","(67, 68)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E016,UserController.java,"(59, 60)","(60, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

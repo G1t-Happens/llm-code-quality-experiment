@@ -114,7 +114,7 @@ def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tole
                 (det_end + tolerance) < (gt_start - tolerance))
 
 
-def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 2) -> bool:
+def strict_match(gt: GroundTruthError, det: DetectedError, tol: int) -> bool:
     if gt.filename != det.filename:
         return False
 

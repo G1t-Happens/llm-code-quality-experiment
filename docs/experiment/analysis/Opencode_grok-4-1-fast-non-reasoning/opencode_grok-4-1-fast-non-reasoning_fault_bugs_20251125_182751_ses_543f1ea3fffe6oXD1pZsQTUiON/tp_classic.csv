@@ -1,6 +1,6 @@
 gt_id,filename,gt_lines,det_lines,error_description
-E016,UserController.java,"(59, 60)","(60, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
-E014,UserServiceImpl.java,"(102, 108)","(102, 103)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
-E004,UserServiceImpl.java,"(74, 79)","(81, 94)",Loading all users before pagination and transform them to DTOs – wrong order
 E013,AddressServiceImpl.java,"(67, 67)","(67, 68)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
 E003,AddressServiceImpl.java,"(78, 90)","(86, 89)",Missing save call in the repository/data access layer
+E014,UserServiceImpl.java,"(102, 108)","(102, 103)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
+E004,UserServiceImpl.java,"(74, 79)","(81, 94)",Loading all users before pagination and transform them to DTOs – wrong order
+E016,UserController.java,"(59, 60)","(60, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
