@@ -273,7 +273,8 @@ def run_fault_localization(code: str):
 
     # Save results
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    prefix = f"{PROVIDER}_fault"
+    short_model = "-".join(MODEL.split("-")[:2])
+    prefix = f"{short_model}_fault"
     raw_file = RESULTS_DIR / f"{prefix}_raw_{ts}.json"
     bugs_file = RESULTS_DIR / f"{prefix}_bugs_{ts}.json"
 
@@ -318,7 +319,8 @@ def run_test_generation(code: str, clear_first: bool):
     content = data["choices"][0]["message"]["content"]
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    raw_file = RESULTS_DIR / f"{PROVIDER}_tests_raw_{ts}.txt"
+    short_model = "-".join(MODEL.split("-")[:2])
+    raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{ts}.txt"
     raw_file.write_text(content, encoding="utf-8")
     print(f"Raw-Antwort gespeichert → {raw_file}")
 
