@@ -24,7 +24,7 @@ USER_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user
 USER_PROMPT_TEST_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_test.txt"
 ENV_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / ".env"
 RESULTS_DIR = BASE_DIR / "docs" / "experiment" / "results"
-GENERATED_TESTS_DIR = BASE_DIR / "baseline_project" / "src" / "test" / "java"
+GENERATED_TESTS_DIR = BASE_DIR / "generated_tests"
 
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 GENERATED_TESTS_DIR.mkdir(parents=True, exist_ok=True)
