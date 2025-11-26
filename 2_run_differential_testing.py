@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# differential_tp_final_with_precision.py
-# KOMPLETT: Recall über gesäte Bugs + Precision über generierte Tests
-
 import shutil
 import subprocess
 import re
@@ -13,7 +10,7 @@ CLEAN = ROOT / "baseline_project_clean"
 BUGGY = ROOT / "baseline_project_buggy"
 GROUND_TRUTH_CSV = ROOT / "docs/experiment/ground_truth/seeded_errors_iso25010.csv"
 
-# Regex für @Test, @ParameterizedTest usw. (wie in deinem anderen Skript)
+# Regex für @Test, @ParameterizedTest usw.
 TEST_PATTERN = re.compile(
     r'^\s*@(?:org\.junit\.jupiter\.api\.)?(Test|ParameterizedTest|RepeatedTest|TestFactory|TestTemplate)\b',
     re.MULTILINE
@@ -31,7 +28,6 @@ def copy_tests():
     return True
 
 def count_generated_tests() -> int:
-    """Zählt alle @Test-Methoden im Quellcode – das ist die echte Basis für Precision!"""
     total = 0
     test_dir = CLEAN / "src/test/java"
     if not test_dir.exists():

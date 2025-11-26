@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# count_compilable_tests_strict_with_total_tests.py
-# → Zeigt dir: Wie viele @Test-Methoden hat die KI wirklich generiert?
-# → Und welche Klassen sind der Grund, dass nicht alles kompilierbar ist?
-
 import shutil
 import subprocess
 import re
@@ -47,7 +43,6 @@ def clean_test_dir():
     SRC_TEST.mkdir(parents=True, exist_ok=True)
 
 def deploy_all_tests():
-    """Kopiert ALLE generierten Tests ins echte Projekt – bereit zum Fixen!"""
     print("\nKopiere alle generierten Tests ins baseline_project_clean → du kannst jetzt direkt fixen!")
     clean_test_dir()
     for src in GENERATED.rglob("*.java"):
@@ -112,9 +107,7 @@ def main():
         except OSError:
             pass
 
-    # ==============================
-    # DEIN ARBEITSBERICHT – perfekt für den manuellen Rescue
-    # ==============================
+    # ARBEITSBERICHT
     print("\n" + "="*85)
     print("           BRUTALE WAHRHEIT – WAS HAT DIE KI WIRKLICH GELIEFERT?")
     print("="*85)
@@ -147,7 +140,7 @@ def main():
     print("  → Dann hast du deine echte ‚Rettungsrate‘: z.B. 47/53 = 88.7%")
     print("="*85)
 
-    # === FINALER SCHRITT: DEPLOY ===
+    # DEPLOY
     deploy_all_tests()
 
     print("\n" + "="*90)
