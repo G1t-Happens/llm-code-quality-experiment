@@ -6,7 +6,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 GENERATED = BASE / "generated_tests"
-PROJECT = BASE / "baseline_project_clean"
+PROJECT = BASE / "baseline_project_buggy"
 SRC_TEST = PROJECT / "src" / "test" / "java"
 
 TEST_PATTERN = re.compile(
