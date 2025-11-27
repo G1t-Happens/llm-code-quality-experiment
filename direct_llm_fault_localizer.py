@@ -7,7 +7,7 @@ import shutil
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Literal
+from typing import List, Dict, Literal, Any, Optional
 
 import dotenv
 from pydantic import BaseModel, Field
@@ -33,16 +33,35 @@ dotenv.load_dotenv(ENV_FILE)
 
 # ----------------------------- Reproduzierbarkeit Setup -----------------------------
 code_content = CODE_FILE.read_text(encoding="utf-8")
-CODE_MD5 = hashlib.md5(code_content.encode()).hexdigest()
+CODE_MD5 = hashlib.md5(code_content.encode("utf-8")).hexdigest()
 
-# Umgebungsvariablen laden
+# ----------------------------- LLM Konfiguration aus .env -----------------------------
 PROVIDER = os.getenv("PROVIDER", "grok").lower()
-TEMPERATURE = float(os.getenv("TEMPERATURE", "0.0"))
+TEMPERATURE = os.getenv("TEMPERATURE")
+if TEMPERATURE is not None:
+    try:
+        TEMPERATURE = float(TEMPERATURE)
+        if TEMPERATURE < 0 or TEMPERATURE > 2:
+            raise ValueError
+    except ValueError:
+        raise ValueError("TEMPERATURE muss eine Zahl zwischen 0.0 und 2.0 sein oder gar nicht gesetzt werden!")
+else:
+    TEMPERATURE = None
+
+TOP_P = os.getenv("TOP_P")
+if TOP_P is not None:
+    try:
+        TOP_P = float(TOP_P)
+        if TOP_P < 0 or TOP_P > 1:
+            raise ValueError
+    except ValueError:
+        raise ValueError("TOP_P muss eine Zahl zwischen 0.0 und 1.0 sein oder gar nicht gesetzt werden!")
+else:
+    TOP_P = None
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", "32768"))
 REQUEST_TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "600"))
-TOP_P = float(os.getenv("TOP_P", "0.90"))
 
-# Provider-spezifische Konfiguration
+
 if PROVIDER == "grok":
     API_KEY = os.getenv("GROK_API_KEY")
     MODEL = os.getenv("GROK_MODEL", "grok-4-fast-non-reasoning")
@@ -52,18 +71,13 @@ elif PROVIDER == "openai":
     MODEL = os.getenv("OPENAI_MODEL", "gpt-5")
     API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
 else:
-    raise ValueError(f"Ungültiger PROVIDER: {PROVIDER}. Muss 'grok' oder 'openai' sein.")
+    raise ValueError(f"Ungültiger PROVIDER: {PROVIDER}. Erlaubt: 'grok' oder 'openai'")
 
 if not API_KEY:
-    raise ValueError(f"{PROVIDER.upper()}_API_KEY fehlt in der .env!")
+    raise ValueError(f"{PROVIDER.upper()}_API_KEY fehlt in der .env-Datei!")
 
-# Reproduzierbarkeit erzwingen
-if TEMPERATURE != 0.0:
-    raise ValueError("Für 100% reproduzierbare Ergebnisse muss TEMPERATURE=0.0 in der .env stehen!")
-
-# Deterministischer Run-Hash (gleiche Parameter = gleicher Hash = gleicher Dateiname)
 run_hash = hashlib.sha1(
-    f"{PROVIDER}|{MODEL}|{TEMPERATURE}|{TOP_P}|{MAX_TOKENS}|{CODE_MD5}".encode()
+    f"{PROVIDER}|{MODEL}|{TEMPERATURE}|{TOP_P}|{MAX_TOKENS}|{CODE_MD5}".encode("utf-8")
 ).hexdigest()[:12]
 
 short_model = MODEL.replace("/", "-").replace(":", "-").replace(" ", "_")
@@ -74,30 +88,62 @@ file_suffix = f"{ts}_{run_hash}"
 SeverityLevel = Literal["critical", "high", "medium", "low"]
 
 class SeededBug(BaseModel):
-    filename: str = Field(..., description="Filename relative to the project root")
-    start_line: int = Field(..., ge=1)
-    end_line: int = Field(..., ge=1)
-    severity: SeverityLevel = Field(...)
-    error_description: str = Field(..., min_length=10)
+    filename: str = Field(..., description="Dateiname relativ zum Projektroot")
+    start_line: int = Field(..., ge=1, description="Erste betroffene Zeile (1-basiert)")
+    end_line: int = Field(..., ge=1, description="Letzte betroffene Zeile (inklusive)")
+    severity: SeverityLevel = Field(..., description="Schweregrad des Fehlers")
+    error_description: str = Field(..., min_length=10, description="Detaillierte Fehlerbeschreibung")
+
+    model_config = {"extra": "forbid"}  # Hilft bei Validierung, aber Schema braucht explizit additionalProperties
 
 class BugList(BaseModel):
-    bugs: List[SeededBug]
+    bugs: List[SeededBug] = Field(default_factory=list, description="Liste aller erkannter Fehler")
+
+    model_config = {"extra": "forbid"}
+
+# ----------------------------- Schema Utility für OpenAI Structured Outputs -----------------------------
+def get_openai_compatible_schema(base_model: BaseModel) -> Dict[str, Any]:
+    schema = base_model.model_json_schema()
+
+    def enforce_strict(obj: Dict[str, Any]) -> Dict[str, Any]:
+        if obj.get("type") == "object":
+            # 1. additionalProperties: false
+            obj["additionalProperties"] = False
+
+            # 2. WICHTIG: required = alle keys aus properties!
+            if "properties" in obj and obj.get("required") is None:
+                obj["required"] = list(obj["properties"].keys())
+
+            # Optional: strict explizit setzen
+            obj["strict"] = True
+
+        # Rekursion für nested objects, arrays, anyOf etc.
+        for key, value in list(obj.items()):
+            if isinstance(value, dict):
+                obj[key] = enforce_strict(value)
+            elif isinstance(value, list):
+                obj[key] = [enforce_strict(item) if isinstance(item, dict) else item for item in value]
+
+        return obj
+
+    return enforce_strict(schema)
 
 # ----------------------------- File Utilities -----------------------------
 def load_file(file_path: Path) -> str:
     if not file_path.exists():
         raise FileNotFoundError(f"Datei nicht gefunden: {file_path}")
-    return file_path.read_text(encoding="utf-8").strip()
+    content = file_path.read_text(encoding="utf-8")
+    return content.strip()
 
 def load_code() -> str:
     code = CODE_FILE.read_text(encoding="utf-8")
-    md5 = hashlib.md5(code.encode()).hexdigest()
+    md5 = hashlib.md5(code.encode("utf-8")).hexdigest()
     print(f"Code geladen: {len(code):,} Zeichen | MD5: {md5}")
     return code
 
 # ----------------------------- Test Generation Helpers -----------------------------
-def clear_generated_tests():
-    if GENERATED_TESTS_DIR.exists():
+def clear_generated_tests() -> None:
+    if GENERATED_TESTS_DIR.exists() and any(GENERATED_TESTS_DIR.iterdir()):
         print(f"Lösche alten Test-Ordner: {GENERATED_TESTS_DIR}")
         shutil.rmtree(GENERATED_TESTS_DIR)
     GENERATED_TESTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -112,7 +158,7 @@ def resolve_test_path(marker_path: str) -> Path:
             java_index = [i for i, p in enumerate(path.parts) if p == "java"][-1]
             relative_parts = path.parts[java_index + 1:]
         except IndexError:
-            raise ValueError(f"Kann Package nicht finden in Pfad: {marker_path}")
+            raise ValueError(f"Kann Java-Package nicht erkennen: {marker_path}")
 
     test_path = GENERATED_TESTS_DIR.joinpath(*relative_parts)
     if not test_path.name.endswith("Test.java"):
@@ -129,10 +175,11 @@ def save_generated_test(file_marker: str, content: str) -> bool:
     path_str = file_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
     if not path_str:
         return False
+
     try:
         test_path = resolve_test_path(path_str)
     except Exception as e:
-        print(f"PARSE-FEHLER bei: {path_str} → {e}")
+        print(f"PARSE-FEHLER bei Pfad '{path_str}': {e}")
         return False
 
     try:
@@ -150,7 +197,6 @@ def save_generated_test(file_marker: str, content: str) -> bool:
     print(f"Test gespeichert → {test_path}")
     return True
 
-# ----------------------------- Markdown & Garbage Cleaner -----------------------------
 def clean_java_content(raw_content: str, file_path: str = "") -> str:
     original = raw_content
     cleaned = raw_content.strip()
@@ -161,12 +207,10 @@ def clean_java_content(raw_content: str, file_path: str = "") -> str:
     ]
     for pattern in code_block_patterns:
         if cleaned.startswith(pattern):
-            rest = cleaned[len(pattern):].lstrip("\n")
-            cleaned = rest
+            cleaned = cleaned[len(pattern):].lstrip("\n")
             break
-
     while cleaned.endswith("```"):
-        cleaned = cleaned[:-3].rstrip()
+        cleaned = cleaned[:-3].rstrip("\n")
 
     garbage_prefixes = [
         "Here is the", "Here are the", "Here's the", "Here is a", "Here are some",
@@ -179,10 +223,8 @@ def clean_java_content(raw_content: str, file_path: str = "") -> str:
         "I've created the", "I've written the", "I have written the",
         "Please find the", "Attached is the", "Enclosed is the",
         "The code is as follows", "The implementation is",
-        # Deutsch
         "Hier ist der", "Hier sind die", "Hier ist eine", "Unten findest du",
         "Der folgende Code", "Der generierte Test", "Die Testklasse",
-        # Sonstiges
         "Explanation:", "Note:", "Important:", "Warning:", "Hinweis:",
         "```", "<!--", "#", "//", "/*", "*"
     ]
@@ -191,20 +233,16 @@ def clean_java_content(raw_content: str, file_path: str = "") -> str:
     filtered = []
     for line in lines:
         stripped = line.strip()
-
         if not stripped and not filtered:
             continue
-
-        if any(stripped.startswith(prefix) for prefix in garbage_prefixes):
+        if any(stripped.startswith(p) for p in garbage_prefixes):
             continue
-
         if stripped.startswith((">", "|", "Diff", "diff --git", "---", "+++")):
             continue
         if stripped.isdigit() and len(stripped) <= 4:
             continue
         if stripped.startswith(("Example:", "Beispiel:", "Output:", "Result:")):
             continue
-
         filtered.append(line)
 
     result = "\n".join(filtered).strip()
@@ -213,12 +251,12 @@ def clean_java_content(raw_content: str, file_path: str = "") -> str:
         start = result.find("```")
         end = result.rfind("```")
         if start != -1 and end != -1 and start < end:
-            result = result[:start] + result[end + 3 :]
+            result = result[:start] + result[end + 3:]
         result = result.strip()
 
-    if original != result + "\n":
+    if original.strip() != result and result:
         fname = Path(file_path).name if file_path else "unknown"
-        print(f"  → Bereinigt (Markdown/Garbage entfernt): {fname}")
+        print(f"  → Bereinigt (Garbage/Markdown entfernt): {fname}")
 
     return result + ("\n" if result else "")
 
@@ -231,108 +269,165 @@ class GrokClient:
             "Content-Type": "application/json"
         })
 
-    def chat(self, messages: List[Dict], use_structured: bool = False, schema=None):
+    def chat(self, messages: List[Dict], use_structured: bool = False, schema: Optional[BaseModel] = None) -> Dict:
         payload = {
             "model": MODEL,
             "messages": messages,
-            "temperature": TEMPERATURE,
-            "top_p": TOP_P,
             "max_tokens": MAX_TOKENS,
         }
+
+        if TEMPERATURE is not None:
+            payload["temperature"] = TEMPERATURE
+        if TOP_P is not None:
+            payload["top_p"] = TOP_P
         if use_structured and schema:
             payload["response_format"] = {
                 "type": "json_schema",
                 "json_schema": {
                     "name": "bug_list",
                     "strict": True,
-                    "schema": schema.model_json_schema()
+                    "schema": get_openai_compatible_schema(schema)
                 }
             }
-        resp = self.session.post(f"{API_BASE}/chat/completions", json=payload, timeout=REQUEST_TIMEOUT)
+
+        resp = self.session.post(
+            f"{API_BASE}/chat/completions",
+            json=payload,
+            timeout=REQUEST_TIMEOUT
+        )
         resp.raise_for_status()
         return resp.json()
 
     def close(self):
         self.session.close()
 
-# ----------------------------- Core Logic Static -----------------------------
+
+class OpenAIResponsesClient:
+    def __init__(self):
+        self.client = OpenAI(
+            api_key=API_KEY,
+            base_url=API_BASE,
+            timeout=REQUEST_TIMEOUT
+        )
+
+    def create(self, input: str | list, instructions: Optional[str] = None, structured_schema: Optional[BaseModel] = None, **kwargs) -> Any:
+        params: Dict[str, Any] = {
+            "model": MODEL,
+            "input": input,
+            "max_output_tokens": MAX_TOKENS,
+            **kwargs
+        }
+        if instructions:
+            params["instructions"] = instructions
+
+        if TEMPERATURE is not None:
+            params["temperature"] = TEMPERATURE
+
+        if TOP_P is not None:
+            params["top_p"] = TOP_P
+
+        if structured_schema:
+            compatible_schema = get_openai_compatible_schema(structured_schema)
+            params["text"] = {
+                "format": {
+                    "type": "json_schema",
+                    "name": "bug_list",
+                    "strict": True,
+                    "schema": compatible_schema
+                }
+            }
+
+        return self.client.responses.create(**params)
+
+    def close(self):
+        self.client.close()
+
+
 # ----------------------------- Core Logic: Fault Localization -----------------------------
 def run_fault_localization(code: str):
     system_prompt = load_file(SYSTEM_PROMPT_FAULT_FILE)
     user_prompt = load_file(USER_PROMPT_FAULT_FILE).format(code=code)
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
+    instructions = system_prompt
+    user_input = user_prompt
 
-    print(f"Starte Fault Localization → {PROVIDER.upper():6} | {MODEL:30} | "
-          f"temp={TEMPERATURE:.1f} | top_p={TOP_P:.2f} | max_tokens={MAX_TOKENS}")
+    temp_str = f"temp={TEMPERATURE:.1f}" if TEMPERATURE is not None else "temp=<auto>"
+    top_p_str = f"top_p={TOP_P:.2f}" if TOP_P is not None else "top_p=<auto>"
+    print(f"Starte Fault Localization → {PROVIDER.upper():6} | {MODEL:30} | {temp_str} | {top_p_str} | max_tokens={MAX_TOKENS}")
+
+    raw_response = None
+    content = ""
 
     if PROVIDER == "grok":
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
         client = GrokClient()
         try:
-            data = client.chat(messages, use_structured=True, schema=BugList)
+            raw_response = client.chat(messages, use_structured=True, schema=BugList)
+            content = raw_response["choices"][0]["message"]["content"]
         finally:
             client.close()
-    else:
-        client = OpenAI(api_key=API_KEY, base_url=API_BASE, timeout=REQUEST_TIMEOUT)
-        data = client.chat.completions.parse(
-            model=MODEL,
-            messages=messages,
-            response_format=BugList,
-            temperature=TEMPERATURE,
-            max_completion_tokens=MAX_TOKENS,
-        ).model_dump()
 
-    raw_content = data["choices"][0]["message"]["content"].strip()
-
-    def parse_grok_output(text: str) -> BugList:
-        raw = text.strip()
-        start = raw.find("[")
-        end = raw.rfind("]") + 1
-        if start == -1 or end == 0:
-            raise ValueError("Kein JSON-Array gefunden!")
-
-        candidate = raw[start:end]
-
+    else:  # OpenAI Responses API
+        client = OpenAIResponsesClient()
         try:
-            parsed = json.loads(candidate)
-            if isinstance(parsed, list):
-                return BugList.model_validate({"bugs": parsed})
-            elif isinstance(parsed, dict) and "bugs" in parsed:
-                return BugList.model_validate(parsed)
+            response = client.create(
+                instructions=instructions,
+                input=user_input,
+                structured_schema=BugList
+            )
+            raw_response = response.model_dump()
+            content = response.output_text
+        finally:
+            client.close()
+
+    # --- Robuster JSON-Parser mit Fallbacks ---
+    def parse_bug_output(text: str) -> BugList:
+        text = text.strip()
+        start = text.find("[")
+        end = text.rfind("]") + 1
+        if start == -1 or end == 0:
+            raise ValueError("Kein JSON-Array gefunden in der Ausgabe")
+
+        candidate = text[start:end]
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, list):
+                return BugList.model_validate({"bugs": data})
+            return BugList.model_validate(data)
         except json.JSONDecodeError:
             pass
 
+        # Fallback: Objekte manuell extrahieren
         objects = re.findall(r'\{[^{}]*"filename"[^{}]*"error_description"[^{}]*\}', candidate, re.DOTALL)
         if not objects:
             objects = re.findall(r'\{[^{}]*"filename"[^{}]*\}', candidate, re.DOTALL)
         if objects:
             cleaned = "[" + ",".join(objects) + "]"
-            parsed_list = json.loads(cleaned)
-            return BugList.model_validate({"bugs": parsed_list})
+            parsed = json.loads(cleaned)
+            return BugList.model_validate({"bugs": parsed})
 
-        raise ValueError("Konnte Grok-JSON nicht reparieren!")
+        raise ValueError("JSON konnte trotz Reparaturversuchen nicht geparst werden")
 
     try:
-        parsed = parse_grok_output(raw_content)
-        print(f"JSON erfolgreich geparst → {len(parsed.bugs)} Bug(s) erkannt!")
+        bug_list = parse_bug_output(content)
+        print(f"Erfolgreich geparst → {len(bug_list.bugs)} Bug(s) erkannt!")
     except Exception as e:
-        print("Parser fehlgeschlagen!")
-        print(raw_content[:5000])
+        print(f"JSON-Parsing fehlgeschlagen: {e}")
+        print("Erste 3000 Zeichen der Ausgabe:")
+        print(content[:3000])
         raise
 
-    bugs = [bug.model_dump() for bug in parsed.bugs]
+    bugs_data = [bug.model_dump() for bug in bug_list.bugs]
 
     prefix = f"{short_model}_fault"
     raw_file = RESULTS_DIR / f"{prefix}_raw_{file_suffix}.json"
     bugs_file = RESULTS_DIR / f"{prefix}_bugs_{file_suffix}.json"
+    raw_file.write_text(json.dumps(raw_response, indent=2, ensure_ascii=False), encoding="utf-8")
+    bugs_file.write_text(json.dumps(bugs_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-    bugs_file.write_text(json.dumps(bugs, indent=2, ensure_ascii=False), encoding="utf-8")
-
-    # METADATA
     metadata = {
         "provider": PROVIDER,
         "model": MODEL,
@@ -343,16 +438,18 @@ def run_fault_localization(code: str):
         "code_length": len(code_content),
         "timestamp": datetime.now().isoformat(),
         "run_hash": run_hash,
-        "system_prompt_md5": hashlib.md5(system_prompt.encode()).hexdigest(),
-        "user_prompt_md5": hashlib.md5(user_prompt.encode()).hexdigest(),
+        "system_prompt_md5": hashlib.md5(system_prompt.encode("utf-8")).hexdigest(),
+        "user_prompt_md5": hashlib.md5(user_prompt.encode("utf-8")).hexdigest(),
+        "detected_bugs": len(bugs_data)
     }
     meta_file = RESULTS_DIR / f"{prefix}_meta_{file_suffix}.json"
     meta_file.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"   Meta → {meta_file}")
 
-    print(f"\nFault Localization abgeschlossen! {len(bugs)} Bug(s) gefunden.")
-    print(f"   Raw  → {raw_file}")
-    print(f"   Bugs → {bugs_file}\n")
+    print(f"Fault Localization abgeschlossen!")
+    print(f"   → {len(bugs_data)} Bug(s) gefunden")
+    print(f"   → Raw:  {raw_file}")
+    print(f"   → Bugs: {bugs_file}")
+    print(f"   → Meta: {meta_file}\n")
 
 # ----------------------------- Core Logic: Test Generation -----------------------------
 def run_test_generation(code: str, clear_first: bool):
@@ -360,87 +457,80 @@ def run_test_generation(code: str, clear_first: bool):
         clear_generated_tests()
 
     system_prompt = load_file(SYSTEM_PROMPT_TEST_FILE)
-    user_prompt = load_file(USER_PROMPT_TEST_FILE).format(code=code)
+    user_prompt = load_file(USER_PROMPT_TEST_FILE).format(code=code) + \
+                  "\n\nGeneriere vollständige JUnit 5 Testklassen mit korrekten Dateimarkern (===== FILE: ... =====)."
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt + "\n\nGeneriere vollständige JUnit 5 Testklassen mit korrekten Dateimarkern."}
-    ]
+    instructions = system_prompt
+    user_input = user_prompt
 
-    print(f"Starte Testgenerierung → {PROVIDER.upper():6} | {MODEL:30} | "
-          f"temp={TEMPERATURE:.1f} | top_p={TOP_P:.2f} | max_tokens={MAX_TOKENS}")
+    temp_str = f"temp={TEMPERATURE:.1f}" if TEMPERATURE is not None else "temp=<auto>"
+    top_p_str = f"top_p={TOP_P:.2f}" if TOP_P is not None else "top_p=<auto>"
+    print(f"Starte Testgenerierung → {PROVIDER.upper():6} | {MODEL:30} | {temp_str} | {top_p_str} | max_tokens={MAX_TOKENS}")
+
+    raw_response = None
+    content = ""
 
     if PROVIDER == "grok":
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
         client = GrokClient()
         try:
-            data = client.chat(messages, use_structured=False)
+            raw_response = client.chat(messages)
+            content = raw_response["choices"][0]["message"]["content"]
         finally:
             client.close()
-    else:
-        client = OpenAI(api_key=API_KEY, base_url=API_BASE, timeout=REQUEST_TIMEOUT)
-        completion = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=TEMPERATURE,
-            top_p=TOP_P,
-            max_completion_tokens=MAX_TOKENS,
-        )
-        data = completion.model_dump()
 
-    content = data["choices"][0]["message"]["content"]
+    else:
+        client = OpenAIResponsesClient()
+        try:
+            response = client.create(
+                instructions=instructions,
+                input=user_input
+            )
+            raw_response = response.model_dump()
+            content = response.output_text
+        finally:
+            client.close()
 
     full_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{file_suffix}.json"
     txt_raw_file = RESULTS_DIR / f"{short_model}_tests_raw_{file_suffix}.txt"
-    full_raw_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    full_raw_file.write_text(json.dumps(raw_response, indent=2, ensure_ascii=False), encoding="utf-8")
     txt_raw_file.write_text(content, encoding="utf-8")
 
-    print(f"Full API-Response  → {full_raw_file}")
-    print(f"Roh-Text (Debug)   → {txt_raw_file}")
+    print(f"Rohantwort gespeichert → {txt_raw_file}")
 
-    # ------------------ ROBUSTER PARSER (kein doppeltes Append!) ------------------
+    # --- Parser für ===== FILE: Marker ---
     parsed_tests = []
-    current_marker = None
+    current_marker: Optional[str] = None
     current_content = ""
 
     for raw_line in content.splitlines(keepends=True):
         if raw_line.strip().startswith("===== FILE:"):
             if current_marker and current_content.strip():
                 path_str = current_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
-                cleaned_content = clean_java_content(current_content, path_str)
-
-                if cleaned_content.strip():
-                    save_generated_test(current_marker, cleaned_content)
-                    parsed_tests.append({
-                        "file_path": path_str,
-                        "content": cleaned_content
-                    })
+                cleaned = clean_java_content(current_content, path_str)
+                if cleaned.strip():
+                    save_generated_test(current_marker, cleaned)
+                    parsed_tests.append({"file_path": path_str, "content": cleaned})
                 else:
-                    print(f"  → LEERER TEST nach Bereinigung → übersprungen: {path_str}")
-
+                    print(f"Leer nach Bereinigung → übersprungen: {path_str}")
             current_marker = raw_line.strip()
             current_content = ""
         else:
             current_content += raw_line
 
-    # Letzte Datei verarbeiten
     if current_marker and current_content.strip():
         path_str = current_marker[len("===== FILE:"):].strip().split("=====", 1)[0].strip()
-        cleaned_content = clean_java_content(current_content, path_str)
+        cleaned = clean_java_content(current_content, path_str)
+        if cleaned.strip():
+            save_generated_test(current_marker, cleaned)
+            parsed_tests.append({"file_path": path_str, "content": cleaned})
 
-        if cleaned_content.strip():
-            save_generated_test(current_marker, cleaned_content)
-            parsed_tests.append({
-                "file_path": path_str,
-                "content": cleaned_content
-            })
-        else:
-            print(f"  → LEERER TEST nach Bereinigung → übersprungen: {path_str}")
-
-    # Geparste JSON-Datei speichern
     parsed_file = RESULTS_DIR / f"{short_model}_tests_parsed_{file_suffix}.json"
     parsed_file.write_text(json.dumps(parsed_tests, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # METADATA
     metadata = {
         "provider": PROVIDER,
         "model": MODEL,
@@ -451,23 +541,23 @@ def run_test_generation(code: str, clear_first: bool):
         "code_length": len(code_content),
         "timestamp": datetime.now().isoformat(),
         "run_hash": run_hash,
-        "system_prompt_md5": hashlib.md5(system_prompt.encode()).hexdigest(),
-        "user_prompt_md5": hashlib.md5(user_prompt.encode()).hexdigest(),
+        "system_prompt_md5": hashlib.md5(system_prompt.encode("utf-8")).hexdigest(),
+        "user_prompt_md5": hashlib.md5(user_prompt.encode("utf-8")).hexdigest(),
+        "generated_tests": len(parsed_tests)
     }
     meta_file = RESULTS_DIR / f"{short_model}_tests_meta_{file_suffix}.json"
     meta_file.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(f"   Meta → {meta_file}")
 
-    print(f"Geparste Tests     → {parsed_file} ({len(parsed_tests)} Dateien)")
-    print(f"\nTestgenerierung abgeschlossen!")
-    print(f"   Generiert: {len(parsed_tests)} Testdatei(en)")
-    print(f"   Tests liegen in:\n      {GENERATED_TESTS_DIR}\n")
+    print(f"Testgenerierung abgeschlossen!")
+    print(f"   → {len(parsed_tests)} Testdatei(en) generiert")
+    print(f"   → Tests in: {GENERATED_TESTS_DIR}")
+    print(f"   → Metadaten: {meta_file}\n")
 
-# ----------------------------- CLI -----------------------------
+# ----------------------------- CLI & Main -----------------------------
 def parse_args():
-    parser = argparse.ArgumentParser(description="LLM Test- & Fault-Analyse")
-    parser.add_argument("--test-mode", action="store_true", help="Testgenerierung aktivieren")
-    parser.add_argument("--clear-tests", action="store_true", help="Vorher alle alten Tests löschen")
+    parser = argparse.ArgumentParser(description="LLM-gestützte Fault Localization & Testgenerierung")
+    parser.add_argument("--test-mode", action="store_true", help="Testgenerierung statt Fault Localization")
+    parser.add_argument("--clear-tests", action="store_true", help="Alten Testordner vor Generierung löschen")
     return parser.parse_args()
 
 def main():
