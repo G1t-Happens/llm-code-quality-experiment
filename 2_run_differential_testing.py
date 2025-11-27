@@ -42,10 +42,42 @@ def restore_project_state():
         if proj.exists():
             shutil.rmtree(proj)
         shutil.copytree(backup, proj, dirs_exist_ok=True)
-    for f in [EXEC_BACKUP_ORIGINAL, EXEC_BACKUP_WITH_LLM]:
-        if f.exists():
-            f.unlink(missing_ok=True)
 
+# =============================================================================
+# Vollständige Bereinigung am Ende
+# =============================================================================
+def full_cleanup():
+    print("\nFühre vollständige Bereinigung durch – es bleibt nichts zurück...")
+    to_delete = [
+        BACKUP_ORIGINAL,
+        BACKUP_FULL,
+        BACKUP_CLEAN_STATE,
+        BACKUP_BUGGY_STATE,
+        EXEC_BACKUP_ORIGINAL,
+        EXEC_BACKUP_WITH_LLM,
+    ]
+    # plus alle dummy*.exec Dateien
+    for dummy in ROOT.glob(".dummy*.exec"):
+        to_delete.append(dummy)
+
+    removed = 0
+    for path in to_delete:
+        if path.exists():
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
+            removed += 1
+            print(f"   Gelöscht: {path.name}")
+
+    if removed == 0:
+        print("   Bereits sauber – nichts zu löschen.")
+    else:
+        print(f"   {removed} temporäre Dateien/Ordner entfernt.")
+
+# =============================================================================
+# Test-Backups & Setzen
+# =============================================================================
 def ensure_test_backups():
     if not BACKUP_ORIGINAL.exists():
         src = CLEAN / "src/test/java"
@@ -65,7 +97,7 @@ def set_tests(proj: Path, source: Path):
     shutil.copytree(source, target, dirs_exist_ok=True)
 
 # =============================================================================
-# Testlauf + Coverage sichern (für modernes JaCoCo-Plugin)
+# Testlauf + Coverage sichern
 # =============================================================================
 def run_tests_and_capture_coverage(proj: Path, backup_exec: Path) -> Tuple[Set[str], Set[str]]:
     print(f"  → gradlew clean test → Coverage → {backup_exec.name}")
@@ -79,12 +111,10 @@ def run_tests_and_capture_coverage(proj: Path, backup_exec: Path) -> Tuple[Set[s
         print(f"   → KEINE test.exec gefunden unter {default_exec}")
         return set(), set()
 
-    # Sofort sichern!
     shutil.copy2(default_exec, backup_exec)
     size = default_exec.stat().st_size
     print(f"   → Coverage gesichert → {backup_exec.name} ({size:,} Bytes)")
 
-    # Test-Ergebnisse korrekt parsen
     failed = set()
     executed = set()
     xml_dir = proj / "build" / "test-results" / "test"
@@ -122,11 +152,11 @@ def get_coverage_from_report(proj: Path) -> float:
         return 0.0
 
 # =============================================================================
-# Hauptlogik – FINAL V6 – FUNKTIONIERT. EHRLICH.
+# Hauptlogik
 # =============================================================================
 def main():
     print("=" * 100)
-    print(" LLM TEST EVALUATION – FINAL V6 – 100% KORREKT & SAUBER")
+    print(" LLM TEST EVALUATION – FINAL V7 – 100% SAUBER & SELBSTBEREINIGEND")
     print("=" * 100)
 
     backup_project_state()
@@ -134,19 +164,17 @@ def main():
     ensure_test_backups()
 
     try:
-        # Phase A: Originaltests → Baseline Coverage
+        # Phase A
         print("\nPhase A: Originaltests auf Clean → Baseline Coverage")
         set_tests(CLEAN, BACKUP_ORIGINAL)
         run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_ORIGINAL)
         subprocess.run(["./gradlew", "jacocoTestReport", "--quiet"], cwd=CLEAN, check=False)
         cov_original = get_coverage_from_report(CLEAN)
 
-        # Phase B: Originaltests auf Buggy
         print("\nPhase B: Originaltests auf Buggy")
         set_tests(BUGGY, BACKUP_ORIGINAL)
         failed_B, _ = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy.exec")
 
-        # Phase C: Full Suite auf Clean → Coverage + FP
         print("\nPhase C: Full Suite auf Clean → Coverage mit LLM")
         set_tests(CLEAN, BACKUP_FULL)
         run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_WITH_LLM)
@@ -154,16 +182,13 @@ def main():
         cov_with_llm = get_coverage_from_report(CLEAN)
         failed_C, executed_C = run_tests_and_capture_coverage(CLEAN, ROOT / ".dummy2.exec")
 
-        # Phase D: Full Suite auf Buggy
         print("\nPhase D: Full Suite auf Buggy")
         set_tests(BUGGY, BACKUP_FULL)
         failed_D, executed_D = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy3.exec")
 
-        # Original executed Tests
         set_tests(CLEAN, BACKUP_ORIGINAL)
         _, executed_A = run_tests_and_capture_coverage(CLEAN, ROOT / ".dummy4.exec")
 
-        # Analyse
         llm_tests = executed_C - executed_A
         if not llm_tests:
             print("\nFEHLER: Keine LLM-Tests erkannt!")
@@ -203,12 +228,16 @@ def main():
                 print(f"   • {t}")
 
     finally:
+        # 1. Projekte zurücksetzen
         restore_project_state()
         print("\nProjekte vollständig zurückgesetzt – wie am ersten Tag.")
 
+        # 2. Alles temporäre Zeug löschen
+        full_cleanup()
+
     print("\n" + "="*100)
-    print("FERTIG – Jetzt ist alles korrekt, sauber und reproduzierbar!")
-    print("Du kannst dieses Skript 1000x laufen lassen – immer dasselbe Ergebnis.")
+    print("FERTIG – Alles durchgelaufen, alles sauber, nichts bleibt zurück!")
+    print("Dein Repo ist jetzt exakt im Zustand wie vor dem Lauf.")
     print("="*100)
 
 if __name__ == "__main__":
