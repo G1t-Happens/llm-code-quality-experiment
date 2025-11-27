@@ -1,0 +1,100 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 48,
+    "severity": "high",
+    "error_description": "create() is annotated with @PostMapping(consumes=\"text/plain\") while binding an AddressRequest record, so standard application/json clients receive 415 Unsupported Media Type and cannot create addresses at all."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 65,
+    "end_line": 74,
+    "severity": "high",
+    "error_description": "getById() blindly calls addressRepository.findById(addressId).get(); when the address does not exist, a NoSuchElementException is thrown, returning HTTP 500 instead of the intended 404 ResourceNotFoundException."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 78,
+    "end_line": 90,
+    "severity": "high",
+    "error_description": "save() maps the AddressRequest to an entity but never persists it (no addressRepository.save call), so nothing is written to the database and the returned AddressResponse contains a transient entity without an id."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 47,
+    "end_line": 51,
+    "severity": "high",
+    "error_description": "create() accepts UserRequest without @Valid/@Validated on the parameter, so Bean Validation constraints (non-blank username/password/email, admin flag required) are never enforced, allowing invalid records into the system."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 61,
+    "severity": "high",
+    "error_description": "delete() lacks any @PreAuthorize guard; with the global filter chain only requiring authentication, any logged-in user can delete arbitrary accounts, violating authorization requirements."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 72,
+    "end_line": 82,
+    "severity": "medium",
+    "error_description": "listAll(Pageable) ignores the Pageable entirely by loading all users via userRepository.findAll() and wrapping them in a PageImpl, which breaks pagination limits, causes unnecessary memory use, and returns incorrect total counts on large datasets."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 101,
+    "end_line": 108,
+    "severity": "critical",
+    "error_description": "getByUsername() builds SQL via string concatenation (\"SELECT * FROM users WHERE username = '\" + username + \"'\") and executes it through EntityManager, enabling SQL injection and credential enumeration."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 118,
+    "end_line": 121,
+    "severity": "high",
+    "error_description": "save() logs the plaintext password via LOG.debug(\"user with name: {} and password: {}\", …), directly exposing credentials in log files and backups."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 123,
+    "end_line": 129,
+    "severity": "high",
+    "error_description": "save() instantiates a new BCryptPasswordEncoder instead of using the injected PasswordEncoder bean; if the application is configured with a different algorithm/strength, newly created users’ hashes will be incompatible with authentication."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 53,
+    "end_line": 56,
+    "severity": "high",
+    "error_description": "updateUserEntityFromUserRequest() encodes the password twice (passwordEncoder.encode(passwordEncoder.encode(dto.password()))) resulting in double-hashed secrets; updated users can no longer log in because their stored hash no longer matches single-hash verification."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 134,
+    "end_line": 155,
+    "severity": "high",
+    "error_description": "update() again instantiates a new BCryptPasswordEncoder instead of the configured PasswordEncoder bean, so password updates may use a different algorithm/strength than authentication expects, leading to unusable credentials when the bean is customized."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 161,
+    "end_line": 173,
+    "severity": "high",
+    "error_description": "delete() loads the User but never calls userRepository.delete(...); the method logs a deletion without actually removing the record, leaving stale accounts in the database."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 178,
+    "end_line": 185,
+    "severity": "high",
+    "error_description": "checkLogin() invokes userRepository.findByUsername(username).get(); when the username is unknown, Optional.get throws and produces HTTP 500, so invalid login attempts crash the endpoint instead of returning 401 Unauthorized."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 175,
+    "end_line": 194,
+    "severity": "high",
+    "error_description": "Because checkLogin() throws before executing the dummy BCrypt comparison, the timing-attack mitigation (DUMMY_HASH) never runs; responses differ between existing and non-existing usernames, enabling enumeration via error timing/status codes."
+  }
+]

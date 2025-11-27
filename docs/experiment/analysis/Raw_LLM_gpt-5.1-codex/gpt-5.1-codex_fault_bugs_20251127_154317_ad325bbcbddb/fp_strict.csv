@@ -1,0 +1,5 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(134, 155)","update() again instantiates a new BCryptPasswordEncoder instead of the configured PasswordEncoder bean, so password updates may use a different algorithm/strength than authentication expects, leading to unusable credentials when the bean is customized."
+UserServiceImpl.java,"(175, 194)","Because checkLogin() throws before executing the dummy BCrypt comparison, the timing-attack mitigation (DUMMY_HASH) never runs; responses differ between existing and non-existing usernames, enabling enumeration via error timing/status codes."
+UserServiceImpl.java,"(178, 185)","checkLogin() invokes userRepository.findByUsername(username).get(); when the username is unknown, Optional.get throws and produces HTTP 500, so invalid login attempts crash the endpoint instead of returning 401 Unauthorized."
+AddressServiceImpl.java,"(65, 74)","getById() blindly calls addressRepository.findById(addressId).get(); when the address does not exist, a NoSuchElementException is thrown, returning HTTP 500 instead of the intended 404 ResourceNotFoundException."

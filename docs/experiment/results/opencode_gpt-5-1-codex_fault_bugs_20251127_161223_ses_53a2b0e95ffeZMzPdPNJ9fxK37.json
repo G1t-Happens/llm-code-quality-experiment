@@ -1,0 +1,102 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_53a2.md",
+    "model": "gpt.5.1.codex",
+    "session_id": "ses_53a2b0e95ffeZMzPdPNJ9fxK37",
+    "processed_at": "2025-11-27T16:12:23.016992",
+    "bug_count": 13
+  },
+  "bugs": [
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 65,
+      "end_line": 74,
+      "severity": "high",
+      "error_description": "Human-made development fault: getById(...) dereferences addressRepository.findById(addressId).get() without guarding, so a missing row throws NoSuchElementException (latent error) that propagates as HTTP 500 instead of the intended 404 ResourceNotFoundException, leaking stack traces and enabling denial of service. Replace Optional#get with orElseThrow(new ResourceNotFoundException(...))."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 76,
+      "end_line": 90,
+      "severity": "high",
+      "error_description": "Human-made development fault: save(...) maps the DTO to an Address entity and immediately returns a response without ever calling addressRepository.save(...) so no INSERT is issued—addresses silently disappear and IDs remain null, causing data-loss failures. Persist via addressRepository.save(...) before mapping to the response."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 48,
+      "severity": "medium",
+      "error_description": "Configuration/design fault: the create endpoint is annotated with @PostMapping(consumes = \"text/plain\"), yet it expects a JSON AddressRequest body with validation groups. Standard REST clients sending application/json receive 415 errors, so the service is unusable. Align the consumes clause (or remove it) to accept application/json."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 71,
+      "end_line": 81,
+      "severity": "medium",
+      "error_description": "Human-made development fault: listAll(Pageable) ignores the Pageable entirely by loading all users via findAll() and wrapping them in PageImpl without slicing. This defeats server-side pagination, leaks full datasets, and can exhaust memory for large tables—a reliability/content failure. Use userRepository.findAll(pageable) to stream proper pages."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 99,
+      "end_line": 108,
+      "severity": "critical",
+      "error_description": "Human-made development fault with security impact: getByUsername(...) concatenates the username directly into a native SQL string executed via EntityManager. Attackers can inject arbitrary SQL (e.g., username=foo' OR '1'='1) to dump or modify data, leading to confidentiality/integrity failure. Use parameter binding or repository methods instead of string concatenation."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 117,
+      "end_line": 118,
+      "severity": "critical",
+      "error_description": "Operational security fault: save(...) logs the raw username and password with LOG.debug. Even at debug level these entries land in files/aggregators, permanently disclosing credentials—a catastrophic confidentiality failure if logs are compromised. Remove the password from logs or mask it before logging."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 125,
+      "end_line": 153,
+      "severity": "medium",
+      "error_description": "Latent configuration fault: both save(...) and update(...) instantiate new BCryptPasswordEncoder instances instead of using the injected PasswordEncoder bean. Any future change to the global encoder (pepper, stronger algorithm, higher cost) will not apply to new users, creating inconsistent hashes and login failures. Inject and reuse the configured bean instead of constructing ad-hoc encoders."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+      "start_line": 53,
+      "end_line": 56,
+      "severity": "high",
+      "error_description": "Human-made development fault: updateUserEntityFromUserRequest(...) encodes passwords twice (passwordEncoder.encode(passwordEncoder.encode(dto.password()))). Updated users end up with double-BCrypt hashes and can never authenticate, producing persistent login failures. Encode exactly once and fall back to the existing hash when dto.password() is null."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 161,
+      "end_line": 173,
+      "severity": "high",
+      "error_description": "Functional omission fault: delete(Long id) loads the entity but never invokes userRepository.delete(...), so the operation is a no-op while returning success to the caller. Users cannot actually be removed, leading to integrity issues and possible regulatory non-compliance. Call delete(existingUserEntity) or deleteById(id) inside the transaction."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 175,
+      "end_line": 189,
+      "severity": "high",
+      "error_description": "Human-made development fault undermining security: checkLogin(...) calls userRepository.findByUsername(username).get() so absent users throw NoSuchElementException before the DUMMY_HASH logic executes. The API leaks 500 errors instead of 401, enabling username enumeration and DoS. Replace Optional#get with orElse(null) and always run the constant-time hash comparison."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 47,
+      "end_line": 51,
+      "severity": "medium",
+      "error_description": "Validation omission fault: create(@RequestBody UserRequest userRequest) lacks @Valid or @Validated(Create.class). Malformed payloads (blank usernames, weak passwords) bypass bean validation and are persisted, propagating inconsistent state into the system. Annotate the parameter with @Validated(Create.class) (and possibly @Valid) to enforce constraints."
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 59,
+      "end_line": 62,
+      "severity": "high",
+      "error_description": "Security configuration fault: delete(@PathVariable Long id) lacks any @PreAuthorize guard even though other endpoints enforce ownership/admin rules. Any authenticated principal (or even anonymous if permitAll is later granted) can delete arbitrary users—catastrophic privilege escalation. Add the same role/ownership checks used elsewhere."
+    },
+    {
+      "filename": "src/main/resources/application.properties",
+      "start_line": 21,
+      "end_line": 24,
+      "severity": "medium",
+      "error_description": "Configuration fault: spring.jpa.hibernate.ddl-auto=update is enabled alongside Flyway migrations (db/migration). Running two schema managers concurrently can produce divergent schemas, unexpected column drops, or failed startups (error propagation to service availability). Disable ddl-auto when using Flyway so only the controlled migrations mutate the schema."
+    }
+  ]
+}

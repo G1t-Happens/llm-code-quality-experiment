@@ -1,7 +1,7 @@
 filename,det_lines,error_description
+LoggingConfig.java,"(52, 52)","Hardcoded absolute path in @Value default for logDirectoryPath: portability fault, fails in non-/home/dbe/... deployments"
 UserServiceImpl.java,"(102, 103)","SQL injection vulnerability in getByUsername method: direct concatenation in native query 'SELECT * FROM users WHERE username = \'' + username + '\'' without parameterization (development flaw, high-probability exploitation fault)"
 UserServiceImpl.java,"(172, 172)","Omission fault in delete method: userRepository.delete(existingUserEntity) missing; users remain in database despite delete request (development phase, human-made, nonmalicious fault)"
 AddressServiceImpl.java,"(86, 89)","Omission fault in save method: addressRepository.save(addressEntity) missing after mapping; new addresses not persisted to database despite successful HTTP response (development phase, human-made, nonmalicious fault)"
 AddressServiceImpl.java,"(96, 97)","Unsafe Optional.get() in update method: assumes address exists, throws unchecked exception if not found (pass 2: adversarial non-existent ID)"
 AddressServiceImpl.java,"(116, 117)",Unsafe Optional.get() in delete method: runtime exception on missing address (pass 3: propagation to halt failure mode)
-LoggingConfig.java,"(52, 52)","Hardcoded absolute path in @Value default for logDirectoryPath: portability fault, fails in non-/home/dbe/... deployments"

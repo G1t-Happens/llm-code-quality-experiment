@@ -17,4 +17,7 @@
 !.vscode/extensions.json
 .history/*
 
+# Project files
 .env
+.github
+.venv

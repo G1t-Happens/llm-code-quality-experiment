@@ -28,8 +28,8 @@ Example 3: Input: "Trojan horse in legacy OTS library."
 - Propagation: Could lead to integrity failure (data leak).
 
 MANDATORY METHOD-DEPTH RULE (non-negotiable):
-For every single method or function discovered in the provided code, you must perform at least three dedicated analysis passes/cycles.
-Each of these three passes must:
+For every single method or function discovered in the provided code, you must perform at least one dedicated analysis passes/cycles.
+Each of these one passes must:
 - explicitly reference and quote the method/function by name and relevant lines,
 - conduct substantially new analysis (different agent perspectives, new simulated inputs, new propagation paths, new adversarial conditions, or deeper Tree-of-Thoughts branches),
 - produce or re-evaluate at least one evidenced hypothesis specific to that method

@@ -1,7 +1,7 @@
 filename,det_lines,error_description
+SecurityConfig.java,"(65, 67)",Public POST /users endpoint lacks rate limiting: enables username enumeration and brute force attacks (security fault: missing throttling on registration)
 UserServiceImpl.java,"(102, 103)",SQL injection vulnerability in getByUsername method: raw string concatenation 'SELECT * FROM users WHERE username = \'' + username + '\'' directly into native query enables malicious username payloads to extract/alter data (human-made development fault: omission of parameterization)
 UserServiceImpl.java,"(125, 152)",Redundant PasswordEncoder instantiation: new BCryptPasswordEncoder() created locally in save() and update() instead of using injected singleton (performance fault: unnecessary object creation)
-SecurityConfig.java,"(65, 67)",Public POST /users endpoint lacks rate limiting: enables username enumeration and brute force attacks (security fault: missing throttling on registration)
 AddressServiceImpl.java,"(86, 87)","Premature mapping in save: addressMapper.toAddressResponse called on unsaved addressEntity before repository.save(), returns null ID in response (development fault: incorrect service contract implementation)"
 AddressServiceImpl.java,"(96, 100)",Inconsistent Optional handling in update: uses orElseThrow unlike getById's .get() pattern (code smell/maintainability fault: inconsistent error handling)
 AddressServiceImpl.java,"(139, 149)",LazyInitializationException risk in enforceAddressOwnership: address.getUser() with FetchType.LAZY may fail outside transaction if user not preloaded (interaction fault: JPA fetch strategy mismatch)

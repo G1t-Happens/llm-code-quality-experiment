@@ -1,7 +1,7 @@
 gt_id,filename,gt_lines,error_description
-E002,UserServiceImpl.java,"(163, 173)",Missing delete call in the repository/data access layer
-E015,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E007,LoggingConfig.java,"(237, 237)","Appender and log level are set on ROOT_LOGGER, affecting all components and modules globally"
 E017,LoggingConfig.java,"(54, 55)","The default log file name contains characters valid on Linux but invalid on Windows (e.g., application:errors.log). This prevents installation/running on Windows"
 E018,LoggingConfig.java,"(51, 52)",Hardcoded Linux-specific log directory. Running this on Windows or another OS will fail or move to an unpredictable location unless manually changed
+E002,UserServiceImpl.java,"(163, 173)",Missing delete call in the repository/data access layer
+E015,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E010,UserController.java,"(48, 48)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"

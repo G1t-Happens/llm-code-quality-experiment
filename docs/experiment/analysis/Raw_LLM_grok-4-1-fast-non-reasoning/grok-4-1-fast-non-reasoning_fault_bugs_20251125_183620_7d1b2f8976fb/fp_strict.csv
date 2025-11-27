@@ -1,5 +1,5 @@
 filename,det_lines,error_description
+AddressController.java,"(46, 46)",Missing @Valid on create endpoint despite @Validated(Create.class): validation groups may not trigger (human-made development fault: annotation inconsistency line 46)
 UserServiceImpl.java,"(102, 103)","SQL injection vulnerability in getByUsername method: raw string concatenation in native query 'SELECT * FROM users WHERE username = \'' + username + '\'' allows malicious username input to execute arbitrary SQL (human-made development fault: unsafe query construction, high propagation risk to data integrity failure)"
 UserServiceImpl.java,"(125, 152)","Inconsistent PasswordEncoder usage: creates new BCryptPasswordEncoder() instances instead of injected bean (human-made development fault: redundant object creation lines 125 & 152, potential inconsistency if encoder config changes)"
 AddressServiceImpl.java,"(87, 87)","Premature mapping in save: addressMapper.toAddressResponse(addressEntity) called before addressRepository.save() (human-made development fault: maps unsaved entity line 87, returns ID=null in response)"
-AddressController.java,"(46, 46)",Missing @Valid on create endpoint despite @Validated(Create.class): validation groups may not trigger (human-made development fault: annotation inconsistency line 46)

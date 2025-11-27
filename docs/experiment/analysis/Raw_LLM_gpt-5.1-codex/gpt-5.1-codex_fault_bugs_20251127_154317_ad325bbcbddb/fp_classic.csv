@@ -1,0 +1,2 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(178, 185)","checkLogin() invokes userRepository.findByUsername(username).get(); when the username is unknown, Optional.get throws and produces HTTP 500, so invalid login attempts crash the endpoint instead of returning 401 Unauthorized."
