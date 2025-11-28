@@ -22,15 +22,15 @@ Your task is to conduct a *thorough and exhaustive* analysis of the provided cod
 
 5. **Thoroughness**: If no faults are found in a section, re-scan it. Do not skip any part of the codebase.
 
-6. **Output Format**: Return results **ONLY** in the following strict JSON format. If no faults are found, return an empty array (`[]`).
-
-
-[
+OUTPUT RULES (STRICT):
+- Respond EXCLUSIVELY with valid JSON.
+- Never include any text before or after the JSON object.
+- Use EXACTLY this format (no markdown, no ```json, no extra text, no explanations):
+{"bugs":[
   {
-    "filename": "example.java",
-    "start_line": 42,
-    "end_line": 42,
-    "error_description": "Division by zero possible if input is zero; no check or handling."
-  },
-  ...
-]
+    "filename":"src/main/java/com/example/AddressService.java",
+    "start_line":55,
+    "end_line":56,
+    "error_description":"SQL injection vulnerability due to direct string concatenation of username in native query"
+  }
+]}
