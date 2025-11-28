@@ -88,11 +88,10 @@ file_suffix = f"{ts}_{run_hash}"
 SeverityLevel = Literal["critical", "high", "medium", "low"]
 
 class SeededBug(BaseModel):
-    filename: str = Field(..., description="Dateiname relativ zum Projektroot")
-    start_line: int = Field(..., ge=1, description="Erste betroffene Zeile (1-basiert)")
-    end_line: int = Field(..., ge=1, description="Letzte betroffene Zeile (inklusive)")
-    severity: SeverityLevel = Field(..., description="Schweregrad des Fehlers")
-    error_description: str = Field(..., min_length=10, description="Detaillierte Fehlerbeschreibung")
+    filename: str = Field(..., description="Filename relative to the project root")
+    start_line: int = Field(..., ge=1, description="Line number of first affected line (1-based)")
+    end_line: int = Field(..., ge=1, description="Line number of last affected line (inclusive, 1-based)")
+    error_description: str = Field(..., min_length=10, description="Short description of the error")
 
     model_config = {"extra": "forbid"}  # Hilft bei Validierung, aber Schema braucht explizit additionalProperties
 
@@ -388,58 +387,53 @@ def run_fault_localization(code: str):
         text = text.strip()
         findings = []
 
-        # 1. Falls es doch ein normales JSON-Array kommt
-        if text.startswith("["):
+        # 1. Vollständiges {"bugs": [...]}
+        if '"bugs"' in text and '{' in text and '}' in text:
+            try:
+                start = text.find('{')
+                end = text.rfind('}') + 1
+                data = json.loads(text[start:end])
+                if isinstance(data, dict) and "bugs" in data:
+                    return BugList.model_validate(data)
+            except Exception:
+                pass
+
+        # 2. Reines Array [...]
+        if text.startswith('['):
             try:
                 data = json.loads(text)
                 if isinstance(data, list):
                     return BugList.model_validate({"bugs": data})
-                return BugList.model_validate(data)
-            except json.JSONDecodeError:
+            except Exception:
                 pass
 
-        # 2. JSON Lines: einfach alles finden, was wie ein { ... } aussieht
+        # 3. RETTUNGSPARSER
         import re
-        potential_jsons = re.findall(r'\{[^{}]*\}', text)  # erst grob alle einfachen Objekte
-        # Fallback: auch verschachtelte mit geschachtelten Klammern (sicher und schnell)
-        matches = re.finditer(r'\{(?:\{[^{}]*\}|[^{}])*\}', text)
-
-        for match in matches:
+        for match in re.finditer(r'(\{(?:[^{}]|(?1))*\})', text):
             obj_str = match.group(0)
+            if '"filename"' not in obj_str and '"file"' not in obj_str:
+                continue
             try:
-                # Trailing comma reparieren
-                cleaned = re.sub(r',\s*}', '}', obj_str)
-                cleaned = re.sub(r',\s*]', ']', cleaned)
-                data = json.loads(cleaned)
+                obj_str = re.sub(r',\s*}', '}', obj_str)
+                obj_str = re.sub(r',\s*]', ']', obj_str)
+                obj_str = re.sub(r'"\s*\n\s*"', '" " ', obj_str)
 
-                bug = {
-                    "filename": data.get("filename") or data.get("file", "unknown.java"),
-                    "start_line": int(data["start_line"]),
-                    "end_line": int(data.get("end_line", data["start_line"])),
-                    "severity": str(data.get("severity", "medium")).lower(),
-                    "error_description": data.get("error_description") or data.get("description") or "No description"
-                }
-                findings.append(bug)
-            except (json.JSONDecodeError, ValueError, KeyError, TypeError) as e:
-                continue  # kaputte Objekte ignorieren
+                obj = json.loads(obj_str)
+                findings.append({
+                    "filename": obj.get("filename") or obj.get("file") or "unknown.java",
+                    "start_line": int(obj.get("start_line", obj.get("line", 1))),
+                    "end_line": int(obj.get("end_line", obj.get("start_line", obj.get("line", 1)))),
+                    "severity": str(obj.get("severity", "medium")).lower(),
+                    "error_description": obj.get("error_description") or obj.get("description") or "No description"
+                })
+            except Exception:
+                continue
 
-        # 3. Ultimativer Fallback: alles zwischen erstem { und letztem }
-        if not findings and "{" in text and "}" in text:
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            try:
-                data = json.loads(text[start:end])
-                if isinstance(data, dict):
-                    findings = [data]
-                elif isinstance(data, list):
-                    findings = data
-            except:
-                pass
+        if findings:
+            print(f"[PARSER] Gerettet: {len(findings)} Bug(s) aus kaputtem Output")
+            return BugList.model_validate({"bugs": findings})
 
-        if not findings:
-            raise ValueError("Kein einziges gültiges JSON-Objekt gefunden – LLM hat komplett versagt.")
-
-        return BugList.model_validate({"bugs": findings})
+        raise ValueError("Keine Bugs gefunden – Output komplett kaputt oder leer")
 
     try:
         bug_list = parse_bug_output(content)
