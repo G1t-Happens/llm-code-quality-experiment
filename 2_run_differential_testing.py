@@ -41,22 +41,12 @@ def restore_project_state():
 
 def full_cleanup():
     print("\nFühre vollständige Bereinigung durch – ABSOLUT ALLES wird gelöscht...")
-
-    # Alle temporären Dateien und Ordner, die wir je erzeugt haben
     to_delete = [
-        BACKUP_ORIGINAL,
-        BACKUP_FULL,
-        BACKUP_CLEAN_STATE,
-        BACKUP_BUGGY_STATE,
-        EXEC_BACKUP_ORIGINAL,
-        EXEC_BACKUP_WITH_LLM,
+        BACKUP_ORIGINAL, BACKUP_FULL, BACKUP_CLEAN_STATE, BACKUP_BUGGY_STATE,
+        EXEC_BACKUP_ORIGINAL, EXEC_BACKUP_WITH_LLM,
     ]
-
-    # Alle dummy*.exec Dateien
     for dummy in ROOT.glob(".dummy*.exec"):
         to_delete.append(dummy)
-
-    # Optional: Auch alle build-Ordner in den Projekten (falls was hängen bleibt)
     for proj in [CLEAN, BUGGY]:
         build_dir = proj / "build"
         if build_dir.exists():
@@ -135,6 +125,7 @@ def run_tests_and_capture_coverage(proj: Path, backup_exec: Path) -> tuple[Set[s
 def get_coverage_from_report(proj: Path) -> float:
     report = proj / "build" / "reports" / "jacoco" / "test" / "jacocoTestReport.xml"
     if not report.exists():
+        print(f"   KEIN JaCoCo-Report gefunden: {report}")
         return 0.0
     try:
         tree = ET.parse(report)
@@ -144,7 +135,8 @@ def get_coverage_from_report(proj: Path) -> float:
             covered += int(counter.get("covered", 0))
         total = missed + covered
         return (covered / total * 100) if total > 0 else 0.0
-    except Exception:
+    except Exception as e:
+        print(f"   Fehler beim Parsen des JaCoCo-Reports: {e}")
         return 0.0
 
 # Hauptlogik
@@ -157,24 +149,33 @@ def main():
     restore_project_state()
     ensure_test_backups()
 
+    cov_original = 0.0
+    cov_with_llm = 0.0
+
     try:
-        print("\nPhase 1: Originaltests auf Clean")
+        # Phase 1: Originaltests auf Clean → Basis-Coverage
+        print("\nPhase 1: Originaltests auf Clean Projekt (Basis-Coverage)")
         set_tests(CLEAN, BACKUP_ORIGINAL)
         failed_A, executed_A = run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_ORIGINAL)
         subprocess.run(["./gradlew", "jacocoTestReport", "--quiet"], cwd=CLEAN, check=False)
         cov_original = get_coverage_from_report(CLEAN)
+        print(f"   Line Coverage (Original-Tests): {cov_original:6.2f}%")
 
-        print("\nPhase 2: Originaltests auf Buggy")
+        # Phase 2: Originaltests auf Buggy (für already_detected)
+        print("\nPhase 2: Originaltests auf Buggy Projekt")
         set_tests(BUGGY, BACKUP_ORIGINAL)
         failed_B, _ = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy_original_buggy.exec")
 
-        print("\nPhase 3: Volle Suite auf Clean")
+        # Phase 3: Volle Suite auf Clean → neue Coverage
+        print("\nPhase 3: Volle Testsuite (inkl. LLM-Tests) auf Clean Projekt")
         set_tests(CLEAN, BACKUP_FULL)
         failed_C, executed_C = run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_WITH_LLM)
         subprocess.run(["./gradlew", "jacocoTestReport", "--quiet"], cwd=CLEAN, check=False)
         cov_with_llm = get_coverage_from_report(CLEAN)
+        print(f"   Line Coverage (mit LLM-Tests):  {cov_with_llm:6.2f}%")
 
-        print("\nPhase 4: Volle Suite auf Buggy")
+        # Phase 4: Volle Suite auf Buggy
+        print("\nPhase 4: Volle Testsuite auf Buggy Projekt")
         set_tests(BUGGY, BACKUP_FULL)
         failed_D, executed_D = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy_full_buggy.exec")
 
@@ -183,7 +184,7 @@ def main():
             print("\nERROR: Keine LLM-Tests erkannt!")
             return
 
-        # === KORREKTE KLASSIFIZIERUNG ===
+        # Klassifikation der LLM-Tests
         broken_tests = failed_C & llm_tests
         good_candidates = llm_tests - broken_tests
         already_detected = good_candidates & failed_B
@@ -201,47 +202,52 @@ def main():
         precision = len(true_positives) / total_llm if total_llm else 0.0
         recall = len(true_positives) / seeded if seeded else 0.0
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+        coverage_gain = cov_with_llm - cov_original
 
-        # === KOMPAKTE ZUSAMMENFASSUNG ===
+        # FINAL RESULTS
         print("\n" + "="*80)
-        print(" FINAL RESULTS – VOLLTAXONOMIE")
+        print(" FINAL RESULTS ")
         print("="*80)
+        print(f" {'Line Coverage (Original-Tests auf Clean)':<40} : {cov_original:6.2f}%")
+        print(f" {'Line Coverage (mit allen LLM-Tests)':<40} : {cov_with_llm:6.2f}%")
+        print(f" {'Coverage-Gewinn durch LLM-Tests':<40} : {coverage_gain:+6.2f} Prozentpunkte")
+        if coverage_gain > 0:
+            print(f"                                          → {coverage_gain/+cov_original*100:>7.1f}% relativer Zuwachs")
+        print("")
         print(f" LLM-Tests gesamt                  : {total_llm:4d}")
         print(f" ├─ True Positives (neu)           : {len(true_positives):4d}   ← Neue Bug-Detektoren")
-        print(f" ├─ Already detected (redundant)   : {len(already_detected):4d}   ← Verstehen das System, aber kein Gewinn")
+        print(f" ├─ Already detected (redundant)   : {len(already_detected):4d}")
         print(f" ├─ False Positives (broken)       : {len(false_positives):4d}")
-        print(f" │  ├─ davon ANTI-TESTS            : {len(anti_tests):4d}   ← HOCHGEFÄHRLICH! Nur grün durch Bugs")
+        print(f" │  ├─ davon ANTI-TESTS            : {len(anti_tests):4d}   ← HOCHGEFÄHRLICH!")
         print(f" │  └─ davon klassisch kaputt      : {len(false_positives - anti_tests):4d}")
-        print(f" └─ Stable Green (harmlos)         : {len(stable_green):4d}   ← Gute Coverage, sicher")
+        print(f" └─ Stable Green (harmlos)         : {len(stable_green):4d}")
         print(f" Precision (nur neue TPs)          : {precision:6.1%}")
         print(f" Recall (von {seeded} seeded Bugs) : {recall:6.1%}")
         print(f" F1-Score                          : {f1:.3f}")
-        print(f" Coverage Gain                     : {cov_with_llm - cov_original:+5.1f} pp")
 
-        # === DETAILAUSGABE NUR BEI VORHANDENSEIN ===
+        # Detailausgabe
         if true_positives:
             print("\nTrue Positives – neue Bug-Detektoren:")
             for t in sorted(true_positives):
                 print(f"   • {t}")
 
         if already_detected:
-            print(f"\nRedundante Bug-Detektoren (already detected by original tests):")
+            print(f"\nRedundante Tests (schon von Original-Tests erkannt):")
             for t in sorted(already_detected):
                 print(f"   • {t}")
 
         if anti_tests:
-            print(f"\nHOCHGEFÄHRLICH: ANTI-TESTS (rot auf Clean, GRÜN auf Buggy!)")
-            print("   → Diese Tests werden nur durch Bugs 'gerettet' – absolut toxisch!")
+            print(f"\nHOCHGEFÄHRLICH: ANTI-TESTS (nur grün durch Bug!)")
             for t in sorted(anti_tests):
                 print(f"   • {t}")
 
         if false_positives - anti_tests:
-            print(f"\nKlassische kaputte Tests (rot auf Clean + Buggy):")
+            print(f"\nKlassisch kaputte Tests (rot auf Clean + Buggy):")
             for t in sorted(false_positives - anti_tests):
                 print(f"   • {t}")
 
         if stable_green:
-            print(f"\nCoverage-Potential: Stable Green Tests (grün auf beiden):")
+            print(f"\nStabile grüne LLM-Tests (guter Coverage-Boost):")
             for t in sorted(stable_green):
                 print(f"   • {t}")
 
@@ -251,7 +257,7 @@ def main():
         full_cleanup()
 
     print("\n" + "="*100)
-    print("FERTIG.")
+    print("FERTIG – alles sauber aufgeräumt.")
     print("="*100)
 
 if __name__ == "__main__":
