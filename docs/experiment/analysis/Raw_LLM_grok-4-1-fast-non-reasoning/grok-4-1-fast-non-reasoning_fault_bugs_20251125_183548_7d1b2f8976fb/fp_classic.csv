@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-AddressServiceImpl.java,"(96, 100)","Inconsistent Optional handling in update: Uses orElseThrow (lines 96-100) unlike getById's unsafe .get(), inconsistent error handling patterns increase maintenance faults, medium-probability development fault (code smell)"

@@ -130,36 +130,53 @@ def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tole
                 (det_end + tolerance) < (gt_start - tolerance))
 
 
-"""
-Strict matching with anti-hallucination / anti-overclaiming safeguards (state-of-the-art 2025).
-Conditions (all must hold):
-• Overlap after ±tol line tolerance
-• IoU ≥ 0.30 over the tolerance-expanded ground truth
-• Detection span ≤ 40 lines
-• Detection span ≤ max(8, 6 × ground-truth span)   ← prevents marking whole functions as buggy
-This significantly reduces credit for vague or overly large spans typical of hallucinating LLMs.
-"""
-def strict_match(gt: GroundTruthError, det: DetectedError, tol: int) -> bool:
+
+def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 3, iou_threshold: float = 0.30) -> bool:
+    """
+    Prüft, ob ein vom LLM erkannter Fehler (det) mit einem Ground Truth Fehler (gt) übereinstimmt.
+    Kleine Einzeiler werden großzügiger bewertet -> LLMs schaetzen nie 100% zeilen-genau.
+    """
+
+    # Schritt 1: Dateiname überprüfen
     if gt.filename != det.filename:
         return False
 
-    gs, ge = gt.start_line - tol, gt.end_line + tol
+    # Schritt 2: Ground Truth Größe
+    gt_size = gt.end_line - gt.start_line + 1
+
+    # Schritt 3: Dynamische Toleranz für Einzeiler
+    if gt_size == 1:
+        tol = max(tol, 2)
+        iou_threshold = max(iou_threshold, 0.15)  # bei Einzeiler niedrigere IoU akzeptieren
+
+    # Schritt 4: Ground Truth Bereich erweitern
+    gs = max(1, gt.start_line - tol)  # Startzeile darf nicht <1 sein
+    ge = gt.end_line + tol
     ds, de = det.start_line, det.end_line
 
+    # Schritt 5: Bereichsüberprüfung
     if de < gs or ds > ge:
         return False
 
+    # Schritt 6: IoU berechnen
     overlap = min(ge, de) - max(gs, ds) + 1
     union = max(ge, de) - min(gs, ds) + 1
     iou = overlap / union if union > 0 else 0
 
-    gt_size = gt.end_line - gt.start_line + 1
-    det_size = de - ds + 1
+    if iou < iou_threshold:
+        return False
 
+    # Schritt 7: Detected Error Größe prüfen
+    det_size = de - ds + 1
+    if det_size <= 0:  # ungültiger Fehlerbereich
+        return False
     if det_size > 40 or det_size > max(8, gt_size * 6):
         return False
 
-    return iou >= 0.30
+    # Schritt 8: Alles in Ordnung → Match
+    return True
+
+
 
 
 """

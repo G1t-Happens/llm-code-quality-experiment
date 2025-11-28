@@ -1,4 +1,0 @@
-filename,det_lines,error_description
-SecurityConfig.java,"(65, 67)",Public POST /users endpoint lacks rate limiting: enables username enumeration and brute force attacks (security fault: missing throttling on registration)
-AddressServiceImpl.java,"(96, 100)",Inconsistent Optional handling in update: uses orElseThrow unlike getById's .get() pattern (code smell/maintainability fault: inconsistent error handling)
-AddressServiceImpl.java,"(139, 149)",LazyInitializationException risk in enforceAddressOwnership: address.getUser() with FetchType.LAZY may fail outside transaction if user not preloaded (interaction fault: JPA fetch strategy mismatch)

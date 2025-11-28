@@ -1,3 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(103, 103)","SQL injection vulnerability (interaction fault, human-made, operational): getByUsername crafts native query with direct username concatenation '"" + username + ""', enabling malicious input to alter SQL; high-risk data exposure or RCE."
-AddressServiceImpl.java,"(82, 82)","Copy-paste defect: LOG.error in save uses incorrect message ""<-- getById"" instead of ""save""; minor logging error but indicates sloppy development (incompetence fault)."

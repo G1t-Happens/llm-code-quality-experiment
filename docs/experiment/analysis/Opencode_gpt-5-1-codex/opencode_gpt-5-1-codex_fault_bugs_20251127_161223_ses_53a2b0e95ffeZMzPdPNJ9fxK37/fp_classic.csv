@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-application.properties,"(21, 24)","Configuration fault: spring.jpa.hibernate.ddl-auto=update is enabled alongside Flyway migrations (db/migration). Running two schema managers concurrently can produce divergent schemas, unexpected column drops, or failed startups (error propagation to service availability). Disable ddl-auto when using Flyway so only the controlled migrations mutate the schema."

@@ -1,19 +1,16 @@
-id,filename,start_line,end_line,iso_category,error_description,injection_method,severity,context_hash
-E001,UserMapper.java,55,55,Functional,Double encryption of the password using a password encoder,manual,medium,70821644b8976ac4
-E002,UserServiceImpl.java,163,173,Functional,Missing delete call in the repository/data access layer,manual,critical,134ab925e954c207
-E003,AddressServiceImpl.java,78,90,Functional,Missing save call in the repository/data access layer,manual,critical,a97b5ef30637f921
-E004,UserServiceImpl.java,74,79,Performance,Loading all users before pagination and transform them to DTOs – wrong order,manual,high,2a44ed7f5de6a8fb
-E005,UserServiceImpl.java,125,125,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium,ae484d5966965275
-E006,UserServiceImpl.java,152,152,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium,b3be6dea7eabc7ff
-E007,LoggingConfig.java,237,237,Compatibility,"Appender and log level are set on ROOT_LOGGER, affecting all components and modules globally",manual,medium,ee433a0841647313
-E008,LoggingConfig.java,96,97,Compatibility,"Sets the timezone globally for the entire JVM instead of only for the logger, potentially affecting other modules, libraries, and scheduling operations",manual,high,e3e980975883102b
-E009,AddressController.java,44,44,Compatibility,Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail,manual,high,51c60db79b961d93
-E010,UserController.java,48,48,Usability,"The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",manual,high,c395163bef63859a
-E011,UserServiceImpl.java,181,181,Reliability,Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,manual,critical,26b2e0354dd3aac1
-E012,SecurityConfig.java,107,110,Reliability,"Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",manual,critical,0afd010fd2a3143d
-E013,AddressServiceImpl.java,67,67,Reliability,Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID,manual,critical,f8eed5fce16822bc
-E014,UserServiceImpl.java,102,108,Security,"Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",manual,critical,77415ebb544b3be1
-E015,UserServiceImpl.java,118,118,Security,"Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",manual,critical,c4dd250602e75770
-E016,UserController.java,59,60,Security,"Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",manual,critical,f37d9c2f4c94b842
-E017,LoggingConfig.java,54,55,Portability,"The default log file name contains characters valid on Linux but invalid on Windows (e.g., application:errors.log). This prevents installation/running on Windows",manual,high,cd393a05ba29e68d
-E018,LoggingConfig.java,51,52,Portability,Hardcoded Linux-specific log directory. Running this on Windows or another OS will fail or move to an unpredictable location unless manually changed,manual,high,ec765b20ea35855a
+id,filename,start_line,end_line,method_start,method_end,iso_category,error_description,injection_method,severity
+E001,UserMapper.java,55,55,53,56,Functional,Double encryption of the password using a password encoder,manual,medium
+E002,UserServiceImpl.java,166,172,161,173,Functional,Missing delete call in the repository/data access layer,manual,critical
+E003,AddressServiceImpl.java,80,89,76,90,Functional,Missing save call in the repository/data access layer,manual,critical
+E004,UserServiceImpl.java,74,79,71,82,Performance,Loading all users before pagination and transform them to DTOs – wrong order,manual,high
+E005,UserServiceImpl.java,125,125,115,132,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium
+E006,UserServiceImpl.java,152,152,134,159,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium
+E007,AddressController.java,44,44,44,48,Compatibility,Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail,manual,high
+E008,UserController.java,49,49,47,51,Usability,"The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",manual,high
+E009,AddressController.java,52,52,50,54,Usability,"The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",manual,high
+E010,UserServiceImpl.java,181,181,175,194,Reliability,Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,manual,critical
+E011,SecurityConfig.java,108,109,107,110,Reliability,"Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",manual,critical
+E012,AddressServiceImpl.java,67,67,64,74,Reliability,Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID,manual,critical
+E013,UserServiceImpl.java,102,108,98,113,Security,"Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",manual,critical
+E014,UserServiceImpl.java,118,118,115,132,Security,"Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",manual,critical
+E015,UserController.java,59,60,59,62,Security,"Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",manual,critical

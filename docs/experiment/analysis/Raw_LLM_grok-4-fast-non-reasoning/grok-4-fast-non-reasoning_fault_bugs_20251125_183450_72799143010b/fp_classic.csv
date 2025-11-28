@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-LoggingConfig.java,"(209, 210)","Potential log injection in createRollingFileAppender: totalSizeCapStr parsed without validation, allowing malformed input to disrupt rolling policy (hypothesized external interaction fault: untrusted config value, low probability as it's application property but could be tampered in env)"

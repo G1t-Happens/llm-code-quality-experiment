@@ -49,7 +49,7 @@ public class AddressController {
 
     @PatchMapping("/{addressId}")
     @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
+    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody AddressRequest addressRequest) {
         return addressService.update(userId, addressId, addressRequest);
     }
 

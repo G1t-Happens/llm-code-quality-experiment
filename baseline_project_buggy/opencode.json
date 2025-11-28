@@ -4,7 +4,7 @@
     "fault_localization_fault": {
       "mode": "primary",
       "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt_fault.txt}",
-      "temperature": 0.0,
+      "temperature": 0.10,
       "top_p": 0.90,
       "max_tokens": 60000,
       "timeout": 600,
@@ -56,7 +56,7 @@
       "tools": {
         "write": false,
         "edit": false,
-        "bash": true,
+        "bash": false,
         "read": true,
         "glob": true,
         "list": true,

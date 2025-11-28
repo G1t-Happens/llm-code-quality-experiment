@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(102, 103)","Interaction fault (development, human-made, nonmalicious): Direct string concatenation of unescaped 'username' into native SQL query → SQL injection vulnerability, potential unauthorized data access or modification"
