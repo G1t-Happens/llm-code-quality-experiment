@@ -383,8 +383,7 @@ def run_fault_localization(code: str):
         finally:
             client.close()
 
-        # --- ULTRA-ROBUSTER PARSER 2025 – funktioniert mit Grok, Claude, GPT-4o, DeepSeek, Llama ---
-        # --- 100% ROBUSTER + PYTHON 3.8–3.13 KOMPATIBLER PARSER (2025 Gold Standard) ---
+    # PARSER 2025
     def parse_bug_output(text: str) -> BugList:
         text = text.strip()
         findings = []
@@ -400,7 +399,6 @@ def run_fault_localization(code: str):
                 pass
 
         # 2. JSON Lines: einfach alles finden, was wie ein { ... } aussieht
-        # Kein rekursives Regex → funktioniert überall
         import re
         potential_jsons = re.findall(r'\{[^{}]*\}', text)  # erst grob alle einfachen Objekte
         # Fallback: auch verschachtelte mit geschachtelten Klammern (sicher und schnell)
