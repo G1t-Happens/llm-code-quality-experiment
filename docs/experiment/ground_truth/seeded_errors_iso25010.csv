@@ -1,7 +1,7 @@
 id,filename,start_line,end_line,method_start,method_end,iso_category,error_description,injection_method,severity
 E001,UserMapper.java,55,55,53,56,Functional,Double encryption of the password using a password encoder,manual,medium
-E002,UserServiceImpl.java,166,172,161,173,Functional,Missing delete call in the repository/data access layer,manual,critical
-E003,AddressServiceImpl.java,80,89,76,90,Functional,Missing save call in the repository/data access layer,manual,critical
+E002,UserServiceImpl.java,171,172,161,173,Functional,Missing delete call in the repository/data access layer,manual,critical
+E003,AddressServiceImpl.java,86,89,76,90,Functional,Missing save call in the repository/data access layer,manual,critical
 E004,UserServiceImpl.java,74,79,71,82,Performance,Loading all users before pagination and transform them to DTOs – wrong order,manual,high
 E005,UserServiceImpl.java,125,125,115,132,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium
 E006,UserServiceImpl.java,152,152,134,159,Performance,PasswordEncoder created per request rather than as a singleton,manual,medium
@@ -11,6 +11,6 @@ E009,AddressController.java,52,52,50,54,Usability,"The update() endpoint does no
 E010,UserServiceImpl.java,181,181,175,194,Reliability,Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,manual,critical
 E011,SecurityConfig.java,108,109,107,110,Reliability,"Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",manual,critical
 E012,AddressServiceImpl.java,67,67,64,74,Reliability,Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID,manual,critical
-E013,UserServiceImpl.java,102,108,98,113,Security,"Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",manual,critical
+E013,UserServiceImpl.java,102,103,98,113,Security,"Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",manual,critical
 E014,UserServiceImpl.java,118,118,115,132,Security,"Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",manual,critical
 E015,UserController.java,59,60,59,62,Security,"Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",manual,critical
