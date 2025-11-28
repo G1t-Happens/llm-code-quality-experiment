@@ -1,54 +1,5 @@
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/build.gradle =====
-
-1	plugins {
-2		id 'java'
-3		id 'org.springframework.boot' version '3.5.7'
-4		id 'io.spring.dependency-management' version '1.1.7'
-5	}
-6	
-7	group = 'com.llmquality'
-8	version = '0.0.1-SNAPSHOT'
-9	description = 'Spring Boot reference application for LLM-based software quality experiment (ISO/IEC 25010)'
-10	
-11	java {
-12		toolchain {
-13			languageVersion = JavaLanguageVersion.of(21)
-14		}
-15	}
-16	
-17	repositories {
-18		mavenCentral()
-19	}
-20	
-21	dependencies {
-22		implementation 'org.springframework.boot:spring-boot-starter-actuator'
-23		implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-24		implementation 'org.springframework.boot:spring-boot-starter-validation'
-25		implementation 'org.springframework.boot:spring-boot-starter-web'
-26	    implementation 'org.springframework.boot:spring-boot-starter-security'
-27	    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
-28	    implementation 'org.springframework.security:spring-security-oauth2-jose'
-29	    implementation 'org.flywaydb:flyway-core'
-30	    implementation 'org.flywaydb:flyway-database-postgresql'
-31	    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
-32	    implementation 'org.mapstruct:mapstruct:1.6.3'
-33	    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
-34	    runtimeOnly 'org.postgresql:postgresql'
-35		developmentOnly 'org.springframework.boot:spring-boot-devtools'
-36		testImplementation 'org.springframework.boot:spring-boot-starter-test'
-37		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-38	}
-39	
-40	tasks.named('test') {
-41		useJUnitPlatform()
-42	}
-
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/settings.gradle =====
-
-1	rootProject.name = 'baseline-project'
-
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/BaselineProjectApplication.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/BaselineProjectApplication.java =====
 
 1	package com.llmquality.baseline;
 2	
@@ -64,7 +15,7 @@
 12	    }
 13	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/AddressController.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java =====
 
 1	package com.llmquality.baseline.controller;
 2	
@@ -117,7 +68,7 @@
 49	
 50	    @PatchMapping("/{addressId}")
 51	    @PreAuthorize("hasRole('ADMIN') or @sec.isOwner(#userId, authentication)")
-52	    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody @Validated(Update.class) AddressRequest addressRequest) {
+52	    public AddressResponse update(@PathVariable Long userId, @PathVariable Long addressId, @RequestBody AddressRequest addressRequest) {
 53	        return addressService.update(userId, addressId, addressRequest);
 54	    }
 55	
@@ -128,7 +79,7 @@
 60	    }
 61	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/controller/UserController.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java =====
 
 1	package com.llmquality.baseline.controller;
 2	
@@ -199,7 +150,7 @@
 67	    }
 68	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/AddressRequest.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/AddressRequest.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -255,7 +206,7 @@
 52	    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
 53	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/AddressResponse.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/AddressResponse.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -291,7 +242,7 @@
 32	    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
 33	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/LoginRequest.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/LoginRequest.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -319,7 +270,7 @@
 24	    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
 25	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/LoginResponse.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/LoginResponse.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -339,7 +290,7 @@
 16	    // You can add custom methods here if needed, e.g., convenience methods or formatting helpers.
 17	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/PagedResponse.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/PagedResponse.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -398,7 +349,7 @@
 55	    }
 56	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/UserRequest.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/UserRequest.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -439,7 +390,7 @@
 37	    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
 38	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/UserResponse.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/UserResponse.java =====
 
 1	package com.llmquality.baseline.dto;
 2	
@@ -466,7 +417,7 @@
 23	    // You can add custom methods here if needed, e.g., formatted output or convenience methods.
 24	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/validation/AddressValidationGroups.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/validation/AddressValidationGroups.java =====
 
 1	package com.llmquality.baseline.dto.validation;
 2	
@@ -516,7 +467,7 @@
 46	    }
 47	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/dto/validation/UserValidationGroups.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/dto/validation/UserValidationGroups.java =====
 
 1	package com.llmquality.baseline.dto.validation;
 2	
@@ -566,7 +517,7 @@
 46	    }
 47	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/entity/Address.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/entity/Address.java =====
 
 1	package com.llmquality.baseline.entity;
 2	
@@ -684,7 +635,7 @@
 114	    }
 115	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/entity/User.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/entity/User.java =====
 
 1	package com.llmquality.baseline.entity;
 2	
@@ -766,7 +717,7 @@
 78	    }
 79	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/enums/AddressType.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/enums/AddressType.java =====
 
 1	package com.llmquality.baseline.enums;
 2	
@@ -790,7 +741,7 @@
 20	    BILLING
 21	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/enums/Role.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/enums/Role.java =====
 
 1	package com.llmquality.baseline.enums;
 2	
@@ -819,7 +770,7 @@
 25	    }
 26	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/BaselineProjectWebException.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/exception/BaselineProjectWebException.java =====
 
 1	package com.llmquality.baseline.exception;
 2	
@@ -864,7 +815,7 @@
 41	    }
 42	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/ResourceAlreadyExistsException.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/exception/ResourceAlreadyExistsException.java =====
 
 1	package com.llmquality.baseline.exception;
 2	
@@ -909,7 +860,7 @@
 41	    }
 42	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/ResourceNotFoundException.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/exception/ResourceNotFoundException.java =====
 
 1	package com.llmquality.baseline.exception;
 2	
@@ -954,7 +905,7 @@
 41	    }
 42	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/UnauthorizedException.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/exception/UnauthorizedException.java =====
 
 1	package com.llmquality.baseline.exception;
 2	
@@ -1004,7 +955,7 @@
 46	    }
 47	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/exception/handler/GlobalExceptionHandler.java =====
 
 1	package com.llmquality.baseline.exception.handler;
 2	
@@ -1069,270 +1020,7 @@
 61	    }
 62	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/logging/LoggingConfig.java =====
-
-1	package com.llmquality.baseline.logging;
-2	
-3	import ch.qos.logback.classic.AsyncAppender;
-4	import ch.qos.logback.classic.Level;
-5	import ch.qos.logback.classic.Logger;
-6	import ch.qos.logback.classic.LoggerContext;
-7	import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-8	import ch.qos.logback.classic.spi.ILoggingEvent;
-9	import ch.qos.logback.core.ConsoleAppender;
-10	import ch.qos.logback.core.rolling.RollingFileAppender;
-11	import ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy;
-12	import ch.qos.logback.core.util.FileSize;
-13	import jakarta.annotation.PostConstruct;
-14	import jakarta.annotation.PreDestroy;
-15	import org.slf4j.LoggerFactory;
-16	import org.springframework.beans.factory.annotation.Value;
-17	import org.springframework.context.annotation.Configuration;
-18	import org.springframework.core.env.Environment;
-19	
-20	import java.nio.file.Files;
-21	import java.nio.file.Path;
-22	import java.nio.file.Paths;
-23	import java.util.Map;
-24	import java.util.Objects;
-25	import java.util.TimeZone;
-26	
-27	
-28	/**
-29	 * Configures programmatic Logback logging for the application.
-30	 * <p>
-31	 * Features:
-32	 * <ul>
-33	 *     <li>Profile-aware log levels (dev = DEBUG, others = INFO by default)</li>
-34	 *     <li>Asynchronous file logging with size/time-based rolling</li>
-35	 * <li>Optional synchronous console logging</li>
-36	 *     <li>Fully configurable via Spring Boot properties</li>
-37	 * </ul>
-38	 * This replaces XML configuration and initializes Logback at startup.
-39	 */
-40	@Configuration
-41	public class LoggingConfig {
-42	
-43	    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoggingConfig.class);
-44	
-45	    private static final String DEFAULT_LOG_DIR = "logs";
-46	    private static final String DEFAULT_LOG_PATTERN = "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n";
-47	    private static final String DEFAULT_ROLLING_PATTERN = "application-%d{yyyy-MM-dd}.%i.log";
-48	    private static final String DEFAULT_MAX_FILE_SIZE = "10MB";
-49	    private static final String DEFAULT_TOTAL_SIZE_CAP = "100MB";
-50	
-51	    @Value("${logging.file.path:/home/dbe/projects/llm-code-quality-experiment/baseline_project/logs}")
-52	    private String logDirectoryPath;
-53	
-54	    @Value("${logging.file.name:application:errors.log}")
-55	    private String logFileName;
-56	
-57	    @Value("${logging.level.root:#{null}}")
-58	    private String rootLogLevel;
-59	
-60	    @Value("#{${logging.level:{:}}}")
-61	    private Map<String, String> loggerLevels;
-62	
-63	    @Value("${logging.console.enabled:#{null}}")
-64	    private Boolean consoleEnabled;
-65	
-66	    @Value("${logging.pattern:" + DEFAULT_LOG_PATTERN + "}")
-67	    private String logPattern;
-68	
-69	    @Value("${logging.rolling.fileNamePattern:" + DEFAULT_ROLLING_PATTERN + "}")
-70	    private String rollingFileNamePattern;
-71	
-72	    @Value("${logging.rolling.maxFileSize:10MB}")
-73	    private String maxFileSizeStr;
-74	
-75	    @Value("${logging.rolling.maxHistory:30}")
-76	    private int maxHistory;
-77	
-78	    @Value("${logging.rolling.totalSizeCap:100MB}")
-79	    private String totalSizeCapStr;
-80	
-81	    private final Environment environment;
-82	    private LoggerContext loggerContext;
-83	    private volatile boolean initialized = false;
-84	
-85	    public LoggingConfig(Environment environment) {
-86	        this.environment = environment;
-87	    }
-88	
-89	    @PostConstruct
-90	    public synchronized void initializeLogging() {
-91	        if (initialized) return;
-92	        initialized = true;
-93	
-94	        try {
-95	            loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-96	            System.setProperty("user.timezone", "UTC");
-97	            TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-98	
-99	            Path logDir = createLogDirectory(logDirectoryPath);
-100	
-101	            String[] activeProfiles = environment.getActiveProfiles();
-102	            String profile = activeProfiles.length > 0 ? activeProfiles[0] : "dev";
-103	
-104	            Level level;
-105	            boolean console;
-106	            if (rootLogLevel != null) {
-107	                level = Level.toLevel(rootLogLevel, Level.INFO);
-108	            } else if ("dev".equals(profile)) {
-109	                level = Level.DEBUG;
-110	            } else {
-111	                level = Level.INFO;
-112	            }
-113	
-114	            console = Objects.requireNonNullElseGet(consoleEnabled, () -> "dev".equals(profile));
-115	
-116	            RollingFileAppender<ILoggingEvent> rollingFileAppender = createRollingFileAppender(logDir);
-117	
-118	            AsyncAppender asyncFileAppender = new AsyncAppender();
-119	            asyncFileAppender.setContext(loggerContext);
-120	            asyncFileAppender.setName("ASYNC_FILE");
-121	            asyncFileAppender.addAppender(rollingFileAppender);
-122	            asyncFileAppender.start();
-123	
-124	            ConsoleAppender<ILoggingEvent> consoleAppender = null;
-125	            if (console) {
-126	                consoleAppender = createConsoleAppender();
-127	            }
-128	
-129	            configureRootLogger(asyncFileAppender, consoleAppender, level);
-130	
-131	            configurePackageSpecificLoggers();
-132	
-133	            LOG.info("Logging initialized successfully. Profile: {}. Log directory: {}", profile, logDir.toAbsolutePath());
-134	
-135	        } catch (Exception e) {
-136	            LOG.error("Failed to initialize logging", e);
-137	        }
-138	    }
-139	
-140	    @PreDestroy
-141	    public void shutdownLogging() {
-142	        if (loggerContext != null) {
-143	            loggerContext.stop();
-144	        }
-145	    }
-146	
-147	    private Path createLogDirectory(String path) {
-148	        Objects.requireNonNull(path, "Log directory path must not be null");
-149	        try {
-150	            Path logPath = Paths.get(path);
-151	            if (!Files.exists(logPath)) Files.createDirectories(logPath);
-152	            return logPath;
-153	        } catch (Exception e) {
-154	            LOG.error("Failed to create log directory '{}'. Falling back to '{}'.", path, DEFAULT_LOG_DIR, e);
-155	            try {
-156	                Path fallback = Paths.get(DEFAULT_LOG_DIR);
-157	                Files.createDirectories(fallback);
-158	                return fallback;
-159	            } catch (Exception ex) {
-160	                LOG.error("Fallback directory '{}' failed. Using current dir.", DEFAULT_LOG_DIR, ex);
-161	                return Paths.get(".");
-162	            }
-163	        }
-164	    }
-165	
-166	    private PatternLayoutEncoder createEncoder(String pattern) {
-167	        if (pattern == null || pattern.isEmpty()) {
-168	            pattern = DEFAULT_LOG_PATTERN;
-169	        }
-170	        PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-171	        encoder.setContext(loggerContext);
-172	        encoder.setPattern(pattern);
-173	        encoder.start();
-174	        return encoder;
-175	    }
-176	
-177	    private RollingFileAppender<ILoggingEvent> createRollingFileAppender(Path logDir) {
-178	        PatternLayoutEncoder encoder = createEncoder(logPattern);
-179	
-180	        RollingFileAppender<ILoggingEvent> rollingFileAppender = new RollingFileAppender<>();
-181	        rollingFileAppender.setContext(loggerContext);
-182	        rollingFileAppender.setName("ROLLING_FILE");
-183	        rollingFileAppender.setFile(logDir.resolve(logFileName).toString());
-184	        rollingFileAppender.setEncoder(encoder);
-185	
-186	        SizeAndTimeBasedRollingPolicy<ILoggingEvent> rollingPolicy = new SizeAndTimeBasedRollingPolicy<>();
-187	        rollingPolicy.setContext(loggerContext);
-188	        rollingPolicy.setParent(rollingFileAppender);
-189	
-190	        if (rollingFileNamePattern == null || rollingFileNamePattern.isEmpty()) {
-191	            rollingFileNamePattern = DEFAULT_ROLLING_PATTERN;
-192	        }
-193	        rollingPolicy.setFileNamePattern(logDir.resolve(rollingFileNamePattern).toString());
-194	
-195	        FileSize maxFileSize;
-196	        try {
-197	            maxFileSize = FileSize.valueOf(maxFileSizeStr);
-198	        } catch (Exception e) {
-199	            LOG.warn("Invalid maxFileSize '{}', using default {}", maxFileSizeStr, DEFAULT_MAX_FILE_SIZE);
-200	            maxFileSize = FileSize.valueOf(DEFAULT_MAX_FILE_SIZE);
-201	        }
-202	        rollingPolicy.setMaxFileSize(maxFileSize);
-203	
-204	        rollingPolicy.setMaxHistory(maxHistory);
-205	
-206	        FileSize totalSizeCap;
-207	        try {
-208	            totalSizeCap = FileSize.valueOf(totalSizeCapStr);
-209	        } catch (Exception e) {
-210	            LOG.warn("Invalid totalSizeCap '{}', using default {}", totalSizeCapStr, DEFAULT_TOTAL_SIZE_CAP);
-211	            totalSizeCap = FileSize.valueOf(DEFAULT_TOTAL_SIZE_CAP);
-212	        }
-213	        rollingPolicy.setTotalSizeCap(totalSizeCap);
-214	
-215	        rollingPolicy.start();
-216	        rollingFileAppender.setRollingPolicy(rollingPolicy);
-217	        rollingFileAppender.start();
-218	
-219	        return rollingFileAppender;
-220	    }
-221	
-222	
-223	    private ConsoleAppender<ILoggingEvent> createConsoleAppender() {
-224	        PatternLayoutEncoder encoder = createEncoder(logPattern);
-225	        ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
-226	        consoleAppender.setContext(loggerContext);
-227	        consoleAppender.setName("CONSOLE");
-228	        consoleAppender.setEncoder(encoder);
-229	        consoleAppender.start();
-230	        return consoleAppender;
-231	    }
-232	
-233	    private void configureRootLogger(AsyncAppender asyncFileAppender,
-234	                                     ConsoleAppender<ILoggingEvent> consoleAppender,
-235	                                     Level level) {
-236	
-237	        Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-238	        rootLogger.detachAndStopAllAppenders();
-239	
-240	        rootLogger.addAppender(asyncFileAppender);
-241	
-242	        if (consoleAppender != null) {
-243	            rootLogger.addAppender(consoleAppender);
-244	        }
-245	
-246	        rootLogger.setLevel(level);
-247	        rootLogger.setAdditive(false);
-248	    }
-249	
-250	    private void configurePackageSpecificLoggers() {
-251	        for (Map.Entry<String, String> entry : loggerLevels.entrySet()) {
-252	            String loggerName = entry.getKey();
-253	            if ("root".equalsIgnoreCase(loggerName)) {
-254	                continue; // Root is already configured
-255	            }
-256	            Level lvl = Level.toLevel(entry.getValue(), Level.INFO);
-257	            loggerContext.getLogger(loggerName).setLevel(lvl);
-258	        }
-259	    }
-260	}
-
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/mapper/AddressMapper.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/AddressMapper.java =====
 
 1	package com.llmquality.baseline.mapper;
 2	
@@ -1393,7 +1081,7 @@
 57	    Address updateAddressEntityFromAddressRequest(AddressRequest addressRequest, @MappingTarget Address address);
 58	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/mapper/UserMapper.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/UserMapper.java =====
 
 1	package com.llmquality.baseline.mapper;
 2	
@@ -1453,7 +1141,7 @@
 56	    User updateUserEntityFromUserRequest(UserRequest dto, @MappingTarget User entity, @Context PasswordEncoder passwordEncoder);
 57	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/repository/AddressRepository.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/repository/AddressRepository.java =====
 
 1	package com.llmquality.baseline.repository;
 2	
@@ -1472,7 +1160,7 @@
 15	    boolean existsByIdAndUserId(Long id, Long userId);
 16	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/repository/UserRepository.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/repository/UserRepository.java =====
 
 1	package com.llmquality.baseline.repository;
 2	
@@ -1491,7 +1179,7 @@
 15	    boolean existsByUsername(String username);
 16	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/security/SecurityConfig.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/security/SecurityConfig.java =====
 
 1	package com.llmquality.baseline.security;
 2	
@@ -1605,7 +1293,7 @@
 110	    }
 111	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/security/SecurityExpressions.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/security/SecurityExpressions.java =====
 
 1	package com.llmquality.baseline.security;
 2	
@@ -1642,7 +1330,7 @@
 33	    }
 34	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java =====
 
 1	package com.llmquality.baseline.service;
 2	
@@ -1795,7 +1483,7 @@
 149	    }
 150	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java =====
 
 1	package com.llmquality.baseline.service;
 2	
@@ -2046,7 +1734,7 @@
 247	    }
 248	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/AddressService.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/interfaces/AddressService.java =====
 
 1	package com.llmquality.baseline.service.interfaces;
 2	
@@ -2110,7 +1798,7 @@
 60	    void delete(Long userId, Long addressId);
 61	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/CRUDable.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/interfaces/CRUDable.java =====
 
 1	package com.llmquality.baseline.service.interfaces;
 2	
@@ -2178,7 +1866,7 @@
 64	    void delete(Long id);
 65	}
 
-===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project/src/main/java/com/llmquality/baseline/service/interfaces/UserService.java =====
+===== FILE: /home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/interfaces/UserService.java =====
 
 1	package com.llmquality.baseline.service.interfaces;
 2	
