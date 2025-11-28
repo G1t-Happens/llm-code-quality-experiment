@@ -1,3 +1,8 @@
 filename,det_lines,error_description
 UserServiceImpl.java,"(66, 76)","listAll(Pageable) ignores the provided Pageable and loads all users into memory before wrapping them in a PageImpl, resulting in incorrect pagination metadata and potential performance issues on large datasets."
+UserServiceImpl.java,"(94, 103)","getByUsername() builds a native SQL string by concatenating the username directly into the query, allowing SQL injection if a crafted username is supplied."
 UserServiceImpl.java,"(113, 113)","save() logs the raw password in plaintext, which is a severe security vulnerability because credentials can leak through log files."
+UserServiceImpl.java,"(162, 173)","delete() looks up the user but never invokes userRepository.delete(...), so the method reports success without removing the user from the database."
+UserServiceImpl.java,"(176, 190)","checkLogin() calls userRepository.findByUsername(...).get() and only afterwards checks for null, causing NoSuchElementException/500 when the user does not exist instead of returning Unauthorized; the dummy hash logic is never reached."
+AddressServiceImpl.java,"(66, 74)","getById() calls addressRepository.findById(addressId).get() without handling empty Optional, leading to NoSuchElementException (500) instead of returning 404 when the address does not exist."
+AddressServiceImpl.java,"(79, 90)","save() maps the request to an Address entity but never persists it with addressRepository.save(), so no record is created in the database and the returned DTO contains a null id."

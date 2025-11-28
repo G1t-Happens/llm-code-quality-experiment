@@ -3,6 +3,6 @@ E013,UserServiceImpl.java,"(102, 103)","(102, 103)","Username parameter is conca
 E005,UserServiceImpl.java,"(125, 125)","(125, 126)",PasswordEncoder created per request rather than as a singleton
 E006,UserServiceImpl.java,"(152, 152)","(152, 153)",PasswordEncoder created per request rather than as a singleton
 E010,UserServiceImpl.java,"(181, 181)","(181, 182)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
-E015,UserController.java,"(59, 60)","(60, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
 E012,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
 E003,AddressServiceImpl.java,"(86, 89)","(86, 87)",Missing save call in the repository/data access layer
+E015,UserController.java,"(59, 60)","(60, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

@@ -1,0 +1,5 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(99, 104)","getByUsername concatenates the username directly into a native SQL string (`SELECT * FROM users WHERE username = '` + username + `'`), enabling SQL injection and bypassing parameter binding."
+UserServiceImpl.java,"(120, 121)","The save method logs usernames together with the raw password string, leaking credentials into application logs and violating security best practices."
+UserServiceImpl.java,"(162, 171)",delete(Long id) loads the user but never calls userRepository.delete(...); the method reports success without removing anything from the database.
+UserServiceImpl.java,"(176, 189)",checkLogin calls userRepository.findByUsername(...).get() before validating credentials; when the username does not exist it throws NoSuchElementException (500) and the intended constant-time dummy hash/UnauthorizedException path is never executed.

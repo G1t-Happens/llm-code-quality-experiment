@@ -1,0 +1,2 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(163, 173)",Logic error in delete method: loads user entity but omits userRepository.delete(); logs deletion without performing it.

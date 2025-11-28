@@ -1,0 +1,6 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(101, 113)","getByUsername builds a native query by concatenating the username directly into SQL, creating a SQL injection vulnerability."
+UserServiceImpl.java,"(161, 173)","delete() loads the user but never calls userRepository.delete, so no deletion actually occurs."
+UserServiceImpl.java,"(175, 189)","checkLogin() calls userRepository.findByUsername(username).get() without checking presence; if the user does not exist it throws NoSuchElementException before reaching the dummy hash logic, resulting in a 500 response instead of a controlled 401."
+AddressServiceImpl.java,"(66, 74)","getById uses addressRepository.findById(...).get() without checking presence, which throws NoSuchElementException (500) instead of returning 404 when an address is absent."
+AddressServiceImpl.java,"(79, 89)","save() maps the DTO to an entity but never persists it via addressRepository.save, so no record is written to the database and the response lacks the generated ID."

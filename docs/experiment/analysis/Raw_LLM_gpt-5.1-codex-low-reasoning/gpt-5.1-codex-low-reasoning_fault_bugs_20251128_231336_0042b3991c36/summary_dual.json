@@ -8,12 +8,12 @@
     "f1": 0.6666666666666667
   },
   "strict": {
-    "tp": 8,
-    "fp": 1,
-    "fn": 7,
-    "precision": 0.8888888888888888,
-    "recall": 0.5333333333333333,
-    "f1": 0.6666666666666667
+    "tp": 3,
+    "fp": 6,
+    "fn": 12,
+    "precision": 0.3333333333333333,
+    "recall": 0.2,
+    "f1": 0.25
   },
   "category": "Raw LLM (gpt-5.1-codex-low-reasoning)",
   "run": "gpt-5.1-codex-low-reasoning_fault_bugs_20251128_231336_0042b3991c36"

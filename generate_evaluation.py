@@ -2,10 +2,11 @@
 import pandas as pd
 import json
 import re
+import math
+import argparse
 from pathlib import Path
 from typing import List, Dict, Any
 from dataclasses import dataclass
-import argparse
 from collections import defaultdict
 from statistics import mean, stdev
 
@@ -120,14 +121,10 @@ def load_llm_detections(json_path: Path) -> List[DetectedError]:
     return errors
 
 
-"""
-Classic lenient matching criterion used in nearly all code review and bug detection papers.
-Returns True if the detection overlaps with the ground-truth interval after expanding GT by ±tolerance lines.
-Equivalent to: at least one line in common after tolerance expansion.
-"""
 def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tolerance: int = 1) -> bool:
     return not ((gt_end + tolerance) < (det_start - tolerance) or
                 (det_end + tolerance) < (gt_start - tolerance))
+
 
 def calculate_iou(gt_start: int, gt_end: int, det_start: int, det_end: int) -> float:
     overlap_start = max(gt_start, det_start)
@@ -138,32 +135,59 @@ def calculate_iou(gt_start: int, gt_end: int, det_start: int, det_end: int) -> f
     union = max(gt_end, det_end) - min(gt_start, det_start) + 1
     return overlap / union if union > 0 else 0.0
 
-
-
-def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 1) -> bool:
+# IoU matching mit Anti-Cheating-Maßnahmen
+def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 3) -> bool:
     if gt.filename != det.filename:
         return False
 
-    # Muss in Toleranz sein
+    # Grundvoraussetzung: Überlappung mit Toleranz (wie im klassischen Matching)
     if not lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tol):
         return False
 
-    iou = calculate_iou(gt.start_line, gt.end_line, det.start_line, det.end_line)
-    gt_size = gt.end_line - gt.start_line + 1
-    det_size = det.end_line - det.start_line + 1
+    gt_start, gt_end = gt.start_line, gt.end_line
+    det_start, det_end = det.start_line, det.end_line
 
-    # Sehr kleine Fehler: fast nur Toleranz zählt
-    if gt_size <= 3:
-        return det_size <= 30  # nur gegen riesige Halluzinationen schützen
+    gt_size = gt_end - gt_start + 1
+    det_size = det_end - det_start + 1
 
-    # Mittlere: moderate IoU + Größenlimit
-    if gt_size <= 10:
-        return iou >= 0.3 and det_size <= max(40, gt_size * 6)
+    iou = calculate_iou(gt_start, gt_end, det_start, det_end)
 
-    # Große Blöcke: hohe Präzision erforderlich
-    return iou >= 0.5 and det_size <= max(50, gt_size * 4)
+    # Spezialfall: Einzeiliger Ground-Truth-Fehler → ±2 Zeilen Toleranz erlaubt
+    # LLMs haben oft Probleme, einzelne Zeilen 1000% exakt zu treffen
+    if gt_size == 1:
+        # Erlaube Detection von 1 bis 5 Zeilen (z.B. Zeile 100 → 98–102 erlaubt)
+        # Aber verhindere riesige Blöcke
+        return det_size <= 7 and iou >= 0.15  # sehr niedrige IoU-Schwelle, da viel Toleranz
 
+    # Normale, glatte/smoothe Skalierung für gt_size ≥ 2
 
+    # 1. IoU-Schwelle sinkt mit Größe des GT-Fehlers (große Fehler sind schwer exakt zu treffen)
+    #    Formel: min_iou = 0.6 - 0.35 * log10(gt_size)
+    #    → bei gt_size=2  → ~0.58
+    #    → bei gt_size=10 → ~0.37
+    #    → bei gt_size=100 → ~0.25
+    min_iou = max(0.2, 0.6 - 0.35 * math.log10(gt_size))
+
+    # 2. Maximal erlaubte Detection-Größe skaliert mit GT-Größe
+    #    Formel: max_det_size = gt_size * 5 + 15
+    #    → kleine Fehler: max ~20–30 Zeilen
+    #    → große Fehler: bis zu 5× GT + Puffer
+    max_det_size = min(gt_size * 5 + 15, gt_size * 3 + 60)
+
+    # 3. Bonus für gute Zentrierung (strafe zu starkes Verschieben)
+    gt_center = (gt_start + gt_end) / 2
+    det_center = (det_start + det_end) / 2
+    center_deviation = abs(gt_center - det_center)
+    max_allowed_shift = gt_size * 1.5 + 5  # je größer GT, desto mehr Versatz erlaubt
+
+    good_alignment = center_deviation <= max_allowed_shift
+
+    return (
+            iou >= min_iou
+            and det_size <= max_det_size
+            and good_alignment
+            and det_size >= 1
+    )
 
 
 """

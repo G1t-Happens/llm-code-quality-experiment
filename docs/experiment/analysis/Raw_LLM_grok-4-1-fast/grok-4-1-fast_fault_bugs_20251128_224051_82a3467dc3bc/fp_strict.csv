@@ -1,2 +1,4 @@
 filename,det_lines,error_description
+UserServiceImpl.java,"(163, 173)","Missing userRepository.delete(existingUserEntity) call in delete method, user is found but never deleted from database"
+UserServiceImpl.java,"(176, 194)",Flawed checkLogin logic: uses Optional.get() throwing NoSuchElementException if user not found instead of UnauthorizedException; enables username enumeration via timing differences and inconsistent error responses
 AddressServiceImpl.java,"(77, 90)",Missing addressRepository.save(addressEntity) in save method; address is mapped and response returned with null ID but never persisted to database

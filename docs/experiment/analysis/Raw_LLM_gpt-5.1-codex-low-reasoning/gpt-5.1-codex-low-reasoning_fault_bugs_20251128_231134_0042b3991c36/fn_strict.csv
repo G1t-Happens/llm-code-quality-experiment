@@ -1,8 +1,13 @@
 gt_id,filename,gt_lines,error_description
+E002,UserServiceImpl.java,"(171, 172)",Missing delete call in the repository/data access layer
 E004,UserServiceImpl.java,"(74, 79)",Loading all users before pagination and transform them to DTOs – wrong order
 E005,UserServiceImpl.java,"(125, 125)",PasswordEncoder created per request rather than as a singleton
 E006,UserServiceImpl.java,"(152, 152)",PasswordEncoder created per request rather than as a singleton
-E008,UserController.java,"(49, 49)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
-E015,UserController.java,"(59, 60)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
+E010,UserServiceImpl.java,"(181, 181)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
+E014,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E009,AddressController.java,"(52, 52)","The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
 E011,SecurityConfig.java,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
+E003,AddressServiceImpl.java,"(86, 89)",Missing save call in the repository/data access layer
+E012,AddressServiceImpl.java,"(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E008,UserController.java,"(49, 49)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
+E015,UserController.java,"(59, 60)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

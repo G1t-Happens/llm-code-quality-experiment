@@ -4,10 +4,10 @@ E013,UserServiceImpl.java,"(102, 103)","(99, 104)","Username parameter is concat
 E014,UserServiceImpl.java,"(118, 118)","(118, 119)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E002,UserServiceImpl.java,"(171, 172)","(163, 172)",Missing delete call in the repository/data access layer
 E010,UserServiceImpl.java,"(181, 181)","(176, 189)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
-E008,UserController.java,"(49, 49)","(47, 51)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
-E015,UserController.java,"(59, 60)","(59, 61)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
-E001,UserMapper.java,"(55, 55)","(55, 57)",Double encryption of the password using a password encoder
 E007,AddressController.java,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
 E009,AddressController.java,"(52, 52)","(50, 53)","The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
 E012,AddressServiceImpl.java,"(67, 67)","(67, 75)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
 E003,AddressServiceImpl.java,"(86, 89)","(80, 90)",Missing save call in the repository/data access layer
+E001,UserMapper.java,"(55, 55)","(55, 57)",Double encryption of the password using a password encoder
+E008,UserController.java,"(49, 49)","(47, 51)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
+E015,UserController.java,"(59, 60)","(59, 61)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
