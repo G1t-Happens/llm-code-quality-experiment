@@ -1,0 +1,74 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "error_description": "Critical SQL injection vulnerability in getByUsername method using unsafe native query with direct string concatenation of unescaped username parameter"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 66,
+    "end_line": 66,
+    "error_description": "UserServiceImpl constructor calls @Autowired on constructor parameters which is redundant and confusing since Spring automatically injects constructor parameters"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 24,
+    "end_line": 27,
+    "error_description": "Redundant @Autowired annotation on constructor which is unnecessary since Spring Boot 2.6+ automatically injects constructor dependencies without explicit @Autowired"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 23,
+    "end_line": 26,
+    "error_description": "Redundant @Autowired annotation on constructor which is unnecessary since Spring Boot automatically injects constructor dependencies"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 40,
+    "end_line": 45,
+    "error_description": "Redundant @Autowired annotation on constructor which is unnecessary for constructor injection"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 182,
+    "error_description": "NullPointerException risk: findByUsername().get() called without null check before accessing user.getPassword()"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "error_description": "NullPointerException risk: findById(addressId).get() without null safety check"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 55,
+    "end_line": 55,
+    "error_description": "Double password encoding in updateUserEntityFromUserRequest mapper expression causing incorrect password hashing"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 126,
+    "error_description": "Redundant local BCryptPasswordEncoder creation when injected passwordEncoder bean is available"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 152,
+    "end_line": 153,
+    "error_description": "Redundant local BCryptPasswordEncoder creation when injected passwordEncoder bean is available"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 60,
+    "end_line": 62,
+    "error_description": "DELETE endpoint lacks @PreAuthorize security annotation allowing unauthorized user deletion"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 87,
+    "error_description": "Entity saved and mapped to response before actual persistence causing premature ID usage in logs and response"
+  }
+]

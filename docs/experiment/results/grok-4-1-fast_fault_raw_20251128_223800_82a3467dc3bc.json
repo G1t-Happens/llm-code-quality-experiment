@@ -1,0 +1,36 @@
+{
+  "id": "1056a5c4-19ed-116b-9312-9fbe64b258b1",
+  "object": "chat.completion",
+  "created": 1764365880,
+  "model": "grok-4-1-fast-reasoning",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": " {\"bugs\":[{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":44,\"end_line\":44,\"error_description\":\"Incorrect @PostMapping consumes='text/plain' for JSON @RequestBody AddressRequest; prevents JSON parsing and validation, should use 'application/json'.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":52,\"end_line\":52,\"error_description\":\"Missing @Validated(Update.class) on @RequestBody AddressRequest in update method; bypasses validation constraints for partial updates.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":47,\"end_line\":51,\"error_description\":\"Missing @Validated(Create.class) or @Valid on @RequestBody UserRequest in create method; input validation bypassed allowing invalid users.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":59,\"end_line\":62,\"error_description\":\"Missing @PreAuthorize on delete method; security vulnerability allows any authenticated user to delete any user account.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/UserMapper.java\",\"start_line\":53,\"end_line\":56,\"error_description\":\"Double password encoding in updateUserEntityFromUserRequest @Mapping expression; passwordEncoder.encode(passwordEncoder.encode(dto.password())) produces invalid hash unmatchable on login.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":67,\"end_line\":68,\"error_description\":\"Inconsistent Optional handling: addressRepository.findById(addressId).get() throws NoSuchElementException instead of ResourceNotFoundException if address not found.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":86,\"end_line\":89,\"error_description\":\"Critical logic error in save method: creates Address entity but omits addressRepository.save(); returns unsaved AddressResponse with null ID.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":74,\"end_line\":82,\"error_description\":\"Incorrect pagination in listAll: fetches all users into full list for PageImpl content, ignores pageable slicing; always returns complete dataset.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":102,\"end_line\":103,\"error_description\":\"Critical SQL injection vulnerability: native query concatenates unescaped 'username' directly; exploitable via malicious input.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":181,\"end_line\":182,\"error_description\":\"checkLogin uses Optional.get() on findByUsername; throws NoSuchElementException for non-existent users instead of UnauthorizedException, leaking existence.\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":163,\"end_line\":173,\"error_description\":\"Logic error in delete method: loads user entity but omits userRepository.delete(); logs deletion without performing it.\"}]}",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 18304,
+    "completion_tokens": 818,
+    "total_tokens": 24188,
+    "prompt_tokens_details": {
+      "text_tokens": 18304,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "cached_tokens": 156
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 5066,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "num_sources_used": 0
+  },
+  "system_fingerprint": "fp_b22f89568e"
+}

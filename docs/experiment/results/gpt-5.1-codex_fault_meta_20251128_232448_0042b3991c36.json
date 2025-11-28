@@ -1,0 +1,15 @@
+{
+  "provider": "openai",
+  "model": "gpt-5.1-codex",
+  "temperature": null,
+  "top_p": null,
+  "max_tokens": 60000,
+  "code_md5": "6103af54f5cdb6cb4c574f5f7612bfe0",
+  "code_length": 76488,
+  "timestamp": "2025-11-28T23:29:07.103243",
+  "time_taken_seconds": 253,
+  "run_hash": "0042b3991c36",
+  "system_prompt_md5": "5643dc3597fc028b635e73e4090616bc",
+  "user_prompt_md5": "0da46d242eecb357e0d18f316ae90898",
+  "detected_bugs": 12
+}

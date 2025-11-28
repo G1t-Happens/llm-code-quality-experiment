@@ -1,0 +1,68 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "error_description": "SQL injection vulnerability due to direct string concatenation of username in native SQL query"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 89,
+    "error_description": "Missing addressRepository.save(addressEntity) call in save method; newly created address is never persisted to the database"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "error_description": "Double password encoding in updateUserEntityFromUserRequest mapping: passwordEncoder.encode(passwordEncoder.encode(dto.password())) incorrectly hashes an already hashed password, breaking password updates"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "error_description": "Missing @PreAuthorize annotation on delete method allows any authenticated user to delete any user account, violating access control"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 52,
+    "end_line": 52,
+    "error_description": "Missing @Validated(Update.class) on update method's @RequestBody AddressRequest parameter skips Update group validations like @Pattern for non-empty fields"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 49,
+    "end_line": 49,
+    "error_description": "Missing @Validated(Create.class) or @Valid on create method's @RequestBody UserRequest parameter bypasses all input validation constraints"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 44,
+    "error_description": "@PostMapping(consumes = \"text/plain\") incompatible with JSON deserialization of AddressRequest record; use application/json or omit consumes"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 74,
+    "end_line": 81,
+    "error_description": "listAll loads all users with findAll() ignoring Pageable, creates PageImpl with full list causing incorrect pagination metadata and high memory usage"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 181,
+    "error_description": "checkLogin uses .get() on Optional<User> causing NoSuchElementException if user not found, preventing secure dummy hash comparison for timing attack protection"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 172,
+    "end_line": 172,
+    "error_description": "Missing userRepository.delete(existingUserEntity) or deleteById(id) in delete method; user account is found but never deleted"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "error_description": "getById inconsistently uses .get() on Optional<Address> instead of orElseThrow with ResourceNotFoundException like other methods"
+  }
+]

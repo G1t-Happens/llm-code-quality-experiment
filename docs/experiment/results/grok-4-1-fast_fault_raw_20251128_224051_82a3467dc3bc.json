@@ -1,0 +1,36 @@
+{
+  "id": "2f25ca36-f396-21db-c17d-80d856a171b3",
+  "object": "chat.completion",
+  "created": 1764366051,
+  "model": "grok-4-1-fast-reasoning",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": " {\"bugs\":[{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":59,\"end_line\":62,\"error_description\":\"Missing @PreAuthorize annotation on delete endpoint, allowing unauthorized deletions of any user by authenticated users\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":47,\"end_line\":51,\"error_description\":\"Missing @Validated or @Valid annotation on UserRequest parameter in create method, allowing submission of invalid user data without validation\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":50,\"end_line\":54,\"error_description\":\"Missing @Validated(Update.class) annotation on AddressRequest parameter in update method, allowing invalid address updates without validation\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":44,\"end_line\":44,\"error_description\":\"Inappropriate @PostMapping(consumes = \\\"text/plain\\\") for JSON DTO AddressRequest, preventing proper deserialization of JSON requests\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":102,\"end_line\":103,\"error_description\":\"SQL injection vulnerability in getByUsername due to direct concatenation of unescaped username into native SQL query string\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":72,\"end_line\":82,\"error_description\":\"Incorrect pagination in listAll: calls findAll() without pageable loading all users into memory, then constructs PageImpl with full list as content ignoring actual page/size\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":163,\"end_line\":173,\"error_description\":\"Missing userRepository.delete(existingUserEntity) call in delete method, user is found but never deleted from database\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":176,\"end_line\":194,\"error_description\":\"Flawed checkLogin logic: uses Optional.get() throwing NoSuchElementException if user not found instead of UnauthorizedException; enables username enumeration via timing differences and inconsistent error responses\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":77,\"end_line\":90,\"error_description\":\"Missing addressRepository.save(addressEntity) in save method; address is mapped and response returned with null ID but never persisted to database\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":67,\"end_line\":67,\"error_description\":\"Uses Optional.get() on findById in getById instead of orElseThrow, causing NoSuchElementException instead of proper ResourceNotFoundException\"},{\"filename\":\"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/UserMapper.java\",\"start_line\":55,\"end_line\":55,\"error_description\":\"Double password encoding in updateUserEntityFromUserRequest mapping expression (passwordEncoder.encode(passwordEncoder.encode(dto.password()))), causing updated passwords to not match during login authentication\"}]}",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 18304,
+    "completion_tokens": 811,
+    "total_tokens": 24781,
+    "prompt_tokens_details": {
+      "text_tokens": 18304,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "cached_tokens": 156
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 5666,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "num_sources_used": 0
+  },
+  "system_fingerprint": "fp_b22f89568e"
+}

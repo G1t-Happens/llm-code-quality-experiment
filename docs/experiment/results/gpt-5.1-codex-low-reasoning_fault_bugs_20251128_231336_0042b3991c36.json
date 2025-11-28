@@ -1,0 +1,56 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 48,
+    "error_description": "Address creation endpoint is restricted to requests with Content-Type text/plain, causing standard JSON clients to receive 415 Unsupported Media Type on valid JSON payloads."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/repository/AddressRepository.java",
+    "start_line": 13,
+    "end_line": 15,
+    "error_description": "Derived query methods reference nonexistent property 'userId' on Address entity; Spring Data fails to initialize the repository because the correct path should navigate through the user relation (e.g., user.id)."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 65,
+    "end_line": 73,
+    "error_description": "getById calls addressRepository.findById(...).get() without handling absence, leading to NoSuchElementException (500) instead of returning a 404 when the address does not exist."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 78,
+    "end_line": 90,
+    "error_description": "save() maps the DTO to an entity but never persists it via addressRepository.save(...), so the address is never stored and the response always contains a null id."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 53,
+    "end_line": 56,
+    "error_description": "User update mapping double-encodes the password (passwordEncoder.encode(passwordEncoder.encode(...))) making stored hashes invalid and preventing subsequent authentication."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 100,
+    "end_line": 105,
+    "error_description": "getByUsername builds a native SQL statement by concatenating the username directly into the query string, allowing SQL injection."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 118,
+    "end_line": 120,
+    "error_description": "save() logs the raw username and password, exposing credentials in application logs—a serious security vulnerability."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 162,
+    "end_line": 172,
+    "error_description": "delete() loads the user but never calls userRepository.delete(...), so the requested user is never removed despite returning success."
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 175,
+    "end_line": 188,
+    "error_description": "checkLogin() invokes userRepository.findByUsername(...).get() without checking presence, throwing NoSuchElementException when the user does not exist instead of returning 401 Unauthorized."
+  }
+]

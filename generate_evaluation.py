@@ -129,52 +129,39 @@ def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tole
     return not ((gt_end + tolerance) < (det_start - tolerance) or
                 (det_end + tolerance) < (gt_start - tolerance))
 
+def calculate_iou(gt_start: int, gt_end: int, det_start: int, det_end: int) -> float:
+    overlap_start = max(gt_start, det_start)
+    overlap_end = min(gt_end, det_end)
+    if overlap_start > overlap_end:
+        return 0.0
+    overlap = overlap_end - overlap_start + 1
+    union = max(gt_end, det_end) - min(gt_start, det_start) + 1
+    return overlap / union if union > 0 else 0.0
 
 
-def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 3, iou_threshold: float = 0.30) -> bool:
-    """
-    Prüft, ob ein vom LLM erkannter Fehler (det) mit einem Ground Truth Fehler (gt) übereinstimmt.
-    Kleine Einzeiler werden großzügiger bewertet -> LLMs schaetzen nie 100% zeilen-genau.
-    """
 
-    # Schritt 1: Dateiname überprüfen
+def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 1) -> bool:
     if gt.filename != det.filename:
         return False
 
-    # Schritt 2: Ground Truth Größe
+    # Muss in Toleranz sein
+    if not lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tol):
+        return False
+
+    iou = calculate_iou(gt.start_line, gt.end_line, det.start_line, det.end_line)
     gt_size = gt.end_line - gt.start_line + 1
+    det_size = det.end_line - det.start_line + 1
 
-    # Schritt 3: Dynamische Toleranz für Einzeiler
-    if gt_size == 1:
-        tol = max(tol, 2)
-        iou_threshold = max(iou_threshold, 0.15)  # bei Einzeiler niedrigere IoU akzeptieren
+    # Sehr kleine Fehler: fast nur Toleranz zählt
+    if gt_size <= 3:
+        return det_size <= 30  # nur gegen riesige Halluzinationen schützen
 
-    # Schritt 4: Ground Truth Bereich erweitern
-    gs = max(1, gt.start_line - tol)  # Startzeile darf nicht <1 sein
-    ge = gt.end_line + tol
-    ds, de = det.start_line, det.end_line
+    # Mittlere: moderate IoU + Größenlimit
+    if gt_size <= 10:
+        return iou >= 0.3 and det_size <= max(40, gt_size * 6)
 
-    # Schritt 5: Bereichsüberprüfung
-    if de < gs or ds > ge:
-        return False
-
-    # Schritt 6: IoU berechnen
-    overlap = min(ge, de) - max(gs, ds) + 1
-    union = max(ge, de) - min(gs, ds) + 1
-    iou = overlap / union if union > 0 else 0
-
-    if iou < iou_threshold:
-        return False
-
-    # Schritt 7: Detected Error Größe prüfen
-    det_size = de - ds + 1
-    if det_size <= 0:  # ungültiger Fehlerbereich
-        return False
-    if det_size > 40 or det_size > max(8, gt_size * 6):
-        return False
-
-    # Schritt 8: Alles in Ordnung → Match
-    return True
+    # Große Blöcke: hohe Präzision erforderlich
+    return iou >= 0.5 and det_size <= max(50, gt_size * 4)
 
 
 
@@ -404,11 +391,11 @@ def main():
     # Finale Tabelle + CSV + Markdown
     results = []
 
-    print("\n" + "═"*120)
-    print(" GESAMTVERGLEICH – KLASSISCH vs. STRENG (IoU≥0.3 + Anti-Cheating) ".center(120))
-    print("═"*120)
-    print(f"{'Kategorie':<35} {'Typ':<12} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>12} {'F1 ±σ':<12}")
-    print("─"*120)
+    print("\n" + "═"*150)
+    print(" GESAMTVERGLEICH – KLASSISCH vs. STRENG (IoU≥0.3 + Anti-Cheating) ".center(150))
+    print("═"*150)
+    print(f"{'Kategorie':<55} {'Typ':<12} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>8} {'F1 ±σ':>9}")
+    print("─"*150)
 
     for cat in sorted(set(overall_classic.keys()) | set(overall_strict.keys())):
         mc = calculate_metrics(overall_classic[cat]["tp"], overall_classic[cat]["fp"], overall_classic[cat]["fn"])
@@ -422,11 +409,11 @@ def main():
         f1_c_std = stdev(f1_c_list) if len(f1_c_list) > 1 else 0
         f1_s_std = stdev(f1_s_list) if len(f1_s_list) > 1 else 0
 
-        print(f"{cat:<35} {'Klassisch':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} "
+        print(f"{cat:<55} {'Klassisch':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} "
               f"{mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c_mean:8.3f}   ±{f1_c_std:6.3f}")
-        print(f"{'':<35} {'Streng':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} "
+        print(f"{'':<55} {'Streng':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} "
               f"{ms['precision']:8.3f} {ms['recall']:8.3f} {f1_s_mean:8.3f}   ±{f1_s_std:6.3f}")
-        print("─"*120)
+        print("─"*150)
 
         results.append({
             "Kategorie": cat, "Typ": "Klassisch", "Runs": runs,
