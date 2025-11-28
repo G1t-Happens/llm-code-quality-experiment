@@ -5,11 +5,9 @@ import re
 import csv
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Set, Tuple
+from typing import Set
 
-# =============================================================================
 # Pfade
-# =============================================================================
 ROOT = Path(__file__).resolve().parent
 CLEAN = ROOT / "baseline_project_clean"
 BUGGY = ROOT / "baseline_project_buggy"
@@ -22,19 +20,17 @@ BACKUP_BUGGY_STATE = ROOT / ".project_buggy_state_backup"
 
 EXEC_BACKUP_ORIGINAL = ROOT / ".jacoco_original.exec"
 EXEC_BACKUP_WITH_LLM = ROOT / ".jacoco_with_llm.exec"
-JACOCO_DEFAULT_EXEC = Path("build") / "jacoco" / "test.exec"
+JACOCO_DEFAULT_EXEC_REL = Path("build") / "jacoco" / "test.exec"
 
-# =============================================================================
-# Backup & Restore
-# =============================================================================
+# Backup & Restore + Cleanup
 def backup_project_state():
     if BACKUP_CLEAN_STATE.exists() and BACKUP_BUGGY_STATE.exists():
         return
-    print("Sichere ursprünglichen Zustand beider Projekte (einmalig)...")
+    print("Sichere ursprünglichen Projektzustand (einmalig)...")
     for proj, backup in [(CLEAN, BACKUP_CLEAN_STATE), (BUGGY, BACKUP_BUGGY_STATE)]:
         if backup.exists():
             shutil.rmtree(backup)
-        shutil.copytree(proj, backup, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".git", "*.log"))
+        shutil.copytree(proj, backup, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".git", "*.log", "__pycache__"))
 
 def restore_project_state():
     print("Stelle ursprünglichen Zustand der Projekte wieder her...")
@@ -43,11 +39,10 @@ def restore_project_state():
             shutil.rmtree(proj)
         shutil.copytree(backup, proj, dirs_exist_ok=True)
 
-# =============================================================================
-# Vollständige Bereinigung am Ende
-# =============================================================================
 def full_cleanup():
-    print("\nFühre vollständige Bereinigung durch – es bleibt nichts zurück...")
+    print("\nFühre vollständige Bereinigung durch – ABSOLUT ALLES wird gelöscht...")
+
+    # Alle temporären Dateien und Ordner, die wir je erzeugt haben
     to_delete = [
         BACKUP_ORIGINAL,
         BACKUP_FULL,
@@ -56,28 +51,36 @@ def full_cleanup():
         EXEC_BACKUP_ORIGINAL,
         EXEC_BACKUP_WITH_LLM,
     ]
-    # plus alle dummy*.exec Dateien
+
+    # Alle dummy*.exec Dateien
     for dummy in ROOT.glob(".dummy*.exec"):
         to_delete.append(dummy)
+
+    # Optional: Auch alle build-Ordner in den Projekten (falls was hängen bleibt)
+    for proj in [CLEAN, BUGGY]:
+        build_dir = proj / "build"
+        if build_dir.exists():
+            to_delete.append(build_dir)
 
     removed = 0
     for path in to_delete:
         if path.exists():
-            if path.is_dir():
-                shutil.rmtree(path)
-            else:
-                path.unlink()
-            removed += 1
-            print(f"   Gelöscht: {path.name}")
+            try:
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=False)
+                    print(f"   Gelöscht: Ordner {path.name}/")
+                else:
+                    path.unlink()
+                    print(f"   Gelöscht: Datei  {path.name}")
+                removed += 1
+            except Exception as e:
+                print(f"   FEHLER beim Löschen von {path}: {e}")
 
     if removed == 0:
         print("   Bereits sauber – nichts zu löschen.")
     else:
-        print(f"   {removed} temporäre Dateien/Ordner entfernt.")
+        print(f"   Insgesamt {removed} temporäre Elemente entfernt – Repo 100% sauber!")
 
-# =============================================================================
-# Test-Backups & Setzen
-# =============================================================================
 def ensure_test_backups():
     if not BACKUP_ORIGINAL.exists():
         src = CLEAN / "src/test/java"
@@ -87,7 +90,7 @@ def ensure_test_backups():
     if not BACKUP_FULL.exists():
         src = BUGGY / "src/test/java"
         if src.exists():
-            print("Sichere volle Testsuite → .full_testsuite_backup")
+            print("Sichere volle Testsuite (inkl. LLM) → .full_testsuite_backup")
             shutil.copytree(src, BACKUP_FULL, dirs_exist_ok=True)
 
 def set_tests(proj: Path, source: Path):
@@ -95,40 +98,36 @@ def set_tests(proj: Path, source: Path):
     if target.exists():
         shutil.rmtree(target)
     shutil.copytree(source, target, dirs_exist_ok=True)
+    (proj / "build").mkdir(exist_ok=True)
 
-# =============================================================================
-# Testlauf + Coverage sichern
-# =============================================================================
-def run_tests_and_capture_coverage(proj: Path, backup_exec: Path) -> Tuple[Set[str], Set[str]]:
-    print(f"  → gradlew clean test → Coverage → {backup_exec.name}")
+# Testlauf + Coverage + JUnit-Results
+def run_tests_and_capture_coverage(proj: Path, backup_exec: Path) -> tuple[Set[str], Set[str]]:
+    print(f"  Running: ./gradlew clean test  →  Coverage → {backup_exec.name}")
+    subprocess.run(["./gradlew", "clean", "test", "--quiet"], cwd=proj, capture_output=True, text=True)
 
-    subprocess.run([
-        "./gradlew", "clean", "test", "--quiet"
-    ], cwd=proj, check=False, capture_output=True)
-
-    default_exec = proj / JACOCO_DEFAULT_EXEC
+    default_exec = proj / JACOCO_DEFAULT_EXEC_REL
     if not default_exec.exists():
-        print(f"   → KEINE test.exec gefunden unter {default_exec}")
+        print(f"   WARNING: KEINE test.exec gefunden unter {default_exec}")
         return set(), set()
 
     shutil.copy2(default_exec, backup_exec)
-    size = default_exec.stat().st_size
-    print(f"   → Coverage gesichert → {backup_exec.name} ({size:,} Bytes)")
+    print(f"   Coverage gesichert → {backup_exec.name} ({default_exec.stat().st_size:,} Bytes)")
 
-    failed = set()
-    executed = set()
+    failed: Set[str] = set()
+    executed: Set[str] = set()
     xml_dir = proj / "build" / "test-results" / "test"
+
     if xml_dir.exists():
         for xml_file in xml_dir.rglob("TEST-*.xml"):
             try:
                 tree = ET.parse(xml_file)
                 for tc in tree.getroot().iter("testcase"):
-                    cn = tc.get("classname", "")
-                    mn = re.split(r"[\[\(]", tc.get("name", ""))[0].strip()
-                    full = f"{cn}.{mn}"
-                    executed.add(full)
+                    classname = tc.get("classname", "")
+                    method = re.split(r"[\[\(]", tc.get("name", ""))[0].strip()
+                    full_name = f"{classname}.{method}"
+                    executed.add(full_name)
                     if tc.find("failure") is not None or tc.find("error") is not None:
-                        failed.add(full)
+                        failed.add(full_name)
             except Exception as e:
                 print(f"     Warnung: Konnte {xml_file.name} nicht parsen: {e}")
     return failed, executed
@@ -136,9 +135,7 @@ def run_tests_and_capture_coverage(proj: Path, backup_exec: Path) -> Tuple[Set[s
 def get_coverage_from_report(proj: Path) -> float:
     report = proj / "build" / "reports" / "jacoco" / "test" / "jacocoTestReport.xml"
     if not report.exists():
-        print("   → Kein JaCoCo-Report gefunden!")
         return 0.0
-
     try:
         tree = ET.parse(report)
         missed = covered = 0
@@ -147,16 +144,13 @@ def get_coverage_from_report(proj: Path) -> float:
             covered += int(counter.get("covered", 0))
         total = missed + covered
         return (covered / total * 100) if total > 0 else 0.0
-    except Exception as e:
-        print(f"   → Report-Parsing fehlgeschlagen: {e}")
+    except Exception:
         return 0.0
 
-# =============================================================================
 # Hauptlogik
-# =============================================================================
 def main():
     print("=" * 100)
-    print(" LLM TEST EVALUATION – FINAL V7 – 100% SAUBER & SELBSTBEREINIGEND")
+    print(" LLM TEST EVALUATION")
     print("=" * 100)
 
     backup_project_state()
@@ -164,80 +158,100 @@ def main():
     ensure_test_backups()
 
     try:
-        # Phase A
-        print("\nPhase A: Originaltests auf Clean → Baseline Coverage")
+        print("\nPhase 1: Originaltests auf Clean")
         set_tests(CLEAN, BACKUP_ORIGINAL)
-        run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_ORIGINAL)
+        failed_A, executed_A = run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_ORIGINAL)
         subprocess.run(["./gradlew", "jacocoTestReport", "--quiet"], cwd=CLEAN, check=False)
         cov_original = get_coverage_from_report(CLEAN)
 
-        print("\nPhase B: Originaltests auf Buggy")
+        print("\nPhase 2: Originaltests auf Buggy")
         set_tests(BUGGY, BACKUP_ORIGINAL)
-        failed_B, _ = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy.exec")
+        failed_B, _ = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy_original_buggy.exec")
 
-        print("\nPhase C: Full Suite auf Clean → Coverage mit LLM")
+        print("\nPhase 3: Volle Suite auf Clean")
         set_tests(CLEAN, BACKUP_FULL)
-        run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_WITH_LLM)
+        failed_C, executed_C = run_tests_and_capture_coverage(CLEAN, EXEC_BACKUP_WITH_LLM)
         subprocess.run(["./gradlew", "jacocoTestReport", "--quiet"], cwd=CLEAN, check=False)
         cov_with_llm = get_coverage_from_report(CLEAN)
-        failed_C, executed_C = run_tests_and_capture_coverage(CLEAN, ROOT / ".dummy2.exec")
 
-        print("\nPhase D: Full Suite auf Buggy")
+        print("\nPhase 4: Volle Suite auf Buggy")
         set_tests(BUGGY, BACKUP_FULL)
-        failed_D, executed_D = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy3.exec")
-
-        set_tests(CLEAN, BACKUP_ORIGINAL)
-        _, executed_A = run_tests_and_capture_coverage(CLEAN, ROOT / ".dummy4.exec")
+        failed_D, executed_D = run_tests_and_capture_coverage(BUGGY, ROOT / ".dummy_full_buggy.exec")
 
         llm_tests = executed_C - executed_A
         if not llm_tests:
-            print("\nFEHLER: Keine LLM-Tests erkannt!")
+            print("\nERROR: Keine LLM-Tests erkannt!")
             return
 
-        already_detected = failed_B & llm_tests
-        fails_in_clean = failed_C & llm_tests
-        true_positives = (llm_tests & failed_D) - fails_in_clean - already_detected
-        false_positives = fails_in_clean
-        stable_green = llm_tests - failed_D - fails_in_clean
+        # === KORREKTE KLASSIFIZIERUNG ===
+        broken_tests = failed_C & llm_tests
+        good_candidates = llm_tests - broken_tests
+        already_detected = good_candidates & failed_B
+        true_positives = good_candidates & failed_D
+        false_positives = broken_tests
+        stable_green = good_candidates - failed_D
+        anti_tests = broken_tests - failed_D
 
         seeded = 0
         if GROUND_TRUTH.exists():
             with open(GROUND_TRUTH, newline='', encoding='utf-8') as f:
                 seeded = len(list(csv.reader(f))) - 1
 
-        precision = len(true_positives) / len(llm_tests)
+        total_llm = len(llm_tests)
+        precision = len(true_positives) / total_llm if total_llm else 0.0
         recall = len(true_positives) / seeded if seeded else 0.0
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
-        print("\n" + "="*50 + " FINAL RESULTS " + "="*50)
-        print(f" LLM-Tests gesamt              : {len(llm_tests):4d}")
-        print(f" ├─ True Positives (neu)       : {len(true_positives):4d}")
-        print(f" ├─ False Positives            : {len(false_positives):4d}")
-        print(f" ├─ Already detected           : {len(already_detected):4d}")
-        print(f" └─ Stable green               : {len(stable_green):4d}")
-        print(f" Precision                     : {precision:6.1%}")
-        print(f" Recall ({seeded} seeded)      : {recall:6.1%}")
-        print(f" F1-Score                      : {f1:.3f}")
-        print(f" Coverage (Original)           : {cov_original:5.1f}%")
-        print(f" Coverage (+LLM Tests)         : {cov_with_llm:5.1f}%")
-        print(f" Coverage-Gain                 : {cov_with_llm - cov_original:+5.1f} pp")
+        # === KOMPAKTE ZUSAMMENFASSUNG ===
+        print("\n" + "="*80)
+        print(" FINAL RESULTS – VOLLTAXONOMIE")
+        print("="*80)
+        print(f" LLM-Tests gesamt                  : {total_llm:4d}")
+        print(f" ├─ True Positives (neu)           : {len(true_positives):4d}   ← Neue Bug-Detektoren")
+        print(f" ├─ Already detected (redundant)   : {len(already_detected):4d}   ← Verstehen das System, aber kein Gewinn")
+        print(f" ├─ False Positives (broken)       : {len(false_positives):4d}")
+        print(f" │  ├─ davon ANTI-TESTS            : {len(anti_tests):4d}   ← HOCHGEFÄHRLICH! Nur grün durch Bugs")
+        print(f" │  └─ davon klassisch kaputt      : {len(false_positives - anti_tests):4d}")
+        print(f" └─ Stable Green (harmlos)         : {len(stable_green):4d}   ← Gute Coverage, sicher")
+        print(f" Precision (nur neue TPs)          : {precision:6.1%}")
+        print(f" Recall (von {seeded} seeded Bugs) : {recall:6.1%}")
+        print(f" F1-Score                          : {f1:.3f}")
+        print(f" Coverage Gain                     : {cov_with_llm - cov_original:+5.1f} pp")
 
+        # === DETAILAUSGABE NUR BEI VORHANDENSEIN ===
         if true_positives:
-            print("\nTrue Positives:")
+            print("\nTrue Positives – neue Bug-Detektoren:")
             for t in sorted(true_positives):
                 print(f"   • {t}")
 
-    finally:
-        # 1. Projekte zurücksetzen
-        restore_project_state()
-        print("\nProjekte vollständig zurückgesetzt – wie am ersten Tag.")
+        if already_detected:
+            print(f"\nRedundante Bug-Detektoren (already detected by original tests):")
+            for t in sorted(already_detected):
+                print(f"   • {t}")
 
-        # 2. Alles temporäre Zeug löschen
+        if anti_tests:
+            print(f"\nHOCHGEFÄHRLICH: ANTI-TESTS (rot auf Clean, GRÜN auf Buggy!)")
+            print("   → Diese Tests werden nur durch Bugs 'gerettet' – absolut toxisch!")
+            for t in sorted(anti_tests):
+                print(f"   • {t}")
+
+        if false_positives - anti_tests:
+            print(f"\nKlassische kaputte Tests (rot auf Clean + Buggy):")
+            for t in sorted(false_positives - anti_tests):
+                print(f"   • {t}")
+
+        if stable_green:
+            print(f"\nCoverage-Potential: Stable Green Tests (grün auf beiden):")
+            for t in sorted(stable_green):
+                print(f"   • {t}")
+
+    finally:
+        restore_project_state()
+        print("\nProjekte zurückgesetzt.")
         full_cleanup()
 
     print("\n" + "="*100)
-    print("FERTIG – Alles durchgelaufen, alles sauber, nichts bleibt zurück!")
-    print("Dein Repo ist jetzt exakt im Zustand wie vor dem Lauf.")
+    print("FERTIG.")
     print("="*100)
 
 if __name__ == "__main__":
