@@ -1,0 +1,2 @@
+filename,det_lines,error_description
+AddressRepository.java,"(13, 15)","Derived query methods reference nonexistent property 'userId' on Address entity; Spring Data fails to initialize the repository because the correct path should navigate through the user relation (e.g., user.id)."

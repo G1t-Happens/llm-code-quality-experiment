@@ -1,0 +1,3 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(66, 76)","listAll(Pageable) ignores the provided Pageable and loads all users into memory before wrapping them in a PageImpl, resulting in incorrect pagination metadata and potential performance issues on large datasets."
+UserServiceImpl.java,"(113, 113)","save() logs the raw password in plaintext, which is a severe security vulnerability because credentials can leak through log files."

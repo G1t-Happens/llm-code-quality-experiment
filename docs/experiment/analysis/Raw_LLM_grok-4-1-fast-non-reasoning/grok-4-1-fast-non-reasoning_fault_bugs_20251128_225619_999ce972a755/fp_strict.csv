@@ -1,0 +1,3 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(67, 67)",Double password encoding in mapper update expression causing incorrect password hashing: passwordEncoder.encode(passwordEncoder.encode(dto.password()))
+AddressServiceImpl.java,"(116, 116)","Unsafe use of repository.findById().get() without null check, will throw NoSuchElementException if address not found"

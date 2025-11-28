@@ -1,0 +1,12 @@
+gt_id,filename,gt_lines,det_lines,error_description
+E004,UserServiceImpl.java,"(74, 79)","(72, 82)",Loading all users before pagination and transform them to DTOs – wrong order
+E013,UserServiceImpl.java,"(102, 103)","(102, 103)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
+E002,UserServiceImpl.java,"(171, 172)","(163, 173)",Missing delete call in the repository/data access layer
+E010,UserServiceImpl.java,"(181, 181)","(176, 194)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
+E008,UserController.java,"(49, 49)","(47, 51)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
+E015,UserController.java,"(59, 60)","(59, 62)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"
+E001,UserMapper.java,"(55, 55)","(55, 55)",Double encryption of the password using a password encoder
+E007,AddressController.java,"(44, 44)","(44, 44)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
+E009,AddressController.java,"(52, 52)","(50, 54)","The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
+E012,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E003,AddressServiceImpl.java,"(86, 89)","(77, 90)",Missing save call in the repository/data access layer

@@ -1,0 +1,4 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(55, 56)",Double password hashing vulnerability in updateUserEntityFromUserRequest mapper expression causes incorrect password hashing
+UserServiceImpl.java,"(67, 67)",NullPointerException risk: userRepository.findByUsername(username).get() without null check before access
+AddressServiceImpl.java,"(87, 87)",Incorrect response: toAddressResponse called on unsaved entity before repository.save() returns managed entity with ID
