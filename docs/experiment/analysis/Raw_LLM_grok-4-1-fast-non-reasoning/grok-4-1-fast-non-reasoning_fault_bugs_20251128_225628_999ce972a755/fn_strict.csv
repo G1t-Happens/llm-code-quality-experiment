@@ -1,10 +1,10 @@
 gt_id,filename,gt_lines,error_description
-E011,SecurityConfig.java,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
-E007,AddressController.java,"(44, 44)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
-E009,AddressController.java,"(52, 52)","The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
+E001,UserMapper.java,"(55, 55)",Double encryption of the password using a password encoder
 E002,UserServiceImpl.java,"(171, 172)",Missing delete call in the repository/data access layer
 E004,UserServiceImpl.java,"(74, 79)",Loading all users before pagination and transform them to DTOs – wrong order
 E014,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
-E001,UserMapper.java,"(55, 55)",Double encryption of the password using a password encoder
+E011,SecurityConfig.java,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
+E007,AddressController.java,"(44, 44)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
+E009,AddressController.java,"(52, 52)","The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
 E008,UserController.java,"(49, 49)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
 E015,UserController.java,"(59, 60)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

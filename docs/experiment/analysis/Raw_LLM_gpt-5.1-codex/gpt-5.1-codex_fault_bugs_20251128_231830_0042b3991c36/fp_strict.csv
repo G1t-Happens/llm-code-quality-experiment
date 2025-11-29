@@ -1,7 +1,7 @@
 filename,det_lines,error_description
+AddressServiceImpl.java,"(65, 74)","getById() calls addressRepository.findById(...).get() without checking the Optional. When an address is missing a NoSuchElementException is thrown, producing a 500 instead of the intended ResourceNotFoundException (404)."
+AddressServiceImpl.java,"(78, 89)",save() builds an Address entity but never persists it via addressRepository.save(...). The method returns a DTO for a transient entity with a null id and no row is inserted into the database.
 UserServiceImpl.java,"(100, 104)","getByUsername constructs a native SQL string by concatenating the untrusted username (""SELECT * FROM users WHERE username = '"" + username + ""'""). This allows SQL injection."
 UserServiceImpl.java,"(117, 132)","save() logs the plaintext password in ""user with name: {} and password: {}"", leaking credentials into application logs and violating security best practices."
 UserServiceImpl.java,"(164, 173)",delete() loads the user but never calls userRepository.delete(...). The API reports success although the record remains in the database.
 UserServiceImpl.java,"(175, 189)",checkLogin() immediately calls userRepository.findByUsername(...).get(); when the username is unknown this throws NoSuchElementException (500) and bypasses the intended dummy-hash timing protection instead of returning 401 Unauthorized.
-AddressServiceImpl.java,"(65, 74)","getById() calls addressRepository.findById(...).get() without checking the Optional. When an address is missing a NoSuchElementException is thrown, producing a 500 instead of the intended ResourceNotFoundException (404)."
-AddressServiceImpl.java,"(78, 89)",save() builds an Address entity but never persists it via addressRepository.save(...). The method returns a DTO for a transient entity with a null id and no row is inserted into the database.

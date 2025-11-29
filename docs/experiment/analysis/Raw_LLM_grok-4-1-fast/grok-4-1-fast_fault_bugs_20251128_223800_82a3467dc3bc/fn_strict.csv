@@ -1,6 +1,6 @@
 gt_id,filename,gt_lines,error_description
-E011,SecurityConfig.java,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
 E002,UserServiceImpl.java,"(171, 172)",Missing delete call in the repository/data access layer
 E005,UserServiceImpl.java,"(125, 125)",PasswordEncoder created per request rather than as a singleton
 E010,UserServiceImpl.java,"(181, 181)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
 E014,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
+E011,SecurityConfig.java,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"

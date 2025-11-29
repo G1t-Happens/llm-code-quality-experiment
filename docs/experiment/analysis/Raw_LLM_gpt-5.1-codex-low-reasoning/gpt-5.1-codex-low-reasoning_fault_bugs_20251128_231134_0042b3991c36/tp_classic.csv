@@ -1,9 +1,9 @@
 gt_id,filename,gt_lines,det_lines,error_description
-E007,AddressController.java,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
+E012,AddressServiceImpl.java,"(67, 67)","(66, 74)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
+E003,AddressServiceImpl.java,"(86, 89)","(79, 89)",Missing save call in the repository/data access layer
+E001,UserMapper.java,"(55, 55)","(53, 56)",Double encryption of the password using a password encoder
 E013,UserServiceImpl.java,"(102, 103)","(101, 113)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
 E014,UserServiceImpl.java,"(118, 118)","(118, 120)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E002,UserServiceImpl.java,"(171, 172)","(161, 173)",Missing delete call in the repository/data access layer
 E010,UserServiceImpl.java,"(181, 181)","(175, 189)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized
-E001,UserMapper.java,"(55, 55)","(53, 56)",Double encryption of the password using a password encoder
-E012,AddressServiceImpl.java,"(67, 67)","(66, 74)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
-E003,AddressServiceImpl.java,"(86, 89)","(79, 89)",Missing save call in the repository/data access layer
+E007,AddressController.java,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail

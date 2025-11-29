@@ -1,6 +1,6 @@
 filename,det_lines,error_description
-AddressController.java,"(24, 27)",Redundant @Autowired annotation on constructor which is unnecessary since Spring Boot 2.6+ automatically injects constructor dependencies without explicit @Autowired
+AddressServiceImpl.java,"(40, 45)",Redundant @Autowired annotation on constructor which is unnecessary for constructor injection
 UserServiceImpl.java,"(55, 55)",Double password encoding in updateUserEntityFromUserRequest mapper expression causing incorrect password hashing
 UserServiceImpl.java,"(66, 66)",UserServiceImpl constructor calls @Autowired on constructor parameters which is redundant and confusing since Spring automatically injects constructor parameters
-AddressServiceImpl.java,"(40, 45)",Redundant @Autowired annotation on constructor which is unnecessary for constructor injection
+AddressController.java,"(24, 27)",Redundant @Autowired annotation on constructor which is unnecessary since Spring Boot 2.6+ automatically injects constructor dependencies without explicit @Autowired
 UserController.java,"(23, 26)",Redundant @Autowired annotation on constructor which is unnecessary since Spring Boot automatically injects constructor dependencies

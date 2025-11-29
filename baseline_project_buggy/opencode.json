@@ -6,7 +6,7 @@
       "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt_fault.txt}",
       "temperature": 0.0,
       "top_p": 1.0,
-      "max_tokens": 50000,
+      "max_tokens": 60000,
       "timeout": 600,
       "response_format": {
         "type": "json_schema",
@@ -30,17 +30,17 @@
                     "start_line": {
                       "type": "integer",
                       "minimum": 1,
-                      "description": "Start line of the detected fault"
+                      "description": "Line number of first affected line (1-based)"
                     },
                     "end_line": {
                       "type": "integer",
                       "minimum": 1,
-                      "description": "End line of the detected fault"
+                      "description": "Line number of last affected line (inclusive, 1-based)"
                     },
                     "error_description": {
                       "type": "string",
                       "minLength": 10,
-                      "description": "Short description of the detected fault"
+                      "description": "Short description of the error"
                     }
                   },
                   "required": ["filename", "start_line", "end_line", "error_description"],
@@ -67,8 +67,8 @@
       "mode": "primary",
       "prompt": "{file:~/projects/llm-code-quality-experiment/docs/experiment/llm_config/system_prompt_test.txt}",
       "temperature": 0.0,
-      "top_p": 0.90,
-      "max_tokens": 32768,
+      "top_p": 1.0,
+      "max_tokens": 60000,
       "timeout": 600,
       "tools": {
         "write": false,

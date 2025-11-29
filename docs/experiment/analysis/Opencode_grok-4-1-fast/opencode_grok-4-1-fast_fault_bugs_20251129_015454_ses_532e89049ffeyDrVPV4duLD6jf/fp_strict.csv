@@ -1,0 +1,8 @@
+filename,det_lines,error_description
+UserServiceImpl.java,"(81, 82)",Unsafe Optional.get() throws NoSuchElementException if user not found during login; prevents timing-attack protection as dummy hash comparison never reached; redundant null-check follows
+UserServiceImpl.java,"(100, 113)",getByUsername uses vulnerable native SQL instead of available repository.findByUsername method; redundant and insecure implementation
+UserServiceImpl.java,"(102, 103)",SQL injection vulnerability: native SQL query constructed with direct string concatenation of user-provided 'username' parameter without parameterization
+SecurityConfig.java,"(48, 48)","Redundant @EnableMethodSecurity; already present in BaselineProjectApplication.java, unnecessary duplication"
+BaselineProjectApplication.java,"(8, 8)","Redundant @EnableMethodSecurity; already present in SecurityConfig.java, unnecessary duplication"
+AddressController.java,"(12, 20)",Missing @Validated class annotation on controller; violates best practice for enabling method parameter validation consistently
+UserController.java,"(11, 19)",Missing @Validated class annotation on controller; violates best practice for enabling method parameter validation consistently

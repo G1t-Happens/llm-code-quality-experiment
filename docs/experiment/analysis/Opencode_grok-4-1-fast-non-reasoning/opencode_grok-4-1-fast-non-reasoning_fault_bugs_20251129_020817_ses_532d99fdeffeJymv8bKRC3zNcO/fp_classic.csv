@@ -1,0 +1,6 @@
+filename,det_lines,error_description
+AddressServiceImpl.java,"(181, 181)",NullPointerException risk: .get() called on Optional without checking if present in login method
+UserServiceImpl.java,"(25, 25)",Inconsistency: Creates new BCryptPasswordEncoder() instead of using injected passwordEncoder bean
+UserServiceImpl.java,"(52, 52)",Inconsistency: Creates new BCryptPasswordEncoder() instead of using injected passwordEncoder bean
+UserServiceImpl.java,"(67, 67)","NullPointerException risk: .get() called on Optional without checking if present, will throw if address not found"
+application.properties,"(23, 23)","Security risk: spring.jpa.show-sql=true exposes SQL queries in logs, including potentially sensitive data"

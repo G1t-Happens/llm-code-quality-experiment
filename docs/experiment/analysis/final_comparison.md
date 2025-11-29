@@ -1,10 +1,14 @@
-| Kategorie                             | Typ                |   Runs |   TP |   FP |   FN |   Precision |   Recall |    F1 |   F1_Std |
-|:--------------------------------------|:-------------------|-------:|-----:|-----:|-----:|------------:|---------:|------:|---------:|
-| Raw LLM (gpt-5.1-codex)               | Klassisch(overlap) |      3 |   36 |    0 |    9 |       1     |    0.8   | 0.889 |    0     |
-|                                       | Streng(dynam. IoU) |      3 |   21 |   15 |   24 |       0.583 |    0.467 | 0.519 |    0.074 |
-| Raw LLM (gpt-5.1-codex-low-reasoning) | Klassisch(overlap) |      3 |   23 |    2 |   22 |       0.92  |    0.511 | 0.657 |    0.044 |
-|                                       | Streng(dynam. IoU) |      3 |    7 |   18 |   38 |       0.28  |    0.156 | 0.199 |    0.097 |
-| Raw LLM (grok-4-1-fast)               | Klassisch(overlap) |      3 |   33 |    0 |   12 |       1     |    0.733 | 0.846 |    0     |
-|                                       | Streng(dynam. IoU) |      3 |   29 |    4 |   16 |       0.879 |    0.644 | 0.744 |    0.118 |
-| Raw LLM (grok-4-1-fast-non-reasoning) | Klassisch(overlap) |      3 |   21 |    9 |   24 |       0.7   |    0.467 | 0.56  |    0.069 |
-|                                       | Streng(dynam. IoU) |      3 |   19 |   11 |   26 |       0.633 |    0.422 | 0.506 |    0.116 |
+| Kategorie                              | Typ                |   Runs |   TP |   FP |   FN |   Precision |   Recall |    F1 |   F1_Std |
+|:---------------------------------------|:-------------------|-------:|-----:|-----:|-----:|------------:|---------:|------:|---------:|
+| Opencode (grok-4-1-fast)               | Klassisch(overlap) |      3 |   32 |    7 |   13 |       0.821 |    0.711 | 0.765 |    0.193 |
+|                                        | Streng(dynam. IoU) |      3 |   28 |   11 |   17 |       0.718 |    0.622 | 0.671 |    0.17  |
+| Opencode (grok-4-1-fast-non-reasoning) | Klassisch(overlap) |      3 |   19 |   10 |   26 |       0.655 |    0.422 | 0.509 |    0.18  |
+|                                        | Streng(dynam. IoU) |      3 |   17 |   12 |   28 |       0.586 |    0.378 | 0.455 |    0.187 |
+| Raw LLM (gpt-5.1-codex)                | Klassisch(overlap) |      3 |   36 |    0 |    9 |       1     |    0.8   | 0.889 |    0     |
+|                                        | Streng(dynam. IoU) |      3 |   21 |   15 |   24 |       0.583 |    0.467 | 0.519 |    0.074 |
+| Raw LLM (gpt-5.1-codex-low-reasoning)  | Klassisch(overlap) |      3 |   23 |    2 |   22 |       0.92  |    0.511 | 0.657 |    0.044 |
+|                                        | Streng(dynam. IoU) |      3 |    7 |   18 |   38 |       0.28  |    0.156 | 0.199 |    0.097 |
+| Raw LLM (grok-4-1-fast)                | Klassisch(overlap) |      3 |   33 |    0 |   12 |       1     |    0.733 | 0.846 |    0     |
+|                                        | Streng(dynam. IoU) |      3 |   29 |    4 |   16 |       0.879 |    0.644 | 0.744 |    0.118 |
+| Raw LLM (grok-4-1-fast-non-reasoning)  | Klassisch(overlap) |      3 |   21 |    9 |   24 |       0.7   |    0.467 | 0.56  |    0.069 |
+|                                        | Streng(dynam. IoU) |      3 |   19 |   11 |   26 |       0.633 |    0.422 | 0.506 |    0.116 |

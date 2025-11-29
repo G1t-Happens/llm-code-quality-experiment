@@ -1,0 +1,89 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_532e.md",
+    "model": "grok.4.1.fast",
+    "session_id": "ses_532e3f32affeqlB5BgVwafFZY5",
+    "processed_at": "2025-11-29T01:58:37.429508",
+    "bug_count": 13
+  },
+  "bugs": [
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 102,
+      "end_line": 104,
+      "error_description": "SQL injection vulnerability: direct concatenation of unescaped 'username' parameter into native SQL query"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 74,
+      "end_line": 81,
+      "error_description": "Missing pagination support: calls userRepository.findAll() without Pageable, loads all users and fakes pagination with PageImpl"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 182,
+      "end_line": 182,
+      "error_description": "NullPointerException risk: calls .get() on Optional<User> from findByUsername without checking if present, crashes on non-existent username instead of returning UnauthorizedException"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 166,
+      "end_line": 173,
+      "error_description": "Logical flaw: delete method finds user but does not call userRepository.delete(), entity is not deleted"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 125,
+      "end_line": 125,
+      "error_description": "Inconsistent password encoding: creates new BCryptPasswordEncoder() locally instead of using injected PasswordEncoder field"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 153,
+      "end_line": 153,
+      "error_description": "Inconsistent password encoding: creates new BCryptPasswordEncoder() locally instead of using injected PasswordEncoder field"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 67,
+      "end_line": 67,
+      "error_description": "NullPointerException risk: calls .get() on Optional<Address> from findById without checking if present"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 86,
+      "end_line": 89,
+      "error_description": "Logical flaw: save method creates Address entity but does not call addressRepository.save(), returns response with null ID"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+      "start_line": 55,
+      "end_line": 55,
+      "error_description": "Incorrect password handling: double-encodes password with passwordEncoder.encode(passwordEncoder.encode(dto.password())), resulting in invalid hash that won't match plaintext"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 59,
+      "end_line": 62,
+      "error_description": "Missing security annotation: @DeleteMapping lacks @PreAuthorize, allows any authenticated user to delete any user"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 49,
+      "end_line": 51,
+      "error_description": "Missing validation: @RequestBody UserRequest lacks @Validated or @Valid annotation for create endpoint"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 52,
+      "end_line": 54,
+      "error_description": "Missing validation: @RequestBody AddressRequest lacks @Validated annotation for update endpoint"
+    },
+    {
+      "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 44,
+      "error_description": "Incorrect media type: @PostMapping specifies consumes = \"text/plain\" but expects JSON AddressRequest DTO"
+    }
+  ]
+}
