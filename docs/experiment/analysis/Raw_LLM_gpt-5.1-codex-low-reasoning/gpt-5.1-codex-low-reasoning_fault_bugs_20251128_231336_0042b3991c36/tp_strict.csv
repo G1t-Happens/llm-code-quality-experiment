@@ -1,4 +1,4 @@
 gt_id,filename,gt_lines,det_lines,error_description
-E014,UserServiceImpl.java,"(118, 118)","(118, 120)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E007,AddressController.java,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
+E014,UserServiceImpl.java,"(118, 118)","(118, 120)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
 E001,UserMapper.java,"(55, 55)","(53, 56)",Double encryption of the password using a password encoder

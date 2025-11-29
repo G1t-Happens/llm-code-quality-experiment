@@ -312,7 +312,7 @@ def print_dual_report(category: str, old: tuple, strict: tuple, tolerance: int):
     print(f"{'Methode':<18} {'TP':>6} {'FP':>6} {'FN':>6} {'Precision':>10} {'Recall':>10} {'F1':>10}")
     print("─"*100)
     print(f"{'Klassisch (±1)':<18} {mo['tp']:6} {mo['fp']:6} {mo['fn']:6} {mo['precision']:10.3f} {mo['recall']:10.3f} {mo['f1']:10.3f}")
-    print(f"{'Streng (IoU≥0.3)':<18} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:10.3f} {ms['recall']:10.3f} {ms['f1']:10.3f}")
+    print(f"{'Streng (IoU)':<18} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:10.3f} {ms['recall']:10.3f} {ms['f1']:10.3f}")
     print("═"*100)
 
 # Save Report
@@ -416,7 +416,7 @@ def main():
     results = []
 
     print("\n" + "═"*150)
-    print(" GESAMTVERGLEICH – KLASSISCH vs. STRENG (IoU≥0.3 + Anti-Cheating) ".center(150))
+    print(" GESAMTVERGLEICH – KLASSISCH(overlap) vs. STRENG (dynam. IoU) ".center(150))
     print("═"*150)
     print(f"{'Kategorie':<55} {'Typ':<12} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>8} {'F1 ±σ':>9}")
     print("─"*150)
@@ -433,20 +433,20 @@ def main():
         f1_c_std = stdev(f1_c_list) if len(f1_c_list) > 1 else 0
         f1_s_std = stdev(f1_s_list) if len(f1_s_list) > 1 else 0
 
-        print(f"{cat:<55} {'Klassisch':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} "
+        print(f"{cat:<55} {'Klassisch(overlap)':<12} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} "
               f"{mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c_mean:8.3f}   ±{f1_c_std:6.3f}")
-        print(f"{'':<55} {'Streng':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} "
+        print(f"{'':<55} {'Streng(dynam. IoU)':<12} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} "
               f"{ms['precision']:8.3f} {ms['recall']:8.3f} {f1_s_mean:8.3f}   ±{f1_s_std:6.3f}")
         print("─"*150)
 
         results.append({
-            "Kategorie": cat, "Typ": "Klassisch", "Runs": runs,
+            "Kategorie": cat, "Typ": "Klassisch(overlap)", "Runs": runs,
             "TP": mc["tp"], "FP": mc["fp"], "FN": mc["fn"],
             "Precision": round(mc["precision"], 3), "Recall": round(mc["recall"], 3),
             "F1": round(f1_c_mean, 3), "F1_Std": round(f1_c_std, 3)
         })
         results.append({
-            "Kategorie": "", "Typ": "Streng", "Runs": runs,
+            "Kategorie": "", "Typ": "Streng(dynam. IoU)", "Runs": runs,
             "TP": ms["tp"], "FP": ms["fp"], "FN": ms["fn"],
             "Precision": round(ms["precision"], 3), "Recall": round(ms["recall"], 3),
             "F1": round(f1_s_mean, 3), "F1_Std": round(f1_s_std, 3)

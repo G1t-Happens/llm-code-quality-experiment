@@ -1,7 +1,7 @@
 filename,det_lines,error_description
+AddressRepository.java,"(13, 15)","Derived query methods reference nonexistent property 'userId' on Address entity; Spring Data fails to initialize the repository because the correct path should navigate through the user relation (e.g., user.id)."
 UserServiceImpl.java,"(100, 105)","getByUsername builds a native SQL statement by concatenating the username directly into the query string, allowing SQL injection."
 UserServiceImpl.java,"(162, 172)","delete() loads the user but never calls userRepository.delete(...), so the requested user is never removed despite returning success."
 UserServiceImpl.java,"(175, 188)","checkLogin() invokes userRepository.findByUsername(...).get() without checking presence, throwing NoSuchElementException when the user does not exist instead of returning 401 Unauthorized."
-AddressRepository.java,"(13, 15)","Derived query methods reference nonexistent property 'userId' on Address entity; Spring Data fails to initialize the repository because the correct path should navigate through the user relation (e.g., user.id)."
 AddressServiceImpl.java,"(65, 73)","getById calls addressRepository.findById(...).get() without handling absence, leading to NoSuchElementException (500) instead of returning a 404 when the address does not exist."
 AddressServiceImpl.java,"(78, 90)","save() maps the DTO to an entity but never persists it via addressRepository.save(...), so the address is never stored and the response always contains a null id."
