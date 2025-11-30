@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-import pandas as pd
-import re
-import math
+# -*- coding: utf-8 -*-
+
 import argparse
-from pathlib import Path
-from typing import List, Dict, Any
-from dataclasses import dataclass
+import json
+import math
+import re
 from collections import defaultdict
+from pathlib import Path
 from statistics import mean, stdev
+from dataclasses import dataclass
+from typing import Any, Dict, List, Tuple
+
+import pandas as pd
 
 
 @dataclass
 class GroundTruthError:
-    id: str
+    id: str                  # z. B. "E012"
     filename: str
     start_line: int
     end_line: int
@@ -27,25 +31,29 @@ class DetectedError:
     filename: str
     start_line: int
     end_line: int
-    severity: str
-    error_description: str
+    severity: str = "unknown"
+    error_description: str = ""
+    detected_id: str = "FP"   # "E012" oder "FP"
 
 
 def extract_class_name(filename: str) -> str:
-    return Path(filename).name
+    return Path(filename).stem
 
 
-# Load manually verified seeded errors (ground truth) from CSV
+# ----------------------------------------------------------------------
+# 1. Ground Truth laden
+# ----------------------------------------------------------------------
 def load_ground_truth(csv_path: Path) -> List[GroundTruthError]:
     df = pd.read_csv(csv_path)
     required = {"id", "filename", "start_line", "end_line", "iso_category", "error_description", "severity"}
     missing = required - set(df.columns)
     if missing:
-        raise ValueError(f"Ground Truth CSV fehlt Spalten: {missing}")
+        raise ValueError(f"Ground Truth fehlt Spalten: {missing}")
 
-    return [
-        GroundTruthError(
-            id=str(row["id"]),
+    errors = []
+    for _, row in df.iterrows():
+        errors.append(GroundTruthError(
+            id=str(row["id"]).strip().upper(),
             filename=extract_class_name(row["filename"]),
             start_line=int(row["start_line"]),
             end_line=int(row["end_line"]),
@@ -53,66 +61,74 @@ def load_ground_truth(csv_path: Path) -> List[GroundTruthError]:
             error_description=str(row["error_description"]),
             severity=str(row["severity"]),
             context_hash=str(row.get("context_hash", ""))
-        )
-        for _, row in df.iterrows()
-    ]
+        ))
+    return errors
 
 
-# Load only semantically correct & verified detections from CSV in /Detected/
+# ----------------------------------------------------------------------
+# 2. Detections laden – ID-Zuordnung statt semantically_correct_detected
+# ----------------------------------------------------------------------
 def load_verified_detections(csv_path: Path) -> List[DetectedError]:
     errors: List[DetectedError] = []
     try:
         df = pd.read_csv(csv_path)
 
-        # Normalize column name for semantically_correct_detected
-        sem_col = next((col for col in df.columns if col.lower() == "semantically_correct_detected"), None)
-        if sem_col is None:
-            print(f"Warnung: Keine Spalte 'semantically_correct_detected' in {csv_path.name} → alle Zeilen werden übersprungen")
-            return errors
+        # Mögliche Spaltennamen für die ID-Zuordnung
+        id_col = None
+        candidates = ["detected_id", "ground_truth_id", "id_mapping", "mapped_id", "error_id",
+                      "semantically_correct_detected", "correct_id"]
+        for col in df.columns:
+            if any(cand.lower() in col.lower() for cand in candidates):
+                id_col = col
+                break
 
-        # Filter: only rows where semantically_correct_detected is true/TRUE
-        df[sem_col] = df[sem_col].astype(str).str.strip()
-        df_verified = df[df[sem_col].str.upper() == "TRUE"]
+        if id_col is None:
+            print(f"Warnung: Keine ID-Spalte gefunden in {csv_path.name} → alle als FP")
+            df["detected_id"] = "FP"
+        else:
+            df["detected_id"] = df[id_col].astype(str).str.strip().str.upper()
+            # Alles, was nicht exakt wie E001, E123 usw. aussieht → FP
+            df.loc[~df["detected_id"].str.fullmatch(r"E\d{3,}", na=True), "detected_id"] = "FP"
 
-        print(f"  Geladen: {len(df_verified)} verifizierte Fehler aus {csv_path.name} (von insgesamt {len(df)} Zeilen)")
+        valid_ids = (df["detected_id"] != "FP").sum()
+        print(f"  → {len(df)} Zeilen geladen, davon {valid_ids} mit gültiger ID (E…)", end="")
 
-        for _, row in df_verified.iterrows():
-            filename = row["filename"]
-            if not filename:
+        for _, row in df.iterrows():
+            if not row.get("filename"):
                 continue
             try:
-                start_line = int(row["start_line"])
-                end_line = int(row["end_line"])
-            except (KeyError, ValueError, TypeError) as e:
-                print(f"    Überspringe Zeile (ungültige Zeilen): {e}")
+                start = int(row["start_line"])
+                end = int(row["end_line"])
+            except (KeyError, ValueError, TypeError):
                 continue
 
-            severity = "unknown"
-            desc = str(row.get("error_description", "")).strip()
-
             errors.append(DetectedError(
-                filename=extract_class_name(filename),
-                start_line=start_line,
-                end_line=end_line,
-                severity=severity,
-                error_description=desc
+                filename=extract_class_name(row["filename"]),
+                start_line=start,
+                end_line=end,
+                severity="unknown",
+                error_description=str(row.get("error_description", "")).strip(),
+                detected_id=row["detected_id"]
             ))
     except Exception as e:
         print(f"Fehler beim Laden von {csv_path.name}: {e}")
+
     return errors
 
 
-def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tolerance: int = 1) -> bool:
-    return not ((gt_end + tolerance) < (det_start - tolerance) or
-                (det_end + tolerance) < (gt_start - tolerance))
+# ----------------------------------------------------------------------
+# Hilfsfunktionen für Localization
+# ----------------------------------------------------------------------
+def lines_overlap(gt_start: int, gt_end: int, det_start: int, det_end: int, tol: int = 1) -> bool:
+    return not ((gt_end + tol) < (det_start - tol) or (det_end + tol) < (gt_start - tol))
 
 
 def calculate_iou(gt_start: int, gt_end: int, det_start: int, det_end: int) -> float:
-    overlap_start = max(gt_start, det_start)
-    overlap_end = min(gt_end, det_end)
-    if overlap_start > overlap_end:
+    o_start = max(gt_start, det_start)
+    o_end = min(gt_end, det_end)
+    if o_start > o_end:
         return 0.0
-    overlap = overlap_end - overlap_start + 1
+    overlap = o_end - o_start + 1
     union = max(gt_end, det_end) - min(gt_start, det_start) + 1
     return overlap / union if union > 0 else 0.0
 
@@ -120,324 +136,327 @@ def calculate_iou(gt_start: int, gt_end: int, det_start: int, det_end: int) -> f
 def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 3) -> bool:
     if gt.filename != det.filename:
         return False
-
     if not lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tol):
         return False
 
-    gt_start, gt_end = gt.start_line, gt.end_line
-    det_start, det_end = det.start_line, det.end_line
+    gts = gt.end_line - gt.start_line + 1
+    ds = det.end_line - det.start_line + 1
+    iou = calculate_iou(gt.start_line, gt.end_line, det.start_line, det.end_line)
 
-    gt_size = gt_end - gt_start + 1
-    det_size = det_end - det_start + 1
+    if gts == 1:
+        return ds <= 7 and iou >= 0.15
 
-    iou = calculate_iou(gt_start, gt_end, det_start, det_end)
+    min_iou = max(0.2, 0.6 - 0.35 * math.log10(gts))
+    max_det = min(gts * 5 + 15, gts * 3 + 60)
+    center_dev = abs((gt.start_line + gt.end_line) / 2 - (det.start_line + det.end_line) / 2)
+    max_shift = gts * 1.5 + 5
 
-    if gt_size == 1:
-        return det_size <= 7 and iou >= 0.15
-
-    min_iou = max(0.2, 0.6 - 0.35 * math.log10(gt_size))
-    max_det_size = min(gt_size * 5 + 15, gt_size * 3 + 60)
-
-    gt_center = (gt_start + gt_end) / 2
-    det_center = (det_start + det_end) / 2
-    center_deviation = abs(gt_center - det_center)
-    max_allowed_shift = gt_size * 1.5 + 5
-
-    good_alignment = center_deviation <= max_allowed_shift
-
-    return (
-            iou >= min_iou
-            and det_size <= max_det_size
-            and good_alignment
-            and det_size >= 1
-    )
+    return (iou >= min_iou and ds <= max_det and center_dev <= max_shift and ds >= 1)
 
 
-def match_errors_both(gt_errors: List[GroundTruthError], det_errors: List[DetectedError], tolerance: int):
+# ----------------------------------------------------------------------
+# 3. Fault Detection – rein ID-basiert
+# ----------------------------------------------------------------------
+def evaluate_fault_detection(gt_errors: List[GroundTruthError],
+                             det_errors: List[DetectedError]) -> Tuple[list, list, list]:
+    gt_ids = {gt.id for gt in gt_errors}
+
+    tp_list, fp_list, fn_list = [], [], []
+
+    detected_correct_ids = set()
+
+    for det in det_errors:
+        if det.detected_id in gt_ids:
+            tp_list.append({
+                "detected_id": det.detected_id,
+                "filename": det.filename,
+                "det_lines": (det.start_line, det.end_line),
+                "error_description": det.error_description
+            })
+            detected_correct_ids.add(det.detected_id)
+        else:
+            fp_list.append({
+                "filename": det.filename,
+                "det_lines": (det.start_line, det.end_line),
+                "error_description": det.error_description,
+                "detected_id": det.detected_id
+            })
+
+    # FN = alle GT-IDs, die nicht erkannt wurden
+    for gt in gt_errors:
+        if gt.id not in detected_correct_ids:
+            fn_list.append({
+                "gt_id": gt.id,
+                "filename": gt.filename,
+                "gt_lines": (gt.start_line, gt.end_line),
+                "error_description": gt.error_description
+            })
+
+    return tp_list, fp_list, fn_list
+
+
+# ----------------------------------------------------------------------
+# 4. Fault Localization – NUR auf semantisch korrekt erkannten Fehlern!
+# ----------------------------------------------------------------------
+def match_errors_localization(gt_errors: List[GroundTruthError],
+                              det_errors: List[DetectedError],
+                              tolerance: int = 1):
+    # Nur Detections mit korrekter ID dürfen lokalisiert werden
+    valid_dets = [d for d in det_errors if d.detected_id != "FP"]
+
+    # GT nach Datei gruppieren
     gt_by_file = defaultdict(list)
-    det_by_file = defaultdict(list)
     for gt in gt_errors:
         gt_by_file[gt.filename].append(gt)
+
+    tp_classic, fp_classic, fn_classic = [], [], []
+    tp_strict, fp_strict, fn_strict = [], [], []
+
+    matched_gt_ids = set()
+
+    for det in valid_dets:
+        # Finde exakt den GT-Eintrag mit derselben ID
+        gt_match = None
+        for g in gt_by_file.get(det.filename, []):
+            if g.id == det.detected_id:
+                gt_match = g
+                break
+        if not gt_match:
+            continue  # Sollte nie passieren
+
+        classic_ok = lines_overlap(gt_match.start_line, gt_match.end_line,
+                                   det.start_line, det.end_line, tolerance)
+        strict_ok = strict_match(gt_match, det, tol=tolerance)
+
+        entry = {
+            "gt_id": gt_match.id,
+            "filename": gt_match.filename,
+            "gt_lines": (gt_match.start_line, gt_match.end_line),
+            "det_lines": (det.start_line, det.end_line),
+            "error_description": gt_match.error_description,
+            "detected_id": det.detected_id
+        }
+
+        if classic_ok:
+            tp_classic.append(entry)
+            matched_gt_ids.add(gt_match.id)
+            if strict_ok:
+                tp_strict.append(entry)
+            else:
+                fp_strict.append({**entry, "note": "bad_localization"})
+        else:
+            fp_classic.append({**entry, "note": "bad_localization"})
+            fp_strict.append({**entry, "note": "bad_localization"})
+
+    # Alle Detections ohne korrekte ID → FP (für beide Metriken)
     for det in det_errors:
-        det_by_file[det.filename].append(det)
+        if det.detected_id == "FP":
+            fp_entry = {
+                "filename": det.filename,
+                "det_lines": (det.start_line, det.end_line),
+                "error_description": det.error_description,
+                "detected_id": "FP"
+            }
+            fp_classic.append(fp_entry)
+            fp_strict.append(fp_entry)
 
-    tp_old_all, fp_old_all, fn_old_all = [], [], []
-    tp_strict_all, fp_strict_all, fn_strict_all = [], [], []
-
-    for filename in set(gt_by_file.keys()) | set(det_by_file.keys()):
-        current_gt = gt_by_file[filename]
-        current_det = det_by_file.get(filename, [])
-        current_det = sorted(current_det, key=lambda x: x.start_line)
-
-        remaining_old = current_gt.copy()
-        remaining_strict = current_gt.copy()
-
-        for det in current_det:
-            matched_old = False
-            matched_strict = False
-            gt_matched_idx = -1
-
-            for i in range(len(remaining_old) - 1, -1, -1):
-                gt = remaining_old[i]
-                old_ok = lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance)
-                strict_ok = strict_match(gt, det, tol=tolerance)
-
-                if old_ok:
-                    tp_old_all.append({
-                        "gt_id": gt.id,
-                        "filename": gt.filename,
-                        "gt_lines": (gt.start_line, gt.end_line),
-                        "det_lines": (det.start_line, det.end_line),
-                        "error_description": gt.error_description
-                    })
-                    matched_old = True
-                    gt_matched_idx = i
-
-                    if strict_ok:
-                        tp_strict_all.append({
-                            "gt_id": gt.id,
-                            "filename": gt.filename,
-                            "gt_lines": (gt.start_line, gt.end_line),
-                            "det_lines": (det.start_line, det.end_line),
-                            "error_description": gt.error_description
-                        })
-                        matched_strict = True
-                        remaining_strict.pop(i)
-                    break
-
-            if matched_old:
-                remaining_old.pop(gt_matched_idx)
-
-            if not matched_old:
-                fp_old_all.append({
-                    "filename": det.filename,
-                    "det_lines": (det.start_line, det.end_line),
-                    "error_description": det.error_description
-                })
-            if not matched_strict:
-                fp_strict_all.append({
-                    "filename": det.filename,
-                    "det_lines": (det.start_line, det.end_line),
-                    "error_description": det.error_description
-                })
-
-        for gt in remaining_old:
-            fn_old_all.append({
+    # FN = alle GT-Fehler, die nicht semantisch erkannt wurden
+    for gt in gt_errors:
+        if gt.id not in matched_gt_ids:
+            fn_entry = {
                 "gt_id": gt.id,
                 "filename": gt.filename,
                 "gt_lines": (gt.start_line, gt.end_line),
                 "error_description": gt.error_description
-            })
-        for gt in remaining_strict:
-            fn_strict_all.append({
-                "gt_id": gt.id,
-                "filename": gt.filename,
-                "gt_lines": (gt.start_line, gt.end_line),
-                "error_description": gt.error_description
-            })
+            }
+            fn_classic.append(fn_entry)
+            fn_strict.append(fn_entry)
 
-    return (tp_old_all, fp_old_all, fn_old_all), (tp_strict_all, fp_strict_all, fn_strict_all)
+    return (tp_classic, fp_classic, fn_classic), (tp_strict, fp_strict, fn_strict)
 
 
-def calculate_metrics(tp: int, fp: int, fn: int) -> Dict[str, Any]:
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
-    return {"tp": tp, "fp": fp, "fn": fn, "precision": precision, "recall": recall, "f1": f1}
+# ----------------------------------------------------------------------
+# Metriken & Ausgabe
+# ----------------------------------------------------------------------
+def calculate_metrics(tp: int, fp: int, fn: int) -> Dict[str, float]:
+    p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
+    return {"tp": tp, "fp": fp, "fn": fn, "precision": p, "recall": r, "f1": f1}
 
 
-def print_dual_report(category: str, old: tuple, strict: tuple, tolerance: int):
-    (tp_o, fp_o, fn_o), (tp_s, fp_s, fn_s) = old, strict
-    mo = calculate_metrics(len(tp_o), len(fp_o), len(fn_o))
+def print_detection_report(category: str, tp_l: list, fp_l: list, fn_l: list):
+    m = calculate_metrics(len(tp_l), len(fp_l), len(fn_l))
+    print("\n" + "═" * 100)
+    print(f" FAULT DETECTION (ID-basiert): {category} ".center(100))
+    print("═" * 100)
+    print(f"{'TP':>6} {'FP':>6} {'FN':>6} {'Precision':>10} {'Recall':>10} {'F1':>10}")
+    print("─" * 100)
+    print(f"{m['tp']:6} {m['fp']:6} {m['fn']:6} {m['precision']:10.3f} {m['recall']:10.3f} {m['f1']:10.3f}")
+    print("═" * 100)
+
+
+def print_localization_report(category: str, classic: tuple, strict: tuple, tol: int):
+    (tp_c, fp_c, fn_c), (tp_s, fp_s, fn_s) = classic, strict
+    mc = calculate_metrics(len(tp_c), len(fp_c), len(fn_c))
     ms = calculate_metrics(len(tp_s), len(fp_s), len(fn_s))
+    print("\n" + "═" * 100)
+    print(f" FAULT LOCALIZATION (nur nach korrekter Detection): {category} ".center(100))
+    print("═" * 100)
+    print(f"Toleranz: ±{tol} Zeilen")
+    print(f"{'Methode':<18} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>10}")
+    print("─" * 100)
+    print(f"{'Classic (±1)':<18} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} {mc['precision']:8.3f} {mc['recall']:8.3f} {mc['f1']:10.3f}")
+    print(f"{'Strict IoU':<18} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:8.3f} {ms['recall']:8.3f} {ms['f1']:10.3f}")
+    print("═" * 100)
 
-    print("\n" + "═"*100)
-    print(f" EVALUATION: {category} ".center(100))
-    print("═"*100)
-    print(f"Toleranz: ±{tolerance} Zeilen")
-    print(f"{'Methode':<18} {'TP':>6} {'FP':>6} {'FN':>6} {'Precision':>10} {'Recall':>10} {'F1':>10}")
-    print("─"*100)
-    print(f"{'Klassisch (±1)':<18} {mo['tp']:6} {mo['fp']:6} {mo['fn']:6} {mo['precision']:10.3f} {mo['recall']:10.3f} {mo['f1']:10.3f}")
-    print(f"{'Streng (IoU)':<18} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:10.3f} {ms['recall']:10.3f} {ms['f1']:10.3f}")
-    print("═"*100)
+
+def save_detection_results(category: str, run_name: str, tp: list, fp: list, fn: list, out_dir: Path):
+    safe = category.replace("(", "").replace(")", "").replace(" ", "_").replace("/", "_")
+    run_dir = out_dir / safe / run_name / "fault_detection"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    if tp: pd.DataFrame(tp).to_csv(run_dir / "tp.csv", index=False)
+    if fp: pd.DataFrame(fp).to_csv(run_dir / "fp.csv", index=False)
+    if fn: pd.DataFrame(fn).to_csv(run_dir / "fn.csv", index=False)
+    (run_dir / "summary.json").write_text(json.dumps(calculate_metrics(len(tp), len(fp), len(fn)), indent=2))
 
 
-def save_dual_results(category: str, run_name: str, old_res: tuple, strict_res: tuple, output_dir: Path):
-    safe_cat = category.replace("(", "").replace(")", "").replace(" ", "_")
-    run_dir = output_dir / safe_cat / run_name
+def save_localization_results(category: str, run_name: str, classic: tuple, strict: tuple, out_dir: Path):
+    safe = category.replace("(", "").replace(")", "").replace(" ", "_").replace("/", "_")
+    run_dir = out_dir / safe / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    (tp_o, fp_o, fn_o), (tp_s, fp_s, fn_s) = old_res, strict_res
-
-    if tp_o: pd.DataFrame(tp_o).to_csv(run_dir / "tp_classic.csv", index=False)
-    if fp_o: pd.DataFrame(fp_o).to_csv(run_dir / "fp_classic.csv", index=False)
-    if fn_o: pd.DataFrame(fn_o).to_csv(run_dir / "fn_classic.csv", index=False)
-    if tp_s: pd.DataFrame(tp_s).to_csv(run_dir / "tp_strict.csv", index=False)
-    if fp_s: pd.DataFrame(fp_s).to_csv(run_dir / "fp_strict.csv", index=False)
-    if fn_s: pd.DataFrame(fn_s).to_csv(run_dir / "fn_strict.csv", index=False)
+    (tp_c, fp_c, fn_c), (tp_s, fp_s, fn_s) = classic, strict
+    for data, name in [(tp_c, "tp_classic"), (fp_c, "fp_classic"), (fn_c, "fn_classic"),
+                       (tp_s, "tp_strict"), (fp_s, "fp_strict"), (fn_s, "fn_strict")]:
+        if data:
+            pd.DataFrame(data).to_csv(run_dir / f"{name}.csv", index=False)
 
     summary = {
-        "classic": calculate_metrics(len(tp_o), len(fp_o), len(fn_o)),
-        "strict": calculate_metrics(len(tp_s), len(fp_s), len(fn_s)),
-        "category": category,
-        "run": run_name
+        "localization_classic": calculate_metrics(len(tp_c), len(fp_c), len(fn_c)),
+        "localization_strict": calculate_metrics(len(tp_s), len(fp_s), len(fn_s))
     }
-    (run_dir / "summary_dual.json").write_text(json.dumps(summary, indent=2, ensure_ascii=False))
+    (run_dir / "summary_localization.json").write_text(json.dumps(summary, indent=2))
 
 
-def detect_category_from_path(csv_path: Path) -> str:
-    parts = csv_path.parts
-    try:
-        raw_llm_idx = parts.index("Raw_LLM")
-        model = parts[raw_llm_idx + 1] if raw_llm_idx + 1 < len(parts) else "unknown"
-        return f"Raw LLM ({model})"
-    except ValueError:
-        model = csv_path.stem.split("_fault_bugs_")[0]
-        return f"Raw LLM ({model})"
+def detect_category(path: Path) -> str:
+    s = str(path)
+    m = re.search(r"Detected[\/\\]([^\/\\]+)[\/\\].*?_fault_bugs_", s)
+    if m:
+        part = m.group(1)
+        model = part.split("_")[-1]
+        if "raw" in part.lower(): return f"Raw LLM ({model})"
+        if "opencode" in part.lower(): return f"Opencode ({model})"
+        if "finetuned" in part.lower(): return f"FineTuned ({model})"
+        return f"{part} ({model})"
+    return "Unknown"
 
 
+# ----------------------------------------------------------------------
+# Main
+# ----------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="LLM Code Review Evaluation – FINAL (CSV Detected Only)")
+    parser = argparse.ArgumentParser(description="Hierarchische Evaluation: Detection → Localization")
     parser.add_argument("--experiment-dir", type=str, default="docs/experiment")
-    parser.add_argument("--tolerance", type=int, default=1)
+    parser.add_argument("--tolerance", type=int, default=1, help="Zeilentoleranz für Classic-Overlap")
     parser.add_argument("--gt-csv", type=str, default="ground_truth/seeded_errors_iso25010.csv")
-    parser.add_argument("--model", type=str, help="Filter nach Modell (z.B. gpt-4o)")
+    parser.add_argument("--model", type=str, help="Nur Modelle mit diesem Namen")
     args = parser.parse_args()
 
-    base_path = Path(args.experiment_dir).resolve()
-    gt_path = base_path / args.gt_csv
+    base = Path(args.experiment_dir).resolve()
+    gt_path = base / args.gt_csv
     if not gt_path.exists():
         raise FileNotFoundError(f"Ground Truth nicht gefunden: {gt_path}")
 
-    # ← HIER FEHLTE DAS LADEN DER GROUND TRUTH!
-    gt_errors = load_ground_truth(gt_path)          # <--- DAS FEHLTE!
-    output_dir = base_path / "analysis"
-    output_dir.mkdir(exist_ok=True)
+    gt_errors = load_ground_truth(gt_path)
+    out_dir = base / "analysis"
+    out_dir.mkdir(exist_ok=True)
 
-    f1_classic_per_run = {}
-    f1_strict_per_run = {}
-    overall_classic = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
-    overall_strict = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
+    csv_files = sorted([p for p in base.rglob("detected_errors.csv")
+                        if "_fault_bugs_" in str(p)])
 
+    if not csv_files:
+        raise FileNotFoundError("Keine detected_errors.csv gefunden!")
 
-    pattern = "analysis/Detected/**/detected_errors.csv"
-    detected_csv_files = sorted([p for p in base_path.rglob("detected_errors.csv")
-                                 if "_fault_bugs_" in "".join(p.parts)])
+    print(f"{len(csv_files)} Runs gefunden.\n")
 
-    if not detected_csv_files:
-        print("FEHLER: Keine detected_errors.csv mit '_fault_bugs_' im Pfad gefunden!")
-        print("Gefundene detected_errors.csv (werden ignoriert):")
-        print("\nInhalt von analysis/Detected/ (rekursiv):")
-        for p in base_path.rglob("detected_errors.csv"):
-            print(f"   → {p.relative_to(base_path)}")
-        raise FileNotFoundError("Keine passenden Dateien gefunden!")
-    print(f"Erfolgreich {len(detected_csv_files)} verifizierte Runs gefunden:\n")
-    for f in detected_csv_files:
-        print(f"   → {f.relative_to(base_path)}")
-    print()
+    # Aggregation
+    agg_det = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
+    agg_loc_c = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
+    agg_loc_s = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "runs": 0})
 
+    f1_det, f1_loc_c, f1_loc_s = {}, {}, {}
 
-    def detect_category_from_path(csv_path: Path) -> str:
-        path_str = str(csv_path)
-        # Suche nach: Detected/<prefix>/<model>_fault_bugs_...
-        match = re.search(r"Detected[\/\\]([^\/\\]+?)[\/\\].*?_fault_bugs_", path_str)
-        if match:
-            prefix_part = match.group(1)
-            model = prefix_part.split("_")[-1]
-            if "raw" in prefix_part.lower():
-                return f"Raw LLM ({model})"
-            elif "opencode" in prefix_part.lower():
-                return f"Opencode ({model})"
-            elif "finetuned" in prefix_part.lower():
-                return f"FineTuned ({model})"
-            else:
-                return f"{prefix_part} ({model})"
-        # Fallback
-        return f"Detected ({csv_path.parts[-3]})"
-
-    for csv_file in detected_csv_files:
-        category = detect_category_from_path(csv_file)
+    for csv_file in csv_files:
+        category = detect_category(csv_file)
         if args.model and args.model.lower() not in category.lower():
             continue
 
         run_name = csv_file.parent.name
-        print(f"→ {csv_file.name}  →  {category}")
+        print(f"→ {run_name} | {category}")
 
         det_errors = load_verified_detections(csv_file)
-        old_res, strict_res = match_errors_both(gt_errors, det_errors, tolerance=args.tolerance)
 
-        print_dual_report(category, old_res, strict_res, args.tolerance)
-        save_dual_results(category, run_name, old_res, strict_res, output_dir)
+        # 1. Fault Detection
+        det_tp, det_fp, det_fn = evaluate_fault_detection(gt_errors, det_errors)
+        print_detection_report(category, det_tp, det_fp, det_fn)
+        save_detection_results(category, run_name, det_tp, det_fp, det_fn, out_dir)
 
-        to, fo, fno = old_res
-        ts, fs, fns = strict_res
+        # 2. Fault Localization – nur auf korrekt erkannten
+        loc_c, loc_s = match_errors_localization(gt_errors, det_errors, tolerance=args.tolerance)
+        print_localization_report(category, loc_c, loc_s, args.tolerance)
+        save_localization_results(category, run_name, loc_c, loc_s, out_dir)
 
-        overall_classic[category]["tp"] += len(to)
-        overall_classic[category]["fp"] += len(fo)
-        overall_classic[category]["fn"] += len(fno)
-        overall_classic[category]["runs"] += 1
+        # Aggregation
+        agg_det[category]["tp"] += len(det_tp)
+        agg_det[category]["fp"] += len(det_fp)
+        agg_det[category]["fn"] += len(det_fn)
+        agg_det[category]["runs"] += 1
 
-        overall_strict[category]["tp"] += len(ts)
-        overall_strict[category]["fp"] += len(fs)
-        overall_strict[category]["fn"] += len(fns)
-        overall_strict[category]["runs"] += 1
+        agg_loc_c[category]["tp"] += len(loc_c[0])
+        agg_loc_c[category]["fp"] += len(loc_c[1])
+        agg_loc_c[category]["fn"] += len(loc_c[2])
+        agg_loc_c[category]["runs"] += 1
 
-        f1_c = calculate_metrics(len(to), len(fo), len(fno))["f1"]
-        f1_s = calculate_metrics(len(ts), len(fs), len(fns))["f1"]
-        f1_classic_per_run.setdefault(category, []).append(f1_c)
-        f1_strict_per_run.setdefault(category, []).append(f1_s)
+        agg_loc_s[category]["tp"] += len(loc_s[0])
+        agg_loc_s[category]["fp"] += len(loc_s[1])
+        agg_loc_s[category]["fn"] += len(loc_s[2])
+        agg_loc_s[category]["runs"] += 1
 
-    # Final report
-    results = []
+        f1_det.setdefault(category, []).append(calculate_metrics(len(det_tp), len(det_fp), len(det_fn))["f1"])
+        f1_loc_c.setdefault(category, []).append(calculate_metrics(*map(len, loc_c))["f1"])
+        f1_loc_s.setdefault(category, []).append(calculate_metrics(*map(len, loc_s))["f1"])
 
-    print("\n" + "═" * 150)
-    print(" GESAMTVERGLEICH – KLASSISCH (overlap) vs. STRENG (dynam. IoU) ".center(150))
-    print("═" * 150)
-    print(f"{'Kategorie':<55} {'Typ':<18} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>10} {'F1 ±σ':>10}")
-    print("─" * 150)
+    # Finaler Gesamtbericht
+    print("\n" + "═" * 160)
+    print(" GESAMTVERGLEICH – HIERARCHISCH (Detection → Localization) ".center(160))
+    print("═" * 160)
+    print(f"{'Kategorie':<50} {'Typ':<28} {'Runs':>5} {'TP':>6} {'FP':>6} {'FN':>6} {'Prec':>8} {'Rec':>8} {'F1':>10} {'±σ':>8}")
+    print("─" * 160)
 
-    for cat in sorted(set(overall_classic.keys()) | set(overall_strict.keys())):
-        mc = calculate_metrics(overall_classic[cat]["tp"], overall_classic[cat]["fp"], overall_classic[cat]["fn"])
-        ms = calculate_metrics(overall_strict[cat]["tp"], overall_strict[cat]["fp"], overall_strict[cat]["fn"])
-        runs = overall_classic[cat]["runs"]
+    for cat in sorted(agg_det.keys()):
+        runs = agg_det[cat]["runs"]
 
-        f1_c_list = f1_classic_per_run.get(cat, [])
-        f1_s_list = f1_strict_per_run.get(cat, [])
+        md = calculate_metrics(agg_det[cat]["tp"], agg_det[cat]["fp"], agg_det[cat]["fn"])
+        mc = calculate_metrics(agg_loc_c[cat]["tp"], agg_loc_c[cat]["fp"], agg_loc_c[cat]["fn"])
+        ms = calculate_metrics(agg_loc_s[cat]["tp"], agg_loc_s[cat]["fp"], agg_loc_s[cat]["fn"])
 
-        f1_c_mean = mean(f1_c_list) if f1_c_list else 0.0
-        f1_s_mean = mean(f1_s_list) if f1_s_list else 0.0
-        f1_c_std  = stdev(f1_c_list) if len(f1_c_list) > 1 else 0.0
-        f1_s_std  = stdev(f1_s_list) if len(f1_s_list) > 1 else 0.0
+        f1_d = mean(f1_det.get(cat, [0]))
+        f1_c = mean(f1_loc_c.get(cat, [0]))
+        f1_s = mean(f1_loc_s.get(cat, [0]))
+        std_d = stdev(f1_det.get(cat, [])) if len(f1_det.get(cat, [])) > 1 else 0.0
+        std_c = stdev(f1_loc_c.get(cat, [])) if len(f1_loc_c.get(cat, [])) > 1 else 0.0
+        std_s = stdev(f1_loc_s.get(cat, [])) if len(f1_loc_s.get(cat, [])) > 1 else 0.0
 
-        print(f"{cat:<55} {'Klassisch (overlap)':<18} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} "
-            f"{mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c_mean:8.3f}   ±{f1_c_std:6.3f}")
+        print(f"{cat:<50} {'Detection (ID)':<28} {runs:5} {md['tp']:6} {md['fp']:6} {md['fn']:6} {md['precision']:8.3f} {md['recall']:8.3f} {f1_d:10.3f} ±{std_d:6.3f}")
+        print(f"{'':<50} {'Localization Classic':<28} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} {mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c:10.3f} ±{std_c:6.3f}")
+        print(f"{'':<50} {'Localization Strict IoU':<28} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:8.3f} {ms['recall']:8.3f} {f1_s:10.3f} ±{std_s:6.3f}")
+        print("─" * 160)
 
-        print(f"{'':<55} {'Streng (dynam. IoU)':<18} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} "
-            f"{ms['precision']:8.3f} {ms['recall']:8.3f} {f1_s_mean:8.3f}   ±{f1_s_std:6.3f}")
-
-        print("─" * 150)
-
-        results.append({
-            "Kategorie": cat, "Typ": "Klassisch(overlap)", "Runs": runs,
-            "TP": mc["tp"], "FP": mc["fp"], "FN": mc["fn"],
-            "Precision": round(mc["precision"], 3), "Recall": round(mc["recall"], 3),
-            "F1": round(f1_c_mean, 3), "F1_Std": round(f1_c_std, 3)
-        })
-        results.append({
-            "Kategorie": "", "Typ": "Streng(dynam. IoU)", "Runs": runs,
-            "TP": ms["tp"], "FP": ms["fp"], "FN": ms["fn"],
-            "Precision": round(ms["precision"], 3), "Recall": round(ms["recall"], 3),
-            "F1": round(f1_s_mean, 3), "F1_Std": round(f1_s_std, 3)
-        })
-
-    df_results = pd.DataFrame(results)
-    df_results.to_csv(output_dir / "final_comparison.csv", index=False)
-    markdown = df_results.to_markdown(index=False)
-    (output_dir / "final_comparison.md").write_text(markdown, encoding="utf-8")
-
-    print(f"\nFertig! Alle Ergebnisse in: {output_dir}")
+    print(f"\nFertig! Alle Ergebnisse in: {out_dir}")
+    print("   → fault_detection/ Ordner mit TP/FP/FN pro Run")
+    print("   → Korrekte hierarchische Auswertung (Detection vor Localization)")
 
 
 if __name__ == "__main__":
-    import json
     main()
