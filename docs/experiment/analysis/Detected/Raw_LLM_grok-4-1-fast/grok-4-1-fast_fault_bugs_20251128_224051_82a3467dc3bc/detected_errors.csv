@@ -1,0 +1,12 @@
+filename,start_line,end_line,error_description,semantically_correct_detected
+UserController.java,59,62,"Missing @PreAuthorize annotation on delete endpoint, allowing unauthorized deletions of any user by authenticated users",
+UserController.java,47,51,"Missing @Validated or @Valid annotation on UserRequest parameter in create method, allowing submission of invalid user data without validation",
+AddressController.java,50,54,"Missing @Validated(Update.class) annotation on AddressRequest parameter in update method, allowing invalid address updates without validation",
+AddressController.java,44,44,"Inappropriate @PostMapping(consumes = ""text/plain"") for JSON DTO AddressRequest, preventing proper deserialization of JSON requests",
+UserServiceImpl.java,102,103,SQL injection vulnerability in getByUsername due to direct concatenation of unescaped username into native SQL query string,
+UserServiceImpl.java,72,82,"Incorrect pagination in listAll: calls findAll() without pageable loading all users into memory, then constructs PageImpl with full list as content ignoring actual page/size",
+UserServiceImpl.java,163,173,"Missing userRepository.delete(existingUserEntity) call in delete method, user is found but never deleted from database",
+UserServiceImpl.java,176,194,Flawed checkLogin logic: uses Optional.get() throwing NoSuchElementException if user not found instead of UnauthorizedException; enables username enumeration via timing differences and inconsistent error responses,
+AddressServiceImpl.java,77,90,Missing addressRepository.save(addressEntity) in save method; address is mapped and response returned with null ID but never persisted to database,
+AddressServiceImpl.java,67,67,"Uses Optional.get() on findById in getById instead of orElseThrow, causing NoSuchElementException instead of proper ResourceNotFoundException",
+UserMapper.java,55,55,"Double password encoding in updateUserEntityFromUserRequest mapping expression (passwordEncoder.encode(passwordEncoder.encode(dto.password()))), causing updated passwords to not match during login authentication",

@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import argparse
 import json
 import math
 import re
+import pandas as pd
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean, stdev
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
-import pandas as pd
 
 
 @dataclass
@@ -73,25 +71,23 @@ def load_verified_detections(csv_path: Path) -> List[DetectedError]:
     try:
         df = pd.read_csv(csv_path)
 
-        # Mögliche Spaltennamen für die ID-Zuordnung
         id_col = None
         candidates = ["detected_id", "ground_truth_id", "id_mapping", "mapped_id", "error_id",
-                      "semantically_correct_detected", "correct_id"]
+                      "semantically_correct_detected", "correct_id", "id"]
         for col in df.columns:
             if any(cand.lower() in col.lower() for cand in candidates):
                 id_col = col
                 break
 
         if id_col is None:
-            print(f"Warnung: Keine ID-Spalte gefunden in {csv_path.name} → alle als FP")
+            print(f"Warnung: Keine ID-Spalte in {csv_path.name} → alle FP")
             df["detected_id"] = "FP"
         else:
             df["detected_id"] = df[id_col].astype(str).str.strip().str.upper()
-            # Alles, was nicht exakt wie E001, E123 usw. aussieht → FP
             df.loc[~df["detected_id"].str.fullmatch(r"E\d{3,}", na=True), "detected_id"] = "FP"
 
-        valid_ids = (df["detected_id"] != "FP").sum()
-        print(f"  → {len(df)} Zeilen geladen, davon {valid_ids} mit gültiger ID (E…)", end="")
+        valid = (df["detected_id"] != "FP").sum()
+        print(f"  → {len(df)} Zeilen, {valid} mit gültiger ID")
 
         for _, row in df.iterrows():
             if not row.get("filename"):
@@ -99,20 +95,18 @@ def load_verified_detections(csv_path: Path) -> List[DetectedError]:
             try:
                 start = int(row["start_line"])
                 end = int(row["end_line"])
-            except (KeyError, ValueError, TypeError):
+            except:
                 continue
 
             errors.append(DetectedError(
                 filename=extract_class_name(row["filename"]),
                 start_line=start,
                 end_line=end,
-                severity="unknown",
                 error_description=str(row.get("error_description", "")).strip(),
                 detected_id=row["detected_id"]
             ))
     except Exception as e:
-        print(f"Fehler beim Laden von {csv_path.name}: {e}")
-
+        print(f"Fehler: {e}")
     return errors
 
 
@@ -157,34 +151,48 @@ def strict_match(gt: GroundTruthError, det: DetectedError, tol: int = 3) -> bool
 # ----------------------------------------------------------------------
 # 3. Fault Detection – rein ID-basiert
 # ----------------------------------------------------------------------
-def evaluate_fault_detection(gt_errors: List[GroundTruthError],
-                             det_errors: List[DetectedError]) -> Tuple[list, list, list]:
+def evaluate_fault_detection(gt_errors: List[GroundTruthError], det_errors: List[DetectedError]):
     gt_ids = {gt.id for gt in gt_errors}
 
-    tp_list, fp_list, fn_list = [], [], []
+    # Zähle wie oft jede ID detektiert wurde
+    detection_count = defaultdict(int)
+    for det in det_errors:
+        if det.detected_id != "FP":
+            detection_count[det.detected_id] += 1
 
-    detected_correct_ids = set()
+    tp_list, fp_list, fn_list = [], [], []
+    used_gt_ids = set()
 
     for det in det_errors:
-        if det.detected_id in gt_ids:
-            tp_list.append({
-                "detected_id": det.detected_id,
-                "filename": det.filename,
-                "det_lines": (det.start_line, det.end_line),
-                "error_description": det.error_description
-            })
-            detected_correct_ids.add(det.detected_id)
-        else:
+        if det.detected_id == "FP" or det.detected_id not in gt_ids:
             fp_list.append({
                 "filename": det.filename,
                 "det_lines": (det.start_line, det.end_line),
                 "error_description": det.error_description,
-                "detected_id": det.detected_id
+                "detected_id": det.detected_id if det.detected_id != "FP" else "FP"
             })
+        else:
+            # Nur der erste Treffer pro ID ist TP → alle weiteren sind FP
+            if det.detected_id not in used_gt_ids and detection_count[det.detected_id] >= 1:
+                tp_list.append({
+                    "detected_id": det.detected_id,
+                    "filename": det.filename,
+                    "det_lines": (det.start_line, det.end_line),
+                    "error_description": det.error_description
+                })
+                used_gt_ids.add(det.detected_id)
+            else:
+                fp_list.append({
+                    "filename": det.filename,
+                    "det_lines": (det.start_line, det.end_line),
+                    "error_description": det.error_description,
+                    "detected_id": det.detected_id,
+                    "note": "duplicate_detection"
+                })
 
-    # FN = alle GT-IDs, die nicht erkannt wurden
+    # FN
     for gt in gt_errors:
-        if gt.id not in detected_correct_ids:
+        if gt.id not in used_gt_ids:
             fn_list.append({
                 "gt_id": gt.id,
                 "filename": gt.filename,
@@ -198,57 +206,69 @@ def evaluate_fault_detection(gt_errors: List[GroundTruthError],
 # ----------------------------------------------------------------------
 # 4. Fault Localization – NUR auf semantisch korrekt erkannten Fehlern!
 # ----------------------------------------------------------------------
-def match_errors_localization(gt_errors: List[GroundTruthError],
-                              det_errors: List[DetectedError],
-                              tolerance: int = 1):
-    # Nur Detections mit korrekter ID dürfen lokalisiert werden
+def match_errors_localization(gt_errors: List[GroundTruthError], det_errors: List[DetectedError], tolerance: int = 1):
+    # Nur Detections mit gültiger ID
     valid_dets = [d for d in det_errors if d.detected_id != "FP"]
 
-    # GT nach Datei gruppieren
-    gt_by_file = defaultdict(list)
+    # GT nach Datei + ID für schnellen Zugriff
+    gt_lookup: Dict[str, GroundTruthError] = {}
     for gt in gt_errors:
-        gt_by_file[gt.filename].append(gt)
+        key = (gt.filename, gt.id)
+        gt_lookup[key] = gt
 
     tp_classic, fp_classic, fn_classic = [], [], []
     tp_strict, fp_strict, fn_strict = [], [], []
 
-    matched_gt_ids = set()
+    matched_gt_keys = set()  # (filename, id)
+
+    # Zuerst: nur eine Detection pro GT-ID darf matchen
+    seen_ids_per_file = defaultdict(int)
 
     for det in valid_dets:
-        # Finde exakt den GT-Eintrag mit derselben ID
-        gt_match = None
-        for g in gt_by_file.get(det.filename, []):
-            if g.id == det.detected_id:
-                gt_match = g
-                break
-        if not gt_match:
-            continue  # Sollte nie passieren
+        key = (det.filename, det.detected_id)
+        if key in gt_lookup and key not in matched_gt_keys:
+            gt = gt_lookup[key]
 
-        classic_ok = lines_overlap(gt_match.start_line, gt_match.end_line,
-                                   det.start_line, det.end_line, tolerance)
-        strict_ok = strict_match(gt_match, det, tol=tolerance)
+            classic_ok = lines_overlap(gt.start_line, gt.end_line, det.start_line, det.end_line, tolerance)
+            strict_ok = strict_match(gt, det, tol=tolerance)
 
-        entry = {
-            "gt_id": gt_match.id,
-            "filename": gt_match.filename,
-            "gt_lines": (gt_match.start_line, gt_match.end_line),
-            "det_lines": (det.start_line, det.end_line),
-            "error_description": gt_match.error_description,
-            "detected_id": det.detected_id
-        }
+            entry = {
+                "gt_id": gt.id,
+                "filename": gt.filename,
+                "gt_lines": (gt.start_line, gt.end_line),
+                "det_lines": (det.start_line, det.end_line),
+                "error_description": gt.error_description,
+                "detected_id": det.detected_id
+            }
 
-        if classic_ok:
-            tp_classic.append(entry)
-            matched_gt_ids.add(gt_match.id)
-            if strict_ok:
-                tp_strict.append(entry)
+            if classic_ok:
+                tp_classic.append(entry)
+                matched_gt_keys.add(key)
+                if strict_ok:
+                    tp_strict.append(entry)
+                else:
+                    fp_strict.append({**entry, "note": "bad_localization"})
             else:
+                fp_classic.append({**entry, "note": "bad_localization"})
                 fp_strict.append({**entry, "note": "bad_localization"})
         else:
-            fp_classic.append({**entry, "note": "bad_localization"})
-            fp_strict.append({**entry, "note": "bad_localization"})
+            # Duplikat oder falsche ID → FP
+            fp_classic.append({
+                "filename": det.filename,
+                "det_lines": (det.start_line, det.end_line),
+                "error_description": det.error_description,
+                "detected_id": det.detected_id,
+                "note": "duplicate_or_wrong_id"
+            })
+            fp_strict.append({
+                "filename": det.filename,
+                "det_lines": (det.start_line, det.end_line),
+                "error_description": det.error_description,
+                "detected_id": det.detected_id,
+                "note": "duplicate_or_wrong_id"
+            })
 
-    # Alle Detections ohne korrekte ID → FP (für beide Metriken)
+    # Alle FP-Detections (keine ID)
     for det in det_errors:
         if det.detected_id == "FP":
             fp_entry = {
@@ -260,9 +280,10 @@ def match_errors_localization(gt_errors: List[GroundTruthError],
             fp_classic.append(fp_entry)
             fp_strict.append(fp_entry)
 
-    # FN = alle GT-Fehler, die nicht semantisch erkannt wurden
+    # FN = nicht erkannte GT-IDs
     for gt in gt_errors:
-        if gt.id not in matched_gt_ids:
+        key = (gt.filename, gt.id)
+        if key not in matched_gt_keys:
             fn_entry = {
                 "gt_id": gt.id,
                 "filename": gt.filename,

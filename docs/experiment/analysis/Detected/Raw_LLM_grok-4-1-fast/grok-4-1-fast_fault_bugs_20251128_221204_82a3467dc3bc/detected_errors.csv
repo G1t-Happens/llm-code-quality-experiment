@@ -1,0 +1,12 @@
+filename,start_line,end_line,error_description,semantically_correct_detected
+UserServiceImpl.java,102,103,SQL injection vulnerability due to direct string concatenation of username in native SQL query,
+AddressServiceImpl.java,86,89,Missing addressRepository.save(addressEntity) call in save method; newly created address is never persisted to the database,
+UserMapper.java,55,55,"Double password encoding in updateUserEntityFromUserRequest mapping: passwordEncoder.encode(passwordEncoder.encode(dto.password())) incorrectly hashes an already hashed password, breaking password updates",
+UserController.java,59,62,"Missing @PreAuthorize annotation on delete method allows any authenticated user to delete any user account, violating access control",
+AddressController.java,52,52,Missing @Validated(Update.class) on update method's @RequestBody AddressRequest parameter skips Update group validations like @Pattern for non-empty fields,
+UserController.java,49,49,Missing @Validated(Create.class) or @Valid on create method's @RequestBody UserRequest parameter bypasses all input validation constraints,
+AddressController.java,44,44,"@PostMapping(consumes = ""text/plain"") incompatible with JSON deserialization of AddressRequest record; use application/json or omit consumes",
+UserServiceImpl.java,74,81,"listAll loads all users with findAll() ignoring Pageable, creates PageImpl with full list causing incorrect pagination metadata and high memory usage",
+UserServiceImpl.java,181,181,"checkLogin uses .get() on Optional<User> causing NoSuchElementException if user not found, preventing secure dummy hash comparison for timing attack protection",
+UserServiceImpl.java,172,172,Missing userRepository.delete(existingUserEntity) or deleteById(id) in delete method; user account is found but never deleted,
+AddressServiceImpl.java,67,67,getById inconsistently uses .get() on Optional<Address> instead of orElseThrow with ResourceNotFoundException like other methods,
