@@ -47,6 +47,13 @@ test {
     useJUnitPlatform()
     ignoreFailures = true
     finalizedBy jacocoTestReport
+
+    // Erzwingt: immer der echte Methodenname, auch bei anonymen Tests
+    systemProperty 'junit.jupiter.displayname.generator.default',
+            'org.junit.jupiter.api.DisplayNameGenerator$Simple'
+
+    // Parameter als (val1, val2) – sauber und lesbar
+    systemProperty 'junit.jupiter.params.displayname.default', '{displayName}({arguments})'
 }
 
 jacocoTestReport {
