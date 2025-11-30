@@ -312,7 +312,7 @@ class OpenAIResponsesClient:
     def create(self, input: str | list, instructions: Optional[str] = None, structured_schema: Optional[BaseModel] = None, **kwargs) -> Any:
         params: Dict[str, Any] = {
             "model": MODEL,
-            ##"reasoning": {"effort": "high"},
+            "reasoning": {"effort": "high"},
             "input": input,
             "max_output_tokens": MAX_TOKENS,
             **kwargs
@@ -568,7 +568,7 @@ def run_test_generation(code: str, clear_first: bool):
         "run_hash": run_hash,
         "system_prompt_md5": hashlib.md5(system_prompt.encode("utf-8")).hexdigest(),
         "user_prompt_md5": hashlib.md5(user_prompt.encode("utf-8")).hexdigest(),
-        "generated_tests": len(parsed_tests)
+        "generated_classes": len(parsed_tests)
     }
     meta_file = RESULTS_DIR / f"{short_model}_tests_meta_{file_suffix}.json"
     meta_file.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
