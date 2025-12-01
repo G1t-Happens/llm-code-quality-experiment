@@ -1,10 +1,10 @@
 filename,start_line,end_line,error_description,semantically_correct_detected
-UserServiceImpl.java,102,103,SQL injection vulnerability due to direct string concatenation of username in native query,
-UserServiceImpl.java,181,181,Unsafe Optional.get() call on findByUsername which throws NoSuchElementException if user not found instead of handling gracefully with UnauthorizedException,
-AddressServiceImpl.java,67,67,Unsafe Optional.get() call on addressRepository.findById(addressId) which throws NoSuchElementException if address not found instead of ResourceNotFoundException,
-AddressServiceImpl.java,86,89,Missing addressRepository.save(addressEntity) call; address is created but not persisted to database before returning response with null ID,
-UserServiceImpl.java,166,173,Missing userRepository.delete(existingUserEntity) call; user is found but not actually deleted from database,
-UserServiceImpl.java,72,82,Pagination ignored: uses userRepository.findAll() without Pageable and constructs inconsistent PageImpl with full list regardless of requested page/size,
-UserMapper.java,55,55,Double password hashing in update mapping expression: passwordEncoder.encode(passwordEncoder.encode(dto.password())) renders password invalid for authentication,
-UserController.java,59,62,Missing @PreAuthorize annotation on delete method allowing any authenticated user to delete any user,
-AddressController.java,44,44,"Incorrect @PostMapping(consumes = ""text/plain"") for JSON DTO AddressRequest; prevents proper JSON deserialization",
+UserServiceImpl.java,102,103,SQL injection vulnerability due to direct string concatenation of username in native query,E013
+UserServiceImpl.java,181,181,Unsafe Optional.get() call on findByUsername which throws NoSuchElementException if user not found instead of handling gracefully with UnauthorizedException,E010
+AddressServiceImpl.java,67,67,Unsafe Optional.get() call on addressRepository.findById(addressId) which throws NoSuchElementException if address not found instead of ResourceNotFoundException,E012
+AddressServiceImpl.java,86,89,Missing addressRepository.save(addressEntity) call; address is created but not persisted to database before returning response with null ID,E003
+UserServiceImpl.java,166,173,Missing userRepository.delete(existingUserEntity) call; user is found but not actually deleted from database,E002
+UserServiceImpl.java,72,82,Pagination ignored: uses userRepository.findAll() without Pageable and constructs inconsistent PageImpl with full list regardless of requested page/size,E004
+UserMapper.java,55,55,Double password hashing in update mapping expression: passwordEncoder.encode(passwordEncoder.encode(dto.password())) renders password invalid for authentication,E001
+UserController.java,59,62,Missing @PreAuthorize annotation on delete method allowing any authenticated user to delete any user,E015
+AddressController.java,44,44,"Incorrect @PostMapping(consumes = ""text/plain"") for JSON DTO AddressRequest; prevents proper JSON deserialization",E007
