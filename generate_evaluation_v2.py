@@ -470,7 +470,7 @@ def main():
         std_s = stdev(f1_loc_s.get(cat, [])) if len(f1_loc_s.get(cat, [])) > 1 else 0.0
 
         print(f"{cat:<50} {'Detection (ID)':<28} {runs:5} {md['tp']:6} {md['fp']:6} {md['fn']:6} {md['precision']:8.3f} {md['recall']:8.3f} {f1_d:10.3f} ±{std_d:6.3f}")
-        print(f"{'':<50} {'Localization Classic':<28} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} {mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c:10.3f} ±{std_c:6.3f}")
+        print(f"{'':<50} {'Localization (Loose Match)':<28} {runs:5} {mc['tp']:6} {mc['fp']:6} {mc['fn']:6} {mc['precision']:8.3f} {mc['recall']:8.3f} {f1_c:10.3f} ±{std_c:6.3f}")
         print(f"{'':<50} {'Localization Strict IoU':<28} {runs:5} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:8.3f} {ms['recall']:8.3f} {f1_s:10.3f} ±{std_s:6.3f}")
         print("─" * 160)
 
