@@ -1,0 +1,85 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_5260.md",
+    "model": "grok.4.1.fast",
+    "session_id": "ses_5260a1e87ffem0ji7MlpMsv1Uh",
+    "processed_at": "2025-12-01T13:55:17.621980",
+    "total_tokens": 43993,
+    "time_taken_seconds": 375,
+    "bug_count": 12
+  },
+  "bugs": [
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 67,
+      "end_line": 67,
+      "error_description": "In getById method, calls Optional.get() on potentially empty Optional from addressRepository.findById(addressId), causing NoSuchElementException runtime error if address does not exist."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 86,
+      "end_line": 89,
+      "error_description": "In save method, maps AddressRequest to Address entity and AddressResponse but omits addressRepository.save(addressEntity), resulting in non-persisted address and response with null ID; misleading log assumes save occurred."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 182,
+      "end_line": 182,
+      "error_description": "In checkLogin method, calls Optional.get() on potentially empty Optional from userRepository.findByUsername(username), causing NoSuchElementException if user does not exist."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 102,
+      "end_line": 104,
+      "error_description": "In getByUsername method, constructs native SQL query by directly concatenating unescaped user-provided 'username' into the query string ('SELECT * FROM users WHERE username = \\'' + username + '\\''), exposing SQL injection vulnerability."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 164,
+      "end_line": 173,
+      "error_description": "In delete method, retrieves User entity via orElseThrow but omits userRepository.delete(existingUserEntity), leaving user undeleted despite success log message."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 74,
+      "end_line": 81,
+      "error_description": "In listAll method, fetches all users with userRepository.findAll() (ignoring Pageable, loading entire table into memory) and constructs PageImpl with full list as content, producing incorrect pagination metadata (always 1 page) and performance bottleneck for large datasets."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+      "start_line": 55,
+      "end_line": 55,
+      "error_description": "In updateUserEntityFromUserRequest @Mapping for password, double-encodes with passwordEncoder.encode(passwordEncoder.encode(dto.password())), causing login failure after update as stored hash (double) no longer matches single-hashed input."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 49,
+      "end_line": 50,
+      "error_description": "In create method, @RequestBody UserRequest lacks @Validated(UserValidationGroups.Create.class), bypassing required Jakarta Bean Validation constraints (e.g., @NotBlank username/password/email, strong password regex)."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 52,
+      "end_line": 53,
+      "error_description": "In update method (PATCH /{addressId}), @RequestBody AddressRequest lacks @Validated(AddressValidationGroups.Update.class), bypassing validation constraints (e.g., @Pattern for non-empty strings)."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 47,
+      "error_description": "@PostMapping specifies consumes=\"text/plain\" but accepts JSON DTO (AddressRequest record), causing 415 Unsupported Media Type errors when clients send standard application/json."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 125,
+      "end_line": 126,
+      "error_description": "In save method, instantiates new BCryptPasswordEncoder() instead of using injected passwordEncoder bean, risking inconsistent encoding parameters if bean is customized."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 152,
+      "end_line": 153,
+      "error_description": "In update method, instantiates new BCryptPasswordEncoder() instead of using injected passwordEncoder bean, risking inconsistent encoding parameters if bean is customized."
+    }
+  ]
+}

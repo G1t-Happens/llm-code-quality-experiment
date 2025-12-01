@@ -1,0 +1,79 @@
+{
+  "_metadata": {
+    "source_file": "session-ses_525f.md",
+    "model": "grok.4.1.fast",
+    "session_id": "ses_525fd490cffeOCDf08ufap68aD",
+    "processed_at": "2025-12-01T14:07:41.293197",
+    "total_tokens": 34555,
+    "time_taken_seconds": 318,
+    "bug_count": 11
+  },
+  "bugs": [
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 55,
+      "end_line": 56,
+      "error_description": "SQL injection vulnerability due to direct string concatenation of username in native query"
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 102,
+      "end_line": 103,
+      "error_description": "SQL injection vulnerability: native SQL query constructed with direct string concatenation of untrusted user input 'username' from request parameter. This allows attackers to inject arbitrary SQL code via the /users/search?username= endpoint, potentially leading to data exfiltration, modification, or deletion. Problem: bypasses JPA parameterization; use repository findByUsername instead. Impact: high-severity security vulnerability enabling full database compromise."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line": 59,
+      "end_line": 62,
+      "error_description": "Missing @PreAuthorize annotation on delete method. Unlike other CRUD methods, no authorization check for admin or ownership, allowing any authenticated user to delete any user account. Problem: relies only on global .authenticated(), no method-level RBAC. Impact: privilege escalation, data loss via unauthorized deletions."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 172,
+      "end_line": 172,
+      "error_description": "Missing userRepository.delete(existingUserEntity) call in delete method. Finds user but logs 'deleted' without persisting deletion. Problem: silent failure, transaction commits without delete. Impact: users cannot be deleted, data retention violation, false success logs."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 86,
+      "end_line": 89,
+      "error_description": "Missing addressRepository.save(addressEntity) in save method. Creates entity, maps to response (id=null), logs 'saved' with null id, but does not persist. Problem: incomplete CRUD implementation. Impact: addresses not saved to DB, data loss, client receives invalid response with null id."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+      "start_line": 67,
+      "end_line": 67,
+      "error_description": "Unsafe Optional.get() on addressRepository.findById(addressId) without prior existence check. Throws NoSuchElementException if address not found, unhandled by GlobalExceptionHandler. Problem: inconsistent error handling (others use orElseThrow); crashes with 500 instead of 404. Impact: poor UX, potential stack trace leakage."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+      "start_line": 55,
+      "end_line": 55,
+      "error_description": "Double password hashing in update mapping expression: passwordEncoder.encode(passwordEncoder.encode(dto.password())). Hashes raw password twice, producing incorrect hash incompatible with single-hash login check. Problem: mapping logic error. Impact: password updates fail authentication, users locked out after update."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 181,
+      "end_line": 181,
+      "error_description": "Unsafe Optional.get() on userRepository.findByUsername(username) in checkLogin. Throws NoSuchElementException if user absent, before dummy hash comparison. Problem: defeats timing attack prevention intent, unhandled exception. Impact: 500 error on invalid login instead of 401, info leak via stack trace."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+      "start_line": 74,
+      "end_line": 81,
+      "error_description": "Incorrect pagination in listAll: calls findAll() without Pageable (loads entire table into memory), constructs PageImpl from full list. Ignores client pageable/sort. Problem: in-memory pagination, no DB efficiency. Impact: performance bottleneck, OOM for large datasets, incorrect results."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/AddressController.java",
+      "start_line": 44,
+      "end_line": 44,
+      "error_description": "@PostMapping(consumes = \"text/plain\") incompatible with @RequestBody AddressRequest (expects JSON). Jackson cannot deserialize JSON body as plain text to record. Problem: HTTP content-type mismatch. Impact: 400 Bad Request on valid JSON POSTs, broken create endpoint."
+    },
+    {
+      "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/build.gradle",
+      "start_line": 48,
+      "end_line": 48,
+      "error_description": "test { ignoreFailures = true }: allows build to succeed despite test failures. Problem: best practice violation, hides bugs. Impact: undetected regressions, false sense of code quality."
+    }
+  ]
+}
