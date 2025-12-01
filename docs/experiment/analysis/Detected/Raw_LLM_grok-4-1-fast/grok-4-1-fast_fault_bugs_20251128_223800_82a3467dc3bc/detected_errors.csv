@@ -1,12 +1,12 @@
 filename,start_line,end_line,error_description,semantically_correct_detected
-AddressController.java,44,44,"Incorrect @PostMapping consumes='text/plain' for JSON @RequestBody AddressRequest; prevents JSON parsing and validation, should use 'application/json'.",E007
-AddressController.java,52,52,Missing @Validated(Update.class) on @RequestBody AddressRequest in update method; bypasses validation constraints for partial updates.,E009
-UserController.java,47,51,Missing @Validated(Create.class) or @Valid on @RequestBody UserRequest in create method; input validation bypassed allowing invalid users.,E008
-UserController.java,59,62,Missing @PreAuthorize on delete method; security vulnerability allows any authenticated user to delete any user account.,E015
-UserMapper.java,53,56,Double password encoding in updateUserEntityFromUserRequest @Mapping expression; passwordEncoder.encode(passwordEncoder.encode(dto.password())) produces invalid hash unmatchable on login.,E001
-AddressServiceImpl.java,67,68,Inconsistent Optional handling: addressRepository.findById(addressId).get() throws NoSuchElementException instead of ResourceNotFoundException if address not found.,E012
-AddressServiceImpl.java,86,89,Critical logic error in save method: creates Address entity but omits addressRepository.save(); returns unsaved AddressResponse with null ID.,E003
-UserServiceImpl.java,74,82,"Incorrect pagination in listAll: fetches all users into full list for PageImpl content, ignores pageable slicing; always returns complete dataset.",E004
-UserServiceImpl.java,102,103,Critical SQL injection vulnerability: native query concatenates unescaped 'username' directly; exploitable via malicious input.,E013
-UserServiceImpl.java,181,182,"checkLogin uses Optional.get() on findByUsername; throws NoSuchElementException for non-existent users instead of UnauthorizedException, leaking existence.",E010
-UserServiceImpl.java,163,173,Logic error in delete method: loads user entity but omits userRepository.delete(); logs deletion without performing it.,E002
+AddressController.java,44,44,"Incorrect @PostMapping consumes='text/plain' for JSON @RequestBody AddressRequest; prevents JSON parsing and validation, should use 'application/json'.",
+AddressController.java,52,52,Missing @Validated(Update.class) on @RequestBody AddressRequest in update method; bypasses validation constraints for partial updates.,
+UserController.java,47,51,Missing @Validated(Create.class) or @Valid on @RequestBody UserRequest in create method; input validation bypassed allowing invalid users.,
+UserController.java,59,62,Missing @PreAuthorize on delete method; security vulnerability allows any authenticated user to delete any user account.,
+UserMapper.java,53,56,Double password encoding in updateUserEntityFromUserRequest @Mapping expression; passwordEncoder.encode(passwordEncoder.encode(dto.password())) produces invalid hash unmatchable on login.,
+AddressServiceImpl.java,67,68,Inconsistent Optional handling: addressRepository.findById(addressId).get() throws NoSuchElementException instead of ResourceNotFoundException if address not found.,
+AddressServiceImpl.java,86,89,Critical logic error in save method: creates Address entity but omits addressRepository.save(); returns unsaved AddressResponse with null ID.,
+UserServiceImpl.java,74,82,"Incorrect pagination in listAll: fetches all users into full list for PageImpl content, ignores pageable slicing; always returns complete dataset.",
+UserServiceImpl.java,102,103,Critical SQL injection vulnerability: native query concatenates unescaped 'username' directly; exploitable via malicious input.,
+UserServiceImpl.java,181,182,"checkLogin uses Optional.get() on findByUsername; throws NoSuchElementException for non-existent users instead of UnauthorizedException, leaking existence.",
+UserServiceImpl.java,163,173,Logic error in delete method: loads user entity but omits userRepository.delete(); logs deletion without performing it.,
