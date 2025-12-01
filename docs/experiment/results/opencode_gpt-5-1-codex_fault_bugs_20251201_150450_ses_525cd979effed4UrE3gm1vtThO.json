@@ -6,7 +6,7 @@
     "processed_at": "2025-12-01T15:04:50.395061",
     "total_tokens": 75974,
     "time_taken_seconds": 481,
-    "bug_count": 14
+    "bug_count": 11
   },
   "bugs": [
     {
@@ -74,24 +74,6 @@
       "start_line": 175,
       "end_line": 189,
       "error_description": "checkLogin invokes userRepository.findByUsername(...).get() and only afterwards checks if the user is null, so unknown usernames throw NoSuchElementException and return 500 responses instead of the intended UnauthorizedException with dummy-hash timing protection."
-    },
-    {
-      "filename": "src/main/resources/db/migration/V1__create_tables.sql",
-      "start_line": 14,
-      "end_line": 21,
-      "error_description": "The addresses.house_number column is defined as VARCHAR(20) while AddressRequest permits up to 255 characters and the entity has no length restriction, causing legitimate inputs over 20 characters to fail at the database layer with data truncation errors."
-    },
-    {
-      "filename": "build.gradle",
-      "start_line": 46,
-      "end_line": 49,
-      "error_description": "The Gradle test task sets ignoreFailures = true, meaning the build succeeds even when tests fail; this masks regressions and allows faulty code to be released despite red tests."
-    },
-    {
-      "filename": "src/test/java/com/llmquality/baseline/mapper/AddressMapperTest.java",
-      "start_line": 86,
-      "end_line": 105,
-      "error_description": "The partial update test asserts that addressType becomes null even though the mapper is configured with NullValuePropertyMappingStrategy.IGNORE, so a correct implementation retaining the previous type will always make this test fail."
     }
   ]
 }
