@@ -80,12 +80,6 @@
       "start_line": 175,
       "end_line": 188,
       "error_description": "`checkLogin` calls `userRepository.findByUsername(username).get()`; missing users cause `NoSuchElementException` (500) before the dummy hash logic can run, defeating the intended timing attack mitigation and skipping the proper 401 response."
-    },
-    {
-      "filename": "src/main/resources/db/migration/V1__create_tables.sql",
-      "start_line": 14,
-      "end_line": 21,
-      "error_description": "The database schema restricts `house_number` and `postal_code` to VARCHAR(20), but `AddressRequest` and the JPA entity allow 255 characters, so valid API requests (length >20) will fail at the database layer with data truncation errors."
     }
   ]
 }
