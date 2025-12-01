@@ -6,7 +6,7 @@
     "processed_at": "2025-12-01T13:55:17.621980",
     "total_tokens": 43993,
     "time_taken_seconds": 375,
-    "bug_count": 12
+    "bug_count": 13
   },
   "bugs": [
     {
@@ -68,6 +68,12 @@
       "start_line": 44,
       "end_line": 47,
       "error_description": "@PostMapping specifies consumes=\"text/plain\" but accepts JSON DTO (AddressRequest record), causing 415 Unsupported Media Type errors when clients send standard application/json."
+    },
+    {
+      "filename":"/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/controller/UserController.java",
+      "start_line":59,
+      "end_line":62,
+      "error_description":"delete method (@DeleteMapping()) lacks @PreAuthorize (e.g., \"hasRole('ADMIN')\"), permitting any authenticated user to delete any user, resulting in unauthorized resource deletion security vulnerability."
     },
     {
       "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
