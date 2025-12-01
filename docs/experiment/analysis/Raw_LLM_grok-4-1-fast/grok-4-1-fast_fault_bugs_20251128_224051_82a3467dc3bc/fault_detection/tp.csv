@@ -1,0 +1,12 @@
+detected_id,filename,det_lines,error_description
+E015,UserController,"(59, 62)","Missing @PreAuthorize annotation on delete endpoint, allowing unauthorized deletions of any user by authenticated users"
+E008,UserController,"(47, 51)","Missing @Validated or @Valid annotation on UserRequest parameter in create method, allowing submission of invalid user data without validation"
+E009,AddressController,"(50, 54)","Missing @Validated(Update.class) annotation on AddressRequest parameter in update method, allowing invalid address updates without validation"
+E007,AddressController,"(44, 44)","Inappropriate @PostMapping(consumes = ""text/plain"") for JSON DTO AddressRequest, preventing proper deserialization of JSON requests"
+E013,UserServiceImpl,"(102, 103)",SQL injection vulnerability in getByUsername due to direct concatenation of unescaped username into native SQL query string
+E004,UserServiceImpl,"(72, 82)","Incorrect pagination in listAll: calls findAll() without pageable loading all users into memory, then constructs PageImpl with full list as content ignoring actual page/size"
+E002,UserServiceImpl,"(163, 173)","Missing userRepository.delete(existingUserEntity) call in delete method, user is found but never deleted from database"
+E010,UserServiceImpl,"(176, 194)",Flawed checkLogin logic: uses Optional.get() throwing NoSuchElementException if user not found instead of UnauthorizedException; enables username enumeration via timing differences and inconsistent error responses
+E003,AddressServiceImpl,"(77, 90)",Missing addressRepository.save(addressEntity) in save method; address is mapped and response returned with null ID but never persisted to database
+E012,AddressServiceImpl,"(67, 67)","Uses Optional.get() on findById in getById instead of orElseThrow, causing NoSuchElementException instead of proper ResourceNotFoundException"
+E001,UserMapper,"(55, 55)","Double password encoding in updateUserEntityFromUserRequest mapping expression (passwordEncoder.encode(passwordEncoder.encode(dto.password()))), causing updated passwords to not match during login authentication"

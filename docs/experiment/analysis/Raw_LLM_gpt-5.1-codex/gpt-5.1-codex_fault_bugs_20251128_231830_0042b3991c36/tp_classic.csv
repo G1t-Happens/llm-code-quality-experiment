@@ -1,0 +1,13 @@
+gt_id,filename,gt_lines,det_lines,error_description,detected_id
+E007,AddressController,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail,E007
+E009,AddressController,"(52, 52)","(50, 53)","The update() endpoint does not validate the AddressRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",E009
+E008,UserController,"(49, 49)","(47, 50)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",E008
+E015,UserController,"(59, 60)","(59, 61)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",E015
+E012,AddressServiceImpl,"(67, 67)","(65, 74)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID,E012
+E003,AddressServiceImpl,"(86, 89)","(78, 89)",Missing save call in the repository/data access layer,E003
+E001,UserMapper,"(55, 55)","(53, 56)",Double encryption of the password using a password encoder,E001
+E004,UserServiceImpl,"(74, 79)","(72, 82)",Loading all users before pagination and transform them to DTOs – wrong order,E004
+E013,UserServiceImpl,"(102, 103)","(100, 104)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",E013
+E014,UserServiceImpl,"(118, 118)","(117, 132)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",E014
+E002,UserServiceImpl,"(171, 172)","(164, 173)",Missing delete call in the repository/data access layer,E002
+E010,UserServiceImpl,"(181, 181)","(175, 189)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,E010

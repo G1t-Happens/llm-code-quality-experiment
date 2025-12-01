@@ -1,0 +1,10 @@
+detected_id,filename,det_lines,error_description
+E013,UserServiceImpl,"(102, 103)",SQL injection vulnerability due to direct string concatenation of username in native query
+E010,UserServiceImpl,"(181, 181)",Unsafe Optional.get() call on findByUsername which throws NoSuchElementException if user not found instead of handling gracefully with UnauthorizedException
+E012,AddressServiceImpl,"(67, 67)",Unsafe Optional.get() call on addressRepository.findById(addressId) which throws NoSuchElementException if address not found instead of ResourceNotFoundException
+E003,AddressServiceImpl,"(86, 89)",Missing addressRepository.save(addressEntity) call; address is created but not persisted to database before returning response with null ID
+E002,UserServiceImpl,"(166, 173)",Missing userRepository.delete(existingUserEntity) call; user is found but not actually deleted from database
+E004,UserServiceImpl,"(72, 82)",Pagination ignored: uses userRepository.findAll() without Pageable and constructs inconsistent PageImpl with full list regardless of requested page/size
+E001,UserMapper,"(55, 55)",Double password hashing in update mapping expression: passwordEncoder.encode(passwordEncoder.encode(dto.password())) renders password invalid for authentication
+E015,UserController,"(59, 62)",Missing @PreAuthorize annotation on delete method allowing any authenticated user to delete any user
+E007,AddressController,"(44, 44)","Incorrect @PostMapping(consumes = ""text/plain"") for JSON DTO AddressRequest; prevents proper JSON deserialization"

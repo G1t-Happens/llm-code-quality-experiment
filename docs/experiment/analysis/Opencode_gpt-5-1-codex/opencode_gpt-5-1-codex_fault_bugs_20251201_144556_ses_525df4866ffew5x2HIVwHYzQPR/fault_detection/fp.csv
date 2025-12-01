@@ -1,0 +1,2 @@
+filename,det_lines,error_description,detected_id,note
+UserServiceImpl,"(175, 188)","`checkLogin` calls `userRepository.findByUsername(username).get()`; missing users cause `NoSuchElementException` (500) before the dummy hash logic can run, defeating the intended timing attack mitigation and skipping the proper 401 response.",E012,duplicate_detection

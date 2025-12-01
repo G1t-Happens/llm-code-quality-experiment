@@ -1,0 +1,2 @@
+filename,det_lines,error_description,detected_id
+AddressMapperTest,"(86, 105)","The partial update test asserts that addressType becomes null even though the mapper is configured with NullValuePropertyMappingStrategy.IGNORE, so a correct implementation retaining the previous type will always make this test fail.",FP

@@ -1,0 +1,4 @@
+gt_id,filename,gt_lines,det_lines,error_description,detected_id,note
+E002,UserServiceImpl,"(171, 172)","(163, 173)",Missing delete call in the repository/data access layer,E002,bad_localization
+E010,UserServiceImpl,"(181, 181)","(176, 194)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,E010,bad_localization
+E003,AddressServiceImpl,"(86, 89)","(77, 90)",Missing save call in the repository/data access layer,E003,bad_localization
