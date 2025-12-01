@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-build.gradle,"(48, 48)",test.ignoreFailures = true masks test failures; prevents bug detection

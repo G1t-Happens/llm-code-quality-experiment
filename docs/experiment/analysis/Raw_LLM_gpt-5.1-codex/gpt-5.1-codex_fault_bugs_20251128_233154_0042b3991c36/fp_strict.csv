@@ -1,6 +1,0 @@
-filename,det_lines,error_description
-AddressServiceImpl.java,"(67, 75)","getById calls addressRepository.findById(addressId).get() without checking presence, so a missing address triggers NoSuchElementException and returns 500 instead of the intended 404 ResourceNotFoundException."
-AddressServiceImpl.java,"(80, 90)","save() maps the request to an Address entity but never calls addressRepository.save(...). The address is never persisted and the returned response contains a null id, defeating the purpose of the API."
-UserServiceImpl.java,"(99, 104)","getByUsername builds a native SQL string via direct concatenation of the username (""SELECT * FROM users WHERE username = '...'""). This is trivially exploitable for SQL injection and should use parameters or repository methods."
-UserServiceImpl.java,"(163, 172)",delete(Long id) retrieves the user but never calls userRepository.delete(...). The API reports success while the user record remains in the database.
-UserServiceImpl.java,"(176, 189)","checkLogin invokes userRepository.findByUsername(username).get(); when the username does not exist Optional.get throws NoSuchElementException, resulting in HTTP 500 instead of returning 401 via UnauthorizedException and defeating the constant-time comparison logic."

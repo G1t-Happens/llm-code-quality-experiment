@@ -1,2 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(113, 113)","save() logs the raw password in plaintext, which is a severe security vulnerability because credentials can leak through log files."

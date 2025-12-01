@@ -1,7 +1,0 @@
-gt_id,filename,gt_lines,det_lines,error_description
-E012,AddressServiceImpl.java,"(67, 67)","(67, 67)",Replacing .orElseThrow() with .get() in AddressServiceImpl.getById() causes an unhandled NoSuchElementException and returns HTTP 500 instead of the proper HTTP 404 whenever a client requests a non-existent address ID
-E003,AddressServiceImpl.java,"(86, 89)","(86, 87)",Missing save call in the repository/data access layer
-E013,UserServiceImpl.java,"(102, 103)","(102, 103)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
-E005,UserServiceImpl.java,"(125, 125)","(125, 126)",PasswordEncoder created per request rather than as a singleton
-E006,UserServiceImpl.java,"(152, 152)","(152, 153)",PasswordEncoder created per request rather than as a singleton
-E010,UserServiceImpl.java,"(181, 181)","(181, 182)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized

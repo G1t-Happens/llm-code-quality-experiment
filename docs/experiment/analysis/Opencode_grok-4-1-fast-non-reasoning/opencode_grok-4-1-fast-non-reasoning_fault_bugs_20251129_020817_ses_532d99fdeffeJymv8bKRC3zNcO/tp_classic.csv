@@ -1,5 +1,0 @@
-gt_id,filename,gt_lines,det_lines,error_description
-E001,UserMapper.java,"(55, 55)","(55, 55)",Double encryption of the password using a password encoder
-E004,UserServiceImpl.java,"(74, 79)","(72, 72)",Loading all users before pagination and transform them to DTOs – wrong order
-E013,UserServiceImpl.java,"(102, 103)","(102, 103)","Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections"
-E015,UserController.java,"(59, 60)","(60, 60)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

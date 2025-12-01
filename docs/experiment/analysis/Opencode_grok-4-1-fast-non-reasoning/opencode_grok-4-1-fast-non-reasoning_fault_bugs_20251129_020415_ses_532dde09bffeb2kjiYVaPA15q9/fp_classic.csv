@@ -1,3 +1,0 @@
-filename,det_lines,error_description
-application.properties,"(23, 23)",Security risk in development: spring.jpa.show-sql=true exposes SQL queries in logs
-UserController.java,"(60, 60)","Security vulnerability: DELETE /users/{id} endpoint has no @PreAuthorize, allows unauthenticated deletion"

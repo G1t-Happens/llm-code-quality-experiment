@@ -1,2 +1,0 @@
-gt_id,filename,gt_lines,det_lines,error_description
-E001,UserMapper.java,"(55, 55)","(55, 55)",Double encryption of the password using a password encoder

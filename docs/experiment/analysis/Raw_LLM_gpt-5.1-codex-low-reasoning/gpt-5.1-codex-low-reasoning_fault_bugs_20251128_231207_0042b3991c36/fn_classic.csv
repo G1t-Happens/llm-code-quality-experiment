@@ -1,9 +1,0 @@
-gt_id,filename,gt_lines,error_description
-E005,UserServiceImpl.java,"(125, 125)",PasswordEncoder created per request rather than as a singleton
-E006,UserServiceImpl.java,"(152, 152)",PasswordEncoder created per request rather than as a singleton
-E014,UserServiceImpl.java,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
-E011,SecurityConfig.java,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
-E007,AddressController.java,"(44, 44)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail
-E009,AddressController.java,"(52, 52)","The update() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
-E008,UserController.java,"(49, 49)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error"
-E015,UserController.java,"(59, 60)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership"

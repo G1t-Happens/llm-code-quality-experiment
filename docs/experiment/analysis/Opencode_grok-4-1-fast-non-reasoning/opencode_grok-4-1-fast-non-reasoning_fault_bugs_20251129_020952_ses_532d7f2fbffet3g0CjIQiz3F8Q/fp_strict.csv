@@ -1,4 +1,0 @@
-filename,det_lines,error_description
-AddressServiceImpl.java,"(116, 116)",NullPointerException risk: addressRepository.findById(addressId).get() assumes entity exists without checking Optional.isPresent()
-UserServiceImpl.java,"(25, 25)",Redundant PasswordEncoder instantiation: creates new BCryptPasswordEncoder() instead of using injected field instance
-UserServiceImpl.java,"(52, 52)",Unused EntityManager injection: injected but only used for vulnerable native query

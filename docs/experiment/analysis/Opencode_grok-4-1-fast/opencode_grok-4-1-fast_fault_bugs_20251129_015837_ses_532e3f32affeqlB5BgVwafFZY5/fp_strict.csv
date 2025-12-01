@@ -1,4 +1,0 @@
-filename,det_lines,error_description
-UserServiceImpl.java,"(153, 153)",Inconsistent password encoding: creates new BCryptPasswordEncoder() locally instead of using injected PasswordEncoder field
-UserServiceImpl.java,"(166, 173)","Logical flaw: delete method finds user but does not call userRepository.delete(), entity is not deleted"
-UserServiceImpl.java,"(182, 182)","NullPointerException risk: calls .get() on Optional<User> from findByUsername without checking if present, crashes on non-existent username instead of returning UnauthorizedException"
