@@ -7,7 +7,6 @@
       "temperature": 0.0,
       "top_p": 1.0,
       "max_tokens": 60000,
-      "timeout": 600,
       "response_format": {
         "type": "json_schema",
         "strict": true,
@@ -78,6 +77,18 @@
         "glob": true,
         "list": true,
         "task": true
+      }
+    }
+  },
+  "provider": {
+    "openai": {
+      "models": {
+        "gpt-5": {
+          "options": {
+            "include": ["reasoning.encrypted_content"],
+            "store": false
+          }
+        }
       }
     }
   }
