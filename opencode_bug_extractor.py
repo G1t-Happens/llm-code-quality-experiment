@@ -19,7 +19,7 @@ def extract_session_id(content: str, filename: str = "") -> str | None:
 
 
 def get_model_from_session_dir(session_dir: Path) -> str:
-    if not session_dir.exists():
+    if not session_dir.exists() or not session_dir.is_dir():
         return "unknown_model"
 
     for msg_file in session_dir.glob("msg_*.json"):
@@ -30,8 +30,9 @@ def get_model_from_session_dir(session_dir: Path) -> str:
                 model = model.strip()
                 if "/" in model:
                     model = model.split("/", 1)[1]
-                return re.sub(r"[^a-zA-Z0-9\.\-]", "", model).lower().replace(".", "-")
-        except:
+                cleaned = re.sub(r"[^a-zA-Z0-9\.\-]", "", model)
+                return cleaned.lower().replace(".", "-")
+        except Exception:
             continue
     return "unknown_model"
 
@@ -41,10 +42,7 @@ def extract_bug_json(content: str):
     if start == -1:
         return None
 
-    # Alles ab dem ersten [ nehmen
     text = content[start:]
-
-    # Nur komplette Objekte behalten
     bracket_level = 0
     objects = []
     current_pos = 0
@@ -61,54 +59,89 @@ def extract_bug_json(content: str):
                 try:
                     obj = json.loads(obj_text)
                     objects.append(obj)
-                except:
+                except json.JSONDecodeError:
                     pass
 
     if not objects:
         return None
 
-    print(f"   → {len(objects)} reparierte Bug-Einträge aus trunkierter Ausgabe wiederhergestellt!")
+    print(f"   → {len(objects)} reparierte Bug-Einträge wiederhergestellt!")
     return objects
 
 
-def main():
-    paths = list(Path(".").rglob("session-*.md")) if len(sys.argv) == 1 else [p for arg in sys.argv[1:] for p in Path(".").rglob(arg)]
-    session_files = [p for p in paths if p.is_file() and p.suffix.lower() == ".md" and p.name.startswith("session-")]
+def make_safe_filename(part: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_-]+", "_", part).strip("_")
 
-    if not session_files:
-        print("Keine 'session-*.md' Dateien gefunden!")
+
+def ensure_unique_path(path: Path) -> Path:
+    if not path.exists():
+        return path
+    stem = path.stem
+    suffix = path.suffix
+    counter = 1
+    while True:
+        new_path = path.parent / f"{stem}_{counter}{suffix}"
+        if not new_path.exists():
+            return new_path
+        counter += 1
+
+
+def main():
+    if len(sys.argv) <= 1:
+        print("Usage: python opencode_bug_extractor.py <file1.md> [file2.md ...] oder Ordner")
+        print("       Oder alle .md im aktuellen Verzeichnis: python opencode_bug_extractor.py *.md")
+        sys.exit(1)
+
+    # Alle Argumente als Pfade behandeln – auch Wildcards wie *.md werden vom Shell expanded
+    input_paths = [Path(p) for p in sys.argv[1:]]
+
+    # Falls Pfad ein Ordner → alle .md darin nehmen
+    md_files = []
+    for p in input_paths:
+        if p.is_dir():
+            md_files.extend(p.rglob("*.md"))
+        elif p.is_file() and p.suffix.lower() == ".md":
+            md_files.append(p)
+        else:
+            print(f"Überspringe (keine .md-Datei): {p}")
+
+    if not md_files:
+        print("Keine .md-Dateien gefunden!")
         return
 
-    print(f"Verarbeite {len(session_files)} Session-Datei(en)...\n")
+    print(f"Verarbeite {len(md_files)} Markdown-Datei(en)...\n")
 
-    for md_path in session_files:
+    for md_path in md_files:
+        print(f"→ Bearbeite: {md_path.name}")
         content = md_path.read_text(encoding="utf-8")
         session_id = extract_session_id(content, md_path.name)
 
         if not session_id:
-            print(f"Session-ID nicht gefunden → überspringe: {md_path.name}")
-            continue
+            print(f"   Session-ID nicht gefunden → nur raw speichern\n")
+        else:
+            session_dir = OPENCODE_STORAGE / session_id
+            model = get_model_from_session_dir(session_dir)
+        # Fallback-Modell falls Session nicht existiert
+        model = model if session_id else "unknown_model"
 
-        session_dir = OPENCODE_STORAGE / session_id
-        model = get_model_from_session_dir(session_dir)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_stem = make_safe_filename(md_path.stem)
+        unique_id = f"{safe_stem}_{session_id or 'no_session'}"
+
+        raw_name = f"opencode_{model}_fault_raw_{unique_id}.md"
+        bugs_name = f"opencode_{model}_fault_bugs_{unique_id}.json"
+
+        raw_path = ensure_unique_path(RESULTS_DIR / raw_name)
+        bugs_path = ensure_unique_path(RESULTS_DIR / bugs_name)
+
+        raw_path.write_text(content, encoding="utf-8")
 
         bugs = extract_bug_json(content)
-
-        # Dateinamen
-        raw_name = f"opencode_{model}_fault_raw_{timestamp}_{session_id}.md"
-        bugs_name = f"opencode_{model}_fault_bugs_{timestamp}_{session_id}.json"
-
-        raw_path = RESULTS_DIR / raw_name
-        bugs_path = RESULTS_DIR / bugs_name
-
-        # Raw speichern
-        raw_path.write_text(content, encoding="utf-8")
 
         if bugs:
             result = {
                 "_metadata": {
                     "source_file": md_path.name,
+                    "source_path": str(md_path.resolve()),
                     "model": model.replace("-", "."),
                     "session_id": session_id,
                     "processed_at": datetime.now().isoformat(),
@@ -117,13 +150,12 @@ def main():
                 "bugs": bugs
             }
             bugs_path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
-            print(f"{md_path.name}")
-            print(f"   → {raw_name}")
-            print(f"   → {bugs_name} ({len(bugs)} Bugs)\n")
+            print(f"   → {raw_path.name}")
+            print(f"   → {bugs_path.name} ({len(bugs)} Bugs)\n")
         else:
-            print(f"{md_path.name} → kein Bug-JSON gefunden (nur raw gespeichert)\n")
+            print(f"   → Nur raw gespeichert (kein Bug-JSON gefunden)\n")
 
-    print(f"Alle Dateien verarbeitet → {RESULTS_DIR}/")
+    print(f"\nFertig! Ergebnisse in: {RESULTS_DIR.resolve()}")
 
 
 if __name__ == "__main__":
