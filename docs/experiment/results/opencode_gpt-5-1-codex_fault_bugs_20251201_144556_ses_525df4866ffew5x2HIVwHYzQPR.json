@@ -10,18 +10,6 @@
   },
   "bugs": [
     {
-      "filename": "build.gradle",
-      "start_line": 48,
-      "end_line": 48,
-      "error_description": "`ignoreFailures = true` on the `test` task suppresses all unit/integration test failures, allowing faulty code to pass the build and hiding regressions."
-    },
-    {
-      "filename": "src/main/resources/application.properties",
-      "start_line": 22,
-      "end_line": 22,
-      "error_description": "`spring.jpa.hibernate.ddl-auto=update` lets Hibernate mutate the schema at runtime even though Flyway migrations manage it, leading to schema drift and conflicting DDL changes in production."
-    },
-    {
       "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
       "start_line": 44,
       "end_line": 47,
