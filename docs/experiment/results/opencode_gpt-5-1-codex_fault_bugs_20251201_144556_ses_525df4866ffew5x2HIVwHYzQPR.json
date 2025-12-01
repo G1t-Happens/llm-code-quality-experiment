@@ -6,7 +6,7 @@
     "processed_at": "2025-12-01T14:45:56.506167",
     "total_tokens": 69068,
     "time_taken_seconds": 473,
-    "bug_count": 15
+    "bug_count": 12
   },
   "bugs": [
     {
