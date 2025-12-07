@@ -37,7 +37,7 @@ for idx, row in gt_df.iterrows():
 
 # MODELL
 print("\nLade multilingual-e5-large-instruct...")
-model = SentenceTransformer("intfloat/multilingual-e5-large-instruct")
+model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 model.max_seq_length = 512
 gt_embeddings = model.encode(
     gt_df['error_description'].tolist(),
@@ -127,6 +127,7 @@ for json_path in tqdm(fault_files, desc="Matching pro Run"):
         if not valid_gt_idxs:
             continue
 
+        # Semantischer Score berechnen
         pred_emb = model.encode(pred_desc, convert_to_tensor=True)
         scores = util.cos_sim(pred_emb, gt_embeddings)[0]
 
@@ -140,7 +141,7 @@ for json_path in tqdm(fault_files, desc="Matching pro Run"):
                 "pred_file": pred_file_full
             })
 
-    # Greedy 1:1 Matching
+    # Greedy 1:1 Matching -> Filename + Overlap + best semantic score = TP
     run_candidates.sort(key=lambda x: x["similarity"], reverse=True)
     assigned_gts = set()
     used_predictions = set()
