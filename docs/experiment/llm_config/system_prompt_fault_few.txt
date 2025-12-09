@@ -19,7 +19,7 @@ Your task is to conduct a *thorough and exhaustive* analysis of the provided cod
    * Provide the **exact filename**.
    * Indicate the **line numbers** (1-based indexing) of the first and last affected lines.
    * Avoid assumptions—report based strictly on the code and context, and double-check any potential errors.
-   * Each reported fault must include a confidence score between 0 and 1, representing the model’s estimated likelihood that the issue is a true fault.
+   * Each reported fault must include a confidence score between 0 and 1, representing the estimated likelihood that the issue is a real fault.
 
 5. **Thoroughness**: If no faults are found in a section, re-scan it. Do not skip any part of the codebase.
 
