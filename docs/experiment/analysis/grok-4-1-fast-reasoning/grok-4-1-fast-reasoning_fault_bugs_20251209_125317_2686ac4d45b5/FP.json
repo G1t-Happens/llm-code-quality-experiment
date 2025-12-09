@@ -1,0 +1,9 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 183,
+    "end_line": 184,
+    "error_description": "Dead code in checkLogin: 'user != null' check unreachable due to prior .get() which throws if absent; dummy hash timing protection not applied for non-existent users",
+    "confidence": 0.85
+  }
+]

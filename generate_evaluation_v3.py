@@ -295,89 +295,164 @@ def match_errors_localization(gt_errors: List[GroundTruthError], det_errors: Lis
 
     return (tp_classic, fp_classic, fn_classic), (tp_strict, fp_strict, fn_strict)
 
-# ----------------------------------------------------------------------
-# 4b. Fault Localization – IoU mit mehreren Thresholds (0.25, 0.50, 0.75)
-# ----------------------------------------------------------------------
-def match_errors_iou_thresholds(
-        gt_errors: List[GroundTruthError],
-        det_errors: List[DetectedError],
-        thresholds: List[float] = None
-) -> Dict[float, Tuple[list, list, list]]:
+
+# Fault Localization – IoU mit mehreren Thresholds (0.25, 0.50, 0.75)
+def adaptive_iou_threshold(gt_lines: int) -> float:
+    """Smooth adaptiver Mindest-IoU basierend auf GT-Größe"""
+    if gt_lines <= 1:
+        return 0.85
+    return max(0.30, 1.00 - 0.28 * math.log10(gt_lines))
+
+
+def match_errors_adaptive_smooth_iou(
+        gt_errors: List[Any],
+        det_errors: List[Any],
+        report_thresholds: List[float] = None
+) -> Dict[str, Tuple[List[dict], List[dict], List[dict]]]:
     """
-    Berechnet TP/FP/FN für mehrere IoU-Thresholds.
-    Nur korrekt detektierte Fehler (richtige ID) werden betrachtet.
-    Gibt Dict zurück: {0.25: (tp, fp, fn), 0.5: ..., 0.75: ...}
+    State-of-the-art adaptive IoU matching with fair thresholds + classic reporting.
+    Returns both fixed IoU thresholds AND true adaptive matching.
     """
-    if thresholds is None:
-        thresholds = [0.25, 0.50, 0.75]
+    if report_thresholds is None:
+        report_thresholds = [0.25, 0.50, 0.75]
+    report_thresholds = sorted(set(report_thresholds))
 
-    # Nur gültige Detections (mit korrekter ID)
-    valid_dets = [d for d in det_errors if d.detected_id != "FP"]
+    # Results for fixed thresholds
+    fixed_results = {th: {"tp": [], "fp": [], "fn": []} for th in report_thresholds}
+    # True adaptive results
+    adaptive_tp, adaptive_fp, adaptive_fn = [], [], []
 
-    # GT-Lookup: (filename, id) → GroundTruthError
-    gt_lookup = {(gt.filename, gt.id): gt for gt in gt_errors}
+    # Group by file
+    gt_by_file = defaultdict(list)
+    det_by_file = defaultdict(list)
+    for gt in gt_errors:
+        gt_by_file[gt.filename].append(gt)
+    for det in det_errors:
+        det_by_file[det.filename].append(det)
 
-    # Ergebnis-Dicts für jeden Threshold
-    results = {th: {"tp": [], "fp": [], "fn": []} for th in thresholds}
-    matched_keys = set()  # verhindert Mehrfachzuordnung pro GT
+    globally_matched_gt = set()  # (filename, gt.id)
 
-    for det in valid_dets:
-        key = (det.filename, det.detected_id)
-        if key in gt_lookup and key not in matched_keys:
-            gt = gt_lookup[key]
+    for filename in set(gt_by_file) | set(det_by_file):
+        current_gts = gt_by_file[filename]
+        current_dets = det_by_file.get(filename, [])
+
+        # GT lookup by ID
+        gt_lookup = {gt.id: gt for gt in current_gts}
+
+        # Only detections with valid ID
+        candidates = [d for d in current_dets if d.detected_id != "FP"]
+        marked_fps = [d for d in current_dets if d.detected_id == "FP"]
+
+        # --- Collect possible (det, gt) pairs ---
+        pairs = []
+        for det in candidates:
+            gt_id = det.detected_id
+            if gt_id not in gt_lookup:
+                continue
+            gt = gt_lookup[gt_id]
+            key = (filename, gt_id)
+            if key in globally_matched_gt:
+                continue
             iou = calculate_iou(gt.start_line, gt.end_line, det.start_line, det.end_line)
+            pairs.append((iou, det, gt, key))
+
+        # --- Greedy matching: best IoU first ---
+        pairs.sort(reverse=True, key=lambda x: x[0])
+
+        used_dets = set()
+
+        for iou, det, gt, key in pairs:
+            if key in globally_matched_gt or id(det) in used_dets:
+                continue
+
+            gt_lines = gt.end_line - gt.start_line + 1
+            required_iou = adaptive_iou_threshold(gt_lines)
+            is_adaptive_tp = iou >= required_iou
 
             entry = {
+                "filename": filename,
                 "gt_id": gt.id,
-                "filename": gt.filename,
                 "gt_lines": (gt.start_line, gt.end_line),
                 "det_lines": (det.start_line, det.end_line),
                 "iou": round(iou, 4),
+                "required_iou": round(required_iou, 3),
+                "adaptive_tp": is_adaptive_tp,
+                "gt_size": gt_lines,
                 "error_description": gt.error_description
             }
 
-            for th in thresholds:
+            # Adaptive decision (the real one!)
+            if is_adaptive_tp:
+                adaptive_tp.append(entry)
+            else:
+                adaptive_fp.append({**entry, "note": f"IoU {iou:.3f} < required {required_iou:.3f}"})
+
+            # Fixed threshold reporting (for comparison)
+            for th in report_thresholds:
                 if iou >= th:
-                    results[th]["tp"].append(entry)
+                    fixed_results[th]["tp"].append(entry.copy())
                 else:
-                    results[th]["fp"].append({**entry, "note": f"IoU={iou:.3f} < {th}"})
-            matched_keys.add(key)
-        else:
-            # Duplikat oder falsche ID
-            for th in thresholds:
-                results[th]["fp"].append({
-                    "filename": det.filename,
-                    "det_lines": (det.start_line, det.end_line),
-                    "detected_id": det.detected_id,
-                    "note": "duplicate_or_invalid_id"
-                })
+                    fixed_results[th]["fp"].append({**entry, "note": f"IoU {iou:.3f} < {th}"})
 
-    # FP aus "FP"-Markierungen (keine ID)
-    for det in det_errors:
-        if det.detected_id == "FP":
-            entry = {
-                "filename": det.filename,
+            globally_matched_gt.add(key)
+            used_dets.add(id(det))
+
+        # --- Unmatched candidates → FP ---
+        for det in candidates:
+            if id(det) in used_dets:
+                continue
+            reason = "wrong_id" if det.detected_id not in gt_lookup else "low_iou_duplicate"
+            fp_entry = {
+                "filename": filename,
+                "detected_id": det.detected_id,
                 "det_lines": (det.start_line, det.end_line),
-                "detected_id": "FP"
+                "note": reason
             }
-            for th in thresholds:
-                results[th]["fp"].append(entry)
+            adaptive_fp.append(fp_entry)
+            for th in report_thresholds:
+                fixed_results[th]["fp"].append(fp_entry.copy())
 
-    # FN: alle GTs ohne Match
-    for gt in gt_errors:
-        key = (gt.filename, gt.id)
-        if key not in matched_keys:
-            entry = {
-                "gt_id": gt.id,
-                "filename": gt.filename,
-                "gt_lines": (gt.start_line, gt.end_line),
-                "error_description": gt.error_description
+        # --- Marked as FP ---
+        for det in marked_fps:
+            fp_entry = {
+                "filename": filename,
+                "det_lines": (det.start_line, det.end_line),
+                "detected_id": "FP",
+                "note": "marked_as_fp"
             }
-            for th in thresholds:
-                results[th]["fn"].append(entry)
+            adaptive_fp.append(fp_entry)
+            for th in report_thresholds:
+                fixed_results[th]["fp"].append(fp_entry.copy())
 
-    # Konvertiere zu Tupeln
-    return {th: (data["tp"], data["fp"], data["fn"]) for th, data in results.items()}
+        # --- False Negatives ---
+        for gt in current_gts:
+            key = (filename, gt.id)
+            if key not in globally_matched_gt:
+                fn_entry = {
+                    "filename": filename,
+                    "gt_id": gt.id,
+                    "gt_lines": (gt.start_line, gt.end_line),
+                    "required_iou": round(adaptive_iou_threshold(gt.end_line - gt.start_line + 1), 3),
+                    "error_description": gt.error_description
+                }
+                adaptive_fn.append(fn_entry)
+                for th in report_thresholds:
+                    fixed_results[th]["fn"].append(fn_entry.copy())
+
+    # Build final result dict
+    result = {
+        "fixed_0.25": (fixed_results[0.25]["tp"], fixed_results[0.25]["fp"], fixed_results[0.25]["fn"]),
+        "fixed_0.50": (fixed_results[0.50]["tp"], fixed_results[0.50]["fp"], fixed_results[0.50]["fn"]),
+        "fixed_0.75": (fixed_results[0.75]["tp"], fixed_results[0.75]["fp"], fixed_results[0.75]["fn"]),
+        "adaptive": (adaptive_tp, adaptive_fp, adaptive_fn),
+    }
+
+    # Optional debug print
+    if adaptive_tp or adaptive_fp:
+        avg_req = mean(entry.get("required_iou", 0.5) for entry in adaptive_tp + adaptive_fp if "required_iou" in entry)
+        print(f"   → Adaptives IoU: Ø benötigter IoU = {avg_req:.3f} (über {len(adaptive_tp)+len(adaptive_fp)} Zuordnungen)")
+
+    return result
 
 # ----------------------------------------------------------------------
 # Metriken & Ausgabe
@@ -415,18 +490,28 @@ def print_localization_report(category: str, classic: tuple, strict: tuple, iou_
     print(f"{'Strict (dynam. IoU)':<22} {ms['tp']:6} {ms['fp']:6} {ms['fn']:6} {ms['precision']:8.3f} {ms['recall']:8.3f} {ms['f1']:10.3f}")
 
     print(f"{'─' * 20:<22} {'─' * 6} {'─' * 6} {'─' * 6} {'─' * 8} {'─' * 8} {'─' * 10}")
-    print(f"{'IoU ≥ 0.25':<22} {len(iou_results[0.25][0]):6} {len(iou_results[0.25][1]):6} {len(iou_results[0.25][2]):6} "
-          f"{calculate_metrics(*map(len, iou_results[0.25]))['precision']:8.3f} "
-          f"{calculate_metrics(*map(len, iou_results[0.25]))['recall']:8.3f} "
-          f"{calculate_metrics(*map(len, iou_results[0.25]))['f1']:10.3f}")
-    print(f"{'IoU ≥ 0.50':<22} {len(iou_results[0.50][0]):6} {len(iou_results[0.50][1]):6} {len(iou_results[0.50][2]):6} "
-          f"{calculate_metrics(*map(len, iou_results[0.50]))['precision']:8.3f} "
-          f"{calculate_metrics(*map(len, iou_results[0.50]))['recall']:8.3f} "
-          f"{calculate_metrics(*map(len, iou_results[0.50]))['f1']:10.3f}")
-    print(f"{'IoU ≥ 0.75':<22} {len(iou_results[0.75][0]):6} {len(iou_results[0.75][1]):6} {len(iou_results[0.75][2]):6} "
-          f"{calculate_metrics(*map(len, iou_results[0.75]))['precision']:8.3f} "
-          f"{calculate_metrics(*map(len, iou_results[0.75]))['recall']:8.3f} "
-          f"{calculate_metrics(*map(len, iou_results[0.75]))['f1']:10.3f}")
+
+    # ─── Die drei alten (fixen) IoU-Zeilen ───
+    print(f"{'IoU ≥ 0.25':<22} {len(iou_results['fixed_0.25'][0]):6} {len(iou_results['fixed_0.25'][1]):6} {len(iou_results['fixed_0.25'][2]):6} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.25']))['precision']:8.3f} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.25']))['recall']:8.3f} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.25']))['f1']:10.3f}")
+    print(f"{'IoU ≥ 0.50':<22} {len(iou_results['fixed_0.50'][0]):6} {len(iou_results['fixed_0.50'][1]):6} {len(iou_results['fixed_0.50'][2]):6} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.50']))['precision']:8.3f} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.50']))['recall']:8.3f} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.50']))['f1']:10.3f}")
+    print(f"{'IoU ≥ 0.75':<22} {len(iou_results['fixed_0.75'][0]):6} {len(iou_results['fixed_0.75'][1]):6} {len(iou_results['fixed_0.75'][2]):6} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.75']))['precision']:8.3f} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.75']))['recall']:8.3f} "
+          f"{calculate_metrics(*map(len, iou_results['fixed_0.75']))['f1']:10.3f}")
+
+    # ─── HIER KOMMT DIE NEUE ADAPTIVE ZEILE ───
+    if "adaptive" in iou_results:
+        tp, fp, fn = iou_results["adaptive"]
+        m = calculate_metrics(len(tp), len(fp), len(fn))
+        print(f"{'IoU ≥ adaptive (fair!)':<22} {len(tp):6} {len(fp):6} {len(fn):6} "
+              f"{m['precision']:8.3f} {m['recall']:8.3f} {m['f1']:10.3f}  ← NEW BEST!")
+
     print("═" * 100)
 
 
@@ -456,6 +541,42 @@ def save_localization_results(category: str, run_name: str, classic: tuple, stri
         "localization_strict": calculate_metrics(len(tp_s), len(fp_s), len(fn_s))
     }
     (run_dir / "summary_localization.json").write_text(json.dumps(summary, indent=2))
+
+def save_iou_localization_results(category: str, run_name: str, iou_results: dict, out_dir: Path):
+    safe = category.replace("(", "").replace(")", "").replace(" ", "_").replace("/", "_")
+    run_dir = out_dir / safe / run_name / "localization_iou"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    # Nur die fixen Thresholds speichern (adaptive hat keinen numerischen Key)
+    fixed_keys = ["fixed_0.25", "fixed_0.50", "fixed_0.75"]
+    for key in fixed_keys:
+        if key not in iou_results:
+            continue
+        tp, fp, fn = iou_results[key]
+        th_str = key.replace("fixed_", "").replace(".", "")
+        if tp: pd.DataFrame(tp).to_csv(run_dir / f"tp_iou_{th_str}.csv", index=False)
+        if fp: pd.DataFrame(fp).to_csv(run_dir / f"fp_iou_{th_str}.csv", index=False)
+        if fn: pd.DataFrame(fn).to_csv(run_dir / f"fn_iou_{th_str}.csv", index=False)
+
+    # Adaptive separat speichern (schöner Name)
+    if "adaptive" in iou_results:
+        tp, fp, fn = iou_results["adaptive"]
+        if tp: pd.DataFrame(tp).to_csv(run_dir / "tp_adaptive.csv", index=False)
+        if fp: pd.DataFrame(fp).to_csv(run_dir / "fp_adaptive.csv", index=False)
+        if fn: pd.DataFrame(fn).to_csv(run_dir / "fn_adaptive.csv", index=False)
+
+    # Summary nur für fixe Thresholds + adaptive
+    summary = {}
+    for key in fixed_keys:
+        if key in iou_results:
+            tp, fp, fn = iou_results[key]
+            th = float(key.split("_")[-1])
+            summary[f"iou_{th:.2f}"] = calculate_metrics(len(tp), len(fp), len(fn))
+    if "adaptive" in iou_results:
+        tp, fp, fn = iou_results["adaptive"]
+        summary["adaptive"] = calculate_metrics(len(tp), len(fp), len(fn))
+
+    (run_dir / "summary_iou.json").write_text(json.dumps(summary, indent=2))
 
 
 def detect_category(path: Path) -> str:
@@ -531,12 +652,19 @@ def main():
         save_detection_results(category, run_name, det_tp, det_fp, det_fn, out_dir)
 
         loc_c, loc_s = match_errors_localization(gt_errors, det_errors, tolerance=args.tolerance)
-        iou_results = match_errors_iou_thresholds(gt_errors, det_errors, thresholds=[0.25, 0.50, 0.75])
+        iou_results = match_errors_adaptive_smooth_iou(gt_errors, det_errors, report_thresholds=[0.25, 0.50, 0.75])
         print_localization_report(category, loc_c, loc_s, iou_results, args.tolerance)
+        save_localization_results(category, run_name, loc_c, loc_s, out_dir)
+        save_iou_localization_results(category, run_name, iou_results, out_dir)
 
         # === IoU-Aggregation über alle Runs ===
-        for th in [0.25, 0.50, 0.75]:
-            tp_l, fp_l, fn_l = iou_results[th]
+        # === IoU-Aggregation über alle Runs (fixed thresholds) ===
+        for key in ["fixed_0.25", "fixed_0.50", "fixed_0.75"]:
+            if key not in iou_results:
+                continue
+            tp_l, fp_l, fn_l = iou_results[key]
+            th = float(key.split("_")[-1])  # "fixed_0.50" → 0.50
+
             agg_iou[category][th]["tp"] += len(tp_l)
             agg_iou[category][th]["fp"] += len(fp_l)
             agg_iou[category][th]["fn"] += len(fn_l)

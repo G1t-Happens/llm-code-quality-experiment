@@ -1,2 +1,0 @@
-gt_id,filename,gt_lines,det_lines,error_description,detected_id,note
-E002,UserServiceImpl,"(171, 172)","(166, 173)",Missing delete call in the repository/data access layer,E002,bad_localization

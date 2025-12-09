@@ -1,0 +1,54 @@
+[
+  {
+    "id": "E001",
+    "filename": "UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "method_start": 53,
+    "method_end": 56,
+    "iso_category": "Functional",
+    "error_description": "Double encryption of the password using a password encoder",
+    "injection_method": "manual",
+    "severity": "medium",
+    "basename": "UserMapper.java"
+  },
+  {
+    "id": "E005",
+    "filename": "UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 125,
+    "method_start": 115,
+    "method_end": 132,
+    "iso_category": "Performance",
+    "error_description": "PasswordEncoder created per request rather than as a singleton",
+    "injection_method": "manual",
+    "severity": "medium",
+    "basename": "UserServiceImpl.java"
+  },
+  {
+    "id": "E006",
+    "filename": "UserServiceImpl.java",
+    "start_line": 152,
+    "end_line": 152,
+    "method_start": 134,
+    "method_end": 159,
+    "iso_category": "Performance",
+    "error_description": "PasswordEncoder created per request rather than as a singleton",
+    "injection_method": "manual",
+    "severity": "medium",
+    "basename": "UserServiceImpl.java"
+  },
+  {
+    "id": "E011",
+    "filename": "SecurityConfig.java",
+    "start_line": 108,
+    "end_line": 109,
+    "method_start": 107,
+    "method_end": 110,
+    "iso_category": "Reliability",
+    "error_description": "Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",
+    "injection_method": "manual",
+    "severity": "critical",
+    "basename": "SecurityConfig.java"
+  }
+]

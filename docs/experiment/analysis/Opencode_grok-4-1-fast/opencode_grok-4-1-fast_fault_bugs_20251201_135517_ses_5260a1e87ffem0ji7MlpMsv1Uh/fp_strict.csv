@@ -1,3 +1,0 @@
-gt_id,filename,gt_lines,det_lines,error_description,detected_id,note
-E010,UserServiceImpl,"(181, 181)","(182, 182)",Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized,E010,bad_localization
-E002,UserServiceImpl,"(171, 172)","(164, 173)",Missing delete call in the repository/data access layer,E002,bad_localization

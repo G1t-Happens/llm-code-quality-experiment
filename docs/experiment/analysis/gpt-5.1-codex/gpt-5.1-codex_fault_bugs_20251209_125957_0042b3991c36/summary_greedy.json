@@ -1,0 +1,11 @@
+{
+  "TP": 11,
+  "FP": 1,
+  "FN": 4,
+  "Precision": 0.9167,
+  "Recall": 0.7333,
+  "F1": 0.8148,
+  "run_name": "gpt-5.1-codex_fault_bugs_20251209_125957_0042b3991c36",
+  "total_predictions": 12,
+  "total_ground_truth": 15
+}

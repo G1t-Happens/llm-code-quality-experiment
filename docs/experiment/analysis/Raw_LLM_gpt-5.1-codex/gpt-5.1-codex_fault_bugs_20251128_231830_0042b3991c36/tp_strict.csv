@@ -1,7 +1,0 @@
-gt_id,filename,gt_lines,det_lines,error_description,detected_id
-E007,AddressController,"(44, 44)","(44, 48)",Incorrect MIME type in controller. The API expects JSON but text/plain is declared. Clients sending JSON may fail,E007
-E009,AddressController,"(52, 52)","(50, 53)","The update() endpoint does not validate the AddressRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",E009
-E008,UserController,"(49, 49)","(47, 50)","The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",E008
-E015,UserController,"(59, 60)","(59, 61)","Removing @PreAuthorize(admin) from the user deletion endpoint allows any authenticated user to permanently delete any account, including all administrators, leading to immediate and irreversible loss of system ownership",E015
-E001,UserMapper,"(55, 55)","(53, 56)",Double encryption of the password using a password encoder,E001
-E004,UserServiceImpl,"(74, 79)","(72, 82)",Loading all users before pagination and transform them to DTOs – wrong order,E004

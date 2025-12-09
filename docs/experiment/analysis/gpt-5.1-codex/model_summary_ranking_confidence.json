@@ -1,0 +1,16 @@
+{
+  "model": "gpt-5.1-codex",
+  "evaluation_type": "ranking_by_confidence_consistent_with_greedy",
+  "total_runs": 3,
+  "total_ground_truth": 15,
+  "avg_Precision@1": 0.6667,
+  "avg_Recall@1": 0.0445,
+  "avg_Precision@3": 0.7778,
+  "avg_Recall@3": 0.1555,
+  "avg_Precision@5": 0.8667,
+  "avg_Recall@5": 0.2889,
+  "avg_Precision@7": 0.9047,
+  "avg_Recall@7": 0.4222,
+  "avg_Precision@10": 0.9,
+  "avg_Recall@10": 0.6
+}

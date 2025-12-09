@@ -1,0 +1,15 @@
+{
+  "run_name": "gpt-5.1-codex_fault_bugs_20251209_125704_0042b3991c36",
+  "total_predictions": 10,
+  "total_ground_truth": 15,
+  "Precision@1": 0.0,
+  "Recall@1": 0.0,
+  "Precision@3": 0.6667,
+  "Recall@3": 0.1333,
+  "Precision@5": 0.8,
+  "Recall@5": 0.2667,
+  "Precision@7": 0.8571,
+  "Recall@7": 0.4,
+  "Precision@10": 0.9,
+  "Recall@10": 0.6
+}

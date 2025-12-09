@@ -1,0 +1,9 @@
+[
+  {
+    "filename": "/home/dbe/projects/llm-code-quality-experiment/baseline_project_buggy/src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 22,
+    "end_line": 25,
+    "error_description": "updateUserEntityFromUserRequest encodes the password twice (passwordEncoder.encode(passwordEncoder.encode(...))), so updated passwords are double-hashed and will never match during login.",
+    "confidence": 0.87
+  }
+]

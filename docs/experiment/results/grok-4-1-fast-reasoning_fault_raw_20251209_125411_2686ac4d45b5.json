@@ -1,0 +1,36 @@
+{
+  "id": "9af13668-9ddf-17fc-5946-bbe6e056c0c4",
+  "object": "chat.completion",
+  "created": 1765281250,
+  "model": "grok-4-1-fast-reasoning",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": " {\"bugs\":[{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":102,\"end_line\":103,\"error_description\":\"SQL injection vulnerability due to direct string concatenation of unescaped user input 'username' into native SQL query.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":88,\"end_line\":91,\"error_description\":\"Missing addressRepository.save(addressEntity) call; newly created Address entity is not persisted to the database before returning AddressResponse with null ID.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/mapper/UserMapper.java\",\"start_line\":55,\"end_line\":55,\"error_description\":\"Double password hashing in update mapping: 'passwordEncoder.encode(passwordEncoder.encode(dto.password()))' prevents updated passwords from matching during login authentication.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":75,\"end_line\":82,\"error_description\":\"Pagination ignored: userRepository.findAll() fetches ALL users into memory without applying Pageable, then PageImpl uses full list as page content, causing incorrect results and performance degradation.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":182,\"end_line\":184,\"error_description\":\"Incorrect handling of non-existent user in login: .get() on Optional throws NoSuchElementException instead of using .orElse(null) for dummy hash comparison, breaking timing attack protection and consistent 401 response.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":59,\"end_line\":62,\"error_description\":\"Missing @PreAuthorize on delete endpoint allows any authenticated user to delete any user account, violating ownership and authorization rules.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":44,\"end_line\":46,\"error_description\":\"@PostMapping consumes='text/plain' incompatible with @RequestBody AddressRequest (complex object); deserialization will fail as text/plain converter returns String, not object.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":167,\"end_line\":173,\"error_description\":\"Missing userRepository.delete(existingUserEntity); user entity is fetched and logged as deleted but never actually removed from database.\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":67,\"end_line\":67,\"error_description\":\"Inconsistent error handling: addressRepository.findById(addressId).get() throws NoSuchElementException if not found, unlike other methods using orElseThrow for ResourceNotFoundException.\",\"confidence\":0.95}]}",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 18399,
+    "completion_tokens": 605,
+    "total_tokens": 25923,
+    "prompt_tokens_details": {
+      "text_tokens": 18399,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "cached_tokens": 18398
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 6919,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "num_sources_used": 0
+  },
+  "system_fingerprint": "fp_b22f89568e"
+}

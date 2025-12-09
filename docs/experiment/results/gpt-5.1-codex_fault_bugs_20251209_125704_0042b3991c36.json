@@ -1,0 +1,72 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 66,
+    "end_line": 74,
+    "error_description": "getById calls addressRepository.findById(addressId).get() without handling the empty Optional; requesting a non‑existing address produces a NoSuchElementException (500) instead of the intended ResourceNotFoundException (404).",
+    "confidence": 0.74
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 76,
+    "end_line": 90,
+    "error_description": "save() builds an Address entity but never persists it (missing addressRepository.save), so no record is stored and the returned DTO contains a transient entity without an id.",
+    "confidence": 0.77
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 48,
+    "error_description": "The create endpoint advertises consumes=\"text/plain\" while expecting a JSON AddressRequest body, causing normal application/json posts to be rejected with 415 Unsupported Media Type.",
+    "confidence": 0.63
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 53,
+    "end_line": 56,
+    "error_description": "updateUserEntityFromUserRequest encodes passwords twice (passwordEncoder.encode(passwordEncoder.encode(dto.password()))); updated users end up with double-hashed passwords and can no longer authenticate.",
+    "confidence": 0.81
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 72,
+    "end_line": 82,
+    "error_description": "listAll ignores the supplied Pageable by calling userRepository.findAll() and wrapping the whole list, so paging/sorting parameters are never applied and the entire table is loaded into memory.",
+    "confidence": 0.69
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 105,
+    "end_line": 107,
+    "error_description": "getByUsername builds a native SQL string via string concatenation of the username, enabling SQL injection; a crafted username can alter the WHERE clause or manipulate the query.",
+    "confidence": 0.82
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 118,
+    "end_line": 119,
+    "error_description": "save() logs the plaintext password in DEBUG (\"user with name: {} and password: {}\"), leaking credentials into log files and monitoring systems.",
+    "confidence": 0.71
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 162,
+    "end_line": 173,
+    "error_description": "delete() fetches the user but never calls userRepository.delete or deleteById, so the user is not removed despite the method returning successfully.",
+    "confidence": 0.78
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 176,
+    "end_line": 189,
+    "error_description": "checkLogin dereferences userRepository.findByUsername(...).get(); when the username is unknown it throws NoSuchElementException (500) before reaching the intended UnauthorizedException and dummy-hash timing protection.",
+    "confidence": 0.8
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 61,
+    "error_description": "The delete endpoint lacks any @PreAuthorize rule, allowing any authenticated user to delete arbitrary accounts instead of restricting the operation to admins/owners.",
+    "confidence": 0.67
+  }
+]

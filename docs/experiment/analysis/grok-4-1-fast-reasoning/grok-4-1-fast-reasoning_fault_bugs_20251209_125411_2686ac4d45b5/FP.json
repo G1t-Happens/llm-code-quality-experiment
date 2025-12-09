@@ -1,0 +1,9 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 184,
+    "error_description": "Incorrect handling of non-existent user in login: .get() on Optional throws NoSuchElementException instead of using .orElse(null) for dummy hash comparison, breaking timing attack protection and consistent 401 response.",
+    "confidence": 1.0
+  }
+]

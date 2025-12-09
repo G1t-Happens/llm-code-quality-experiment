@@ -1,0 +1,72 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "error_description": "SQL injection vulnerability: username parameter directly concatenated into native SQL query without parameterization or prepared statement",
+    "confidence": 1.0
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 90,
+    "error_description": "Missing addressRepository.save(addressEntity) call in save method; new address entity is created and response generated but never persisted to database",
+    "confidence": 1.0
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "error_description": "Double password hashing in update mapping expression: passwordEncoder.encode(passwordEncoder.encode(dto.password())), resulting in hashed value that won't match single-encoded passwords during login",
+    "confidence": 1.0
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 74,
+    "end_line": 82,
+    "error_description": "Incorrect pagination in listAll: fetches all users with findAll() ignoring Pageable, then creates PageImpl with full list as content for every requested page",
+    "confidence": 1.0
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 163,
+    "end_line": 173,
+    "error_description": "Missing userRepository.delete(existingUserEntity) call in delete method; user entity is loaded but never actually deleted from database",
+    "confidence": 1.0
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 44,
+    "error_description": "Incorrect @PostMapping(consumes=\"text/plain\") for complex JSON DTO AddressRequest; prevents proper HTTP message conversion and binding of request body",
+    "confidence": 0.99
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 182,
+    "error_description": "Unsafe Optional.get() on findByUsername in checkLogin; throws NoSuchElementException for non-existent users instead of UnauthorizedException, and prevents timing attack mitigation",
+    "confidence": 0.95
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "error_description": "Unsafe repository.findById(addressId).get() in getById; assumes address exists and throws NoSuchElementException if not found instead of ResourceNotFoundException",
+    "confidence": 0.9
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "error_description": "Missing @PreAuthorize annotation on @DeleteMapping /{id}; allows unauthorized users to delete any user, inconsistent with other secured endpoints",
+    "confidence": 0.85
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 183,
+    "end_line": 184,
+    "error_description": "Dead code in checkLogin: 'user != null' check unreachable due to prior .get() which throws if absent; dummy hash timing protection not applied for non-existent users",
+    "confidence": 0.85
+  }
+]

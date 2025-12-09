@@ -1,3 +1,0 @@
-gt_id,filename,gt_lines,error_description
-E011,SecurityConfig,"(108, 109)","Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short"
-E014,UserServiceImpl,"(118, 118)","Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers"
