@@ -312,7 +312,7 @@ class OpenAIResponsesClient:
     def create(self, input: str | list, instructions: Optional[str] = None, structured_schema: Optional[BaseModel] = None, **kwargs) -> Any:
         params: Dict[str, Any] = {
             "model": MODEL,
-            "reasoning": {"effort": "high"},
+            "reasoning": {"effort": "medium"},
             "input": input,
             "max_output_tokens": MAX_TOKENS,
             **kwargs
