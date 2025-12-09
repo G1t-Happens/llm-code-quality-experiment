@@ -1,0 +1,122 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 61,
+    "error_description": "The delete endpoint lacks any @PreAuthorize rule, so any authenticated user (not just admins or the account owner) can delete arbitrary users.",
+    "confidence": 0.69,
+    "semantically_correct_detected": "E015",
+    "similarity_score": 0.8137,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 175,
+    "end_line": 189,
+    "error_description": "checkLogin calls userRepository.findByUsername(...).get(); if the username does not exist a NoSuchElementException is thrown (HTTP 500) and the DUMMY_HASH timing protection is bypassed. Missing users should be handled explicitly to return 401 consistently.",
+    "confidence": 0.76,
+    "semantically_correct_detected": "E010",
+    "similarity_score": 0.7087,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 99,
+    "end_line": 108,
+    "error_description": "getByUsername builds a native SQL statement via string concatenation of the supplied username, allowing SQL injection (e.g., usernames containing quote + SQL).",
+    "confidence": 0.86,
+    "semantically_correct_detected": "E013",
+    "similarity_score": 0.7017,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 65,
+    "end_line": 73,
+    "error_description": "getById calls addressRepository.findById(...).get(); when the address does not exist a NoSuchElementException is thrown, returning HTTP 500 instead of the intended ResourceNotFoundException (404) and skipping the ownership check.",
+    "confidence": 0.78,
+    "semantically_correct_detected": "E012",
+    "similarity_score": 0.6986,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 50,
+    "end_line": 53,
+    "error_description": "The update endpoint does not annotate the body with @Validated(Update.class) (or @Valid), so none of the validation constraints defined for the Update group in AddressRequest run and invalid data can be persisted.",
+    "confidence": 0.58,
+    "semantically_correct_detected": "E009",
+    "similarity_score": 0.6614,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 78,
+    "end_line": 89,
+    "error_description": "save maps the request to an Address entity but never calls addressRepository.save, so no database insert occurs and the response contains a transient entity with null id.",
+    "confidence": 0.82,
+    "semantically_correct_detected": "E003",
+    "similarity_score": 0.6112,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 161,
+    "end_line": 173,
+    "error_description": "delete fetches the user but never calls userRepository.delete(...); the REST endpoint reports success without removing the user from the database.",
+    "confidence": 0.8,
+    "semantically_correct_detected": "E002",
+    "similarity_score": 0.5684,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 117,
+    "end_line": 118,
+    "error_description": "The save method logs the submitted password in plaintext. Logs become a source of credential leakage, violating security best practices.",
+    "confidence": 0.73,
+    "semantically_correct_detected": "E014",
+    "similarity_score": 0.545,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 71,
+    "end_line": 82,
+    "error_description": "listAll ignores the Pageable parameter and loads every user with findAll(), returning the full list regardless of requested page/size. Pagination metadata is wrong and large result sets may exhaust memory.",
+    "confidence": 0.55,
+    "semantically_correct_detected": "E004",
+    "similarity_score": 0.5353,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 47,
+    "end_line": 51,
+    "error_description": "User creation is not annotated with @Valid/@Validated(Create.class); all bean validation constraints declared with the Create group on UserRequest are skipped, allowing empty usernames/passwords/emails and null admin flags to pass through to the service layer.",
+    "confidence": 0.74,
+    "semantically_correct_detected": "E008",
+    "similarity_score": 0.5188,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 47,
+    "error_description": "The create endpoint is restricted to requests with Content-Type \"text/plain\" even though it expects an AddressRequest JSON body. Clients sending the usual JSON payload receive HTTP 415 and cannot create addresses.",
+    "confidence": 0.66,
+    "semantically_correct_detected": "E007",
+    "similarity_score": 0.4392,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 53,
+    "end_line": 56,
+    "error_description": "updateUserEntityFromUserRequest hashes the password twice (encode(encode(raw))). The stored value no longer matches the raw password, so users who change their password can no longer authenticate.",
+    "confidence": 0.77,
+    "semantically_correct_detected": "E001",
+    "similarity_score": 0.2574,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  }
+]

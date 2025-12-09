@@ -1,0 +1,92 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "error_description": "SQL injection vulnerability from direct username concatenation in native query string",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E013",
+    "similarity_score": 0.8587,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 163,
+    "end_line": 173,
+    "error_description": "delete method loads user entity but omits repository.delete call, no actual deletion occurs",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E002",
+    "similarity_score": 0.761,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "error_description": "@DeleteMapping lacks @PreAuthorize annotation, allowing any authenticated user to delete any user account",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E015",
+    "similarity_score": 0.7443,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "error_description": "Unsafe Optional.get() on findById without check, throws NoSuchElementException if address not found",
+    "confidence": 0.95,
+    "semantically_correct_detected": "E012",
+    "similarity_score": 0.6191,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 89,
+    "error_description": "Address entity created from request but never saved to repository before returning response, data loss",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E003",
+    "similarity_score": 0.6165,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 74,
+    "end_line": 81,
+    "error_description": "listAll loads entire user list into memory ignoring Pageable for server-side pagination, performance bottleneck",
+    "confidence": 0.95,
+    "semantically_correct_detected": "E004",
+    "similarity_score": 0.601,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 182,
+    "error_description": "Unsafe Optional.get() in checkLogin throws exception early if user absent, enables timing attacks and inconsistent errors",
+    "confidence": 0.9,
+    "semantically_correct_detected": "E010",
+    "similarity_score": 0.5777,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "error_description": "Double encoding of password in update mapping expression (encode(encode(password))), invalidating the hash for login",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E001",
+    "similarity_score": 0.5501,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 46,
+    "error_description": "@PostMapping specifies consumes='text/plain' incompatible with @RequestBody AddressRequest DTO expecting JSON deserialization, causing failure",
+    "confidence": 0.95,
+    "semantically_correct_detected": "E007",
+    "similarity_score": 0.5208,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  }
+]

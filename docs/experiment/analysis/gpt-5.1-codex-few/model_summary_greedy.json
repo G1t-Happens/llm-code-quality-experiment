@@ -1,0 +1,50 @@
+{
+  "TP": 34,
+  "FP": 3,
+  "FN": 11,
+  "Precision": 0.9189,
+  "Recall": 0.7556,
+  "F1": 0.8293,
+  "model": "gpt-5.1-codex-few",
+  "evaluation_type": "greedy_1to1_best_semantic",
+  "total_runs": 3,
+  "total_TP": 34,
+  "total_FP": 3,
+  "total_FN": 11,
+  "total_ground_truth": 15,
+  "per_run_details": [
+    {
+      "TP": 12,
+      "FP": 1,
+      "FN": 3,
+      "Precision": 0.9231,
+      "Recall": 0.8,
+      "F1": 0.8571,
+      "run_name": "gpt-5.1-codex-few_fault_bugs_20251209_133839_0042b3991c36",
+      "total_predictions": 12,
+      "total_ground_truth": 15
+    },
+    {
+      "TP": 10,
+      "FP": 2,
+      "FN": 5,
+      "Precision": 0.8333,
+      "Recall": 0.6667,
+      "F1": 0.7407,
+      "run_name": "gpt-5.1-codex-few_fault_bugs_20251209_135405_0042b3991c36",
+      "total_predictions": 12,
+      "total_ground_truth": 15
+    },
+    {
+      "TP": 12,
+      "FP": 0,
+      "FN": 3,
+      "Precision": 1.0,
+      "Recall": 0.8,
+      "F1": 0.8889,
+      "run_name": "gpt-5.1-codex-few_fault_bugs_20251209_134514_0042b3991c36",
+      "total_predictions": 12,
+      "total_ground_truth": 15
+    }
+  ]
+}

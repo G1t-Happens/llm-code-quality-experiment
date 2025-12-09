@@ -1,0 +1,36 @@
+{
+  "id": "831516ed-35db-49e0-8aa4-6f528246ee5a",
+  "object": "chat.completion",
+  "created": 1765283739,
+  "model": "grok-4-1-fast-reasoning",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": " {\"bugs\":[{\"filename\":\"src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":44,\"end_line\":46,\"error_description\":\"@PostMapping specifies consumes='text/plain' incompatible with @RequestBody AddressRequest DTO expecting JSON deserialization, causing failure\",\"confidence\":0.95},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":47,\"end_line\":47,\"error_description\":\"Missing @Valid or @Validated on @RequestBody UserRequest in create method, bypassing input validation\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":59,\"end_line\":62,\"error_description\":\"@DeleteMapping lacks @PreAuthorize annotation, allowing any authenticated user to delete any user account\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/mapper/UserMapper.java\",\"start_line\":55,\"end_line\":55,\"error_description\":\"Double encoding of password in update mapping expression (encode(encode(password))), invalidating the hash for login\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":67,\"end_line\":67,\"error_description\":\"Unsafe Optional.get() on findById without check, throws NoSuchElementException if address not found\",\"confidence\":0.95},{\"filename\":\"src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":86,\"end_line\":89,\"error_description\":\"Address entity created from request but never saved to repository before returning response, data loss\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":102,\"end_line\":103,\"error_description\":\"SQL injection vulnerability from direct username concatenation in native query string\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":74,\"end_line\":81,\"error_description\":\"listAll loads entire user list into memory ignoring Pageable for server-side pagination, performance bottleneck\",\"confidence\":0.95},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":163,\"end_line\":173,\"error_description\":\"delete method loads user entity but omits repository.delete call, no actual deletion occurs\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":181,\"end_line\":182,\"error_description\":\"Unsafe Optional.get() in checkLogin throws exception early if user absent, enables timing attacks and inconsistent errors\",\"confidence\":0.9}]}",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 18710,
+    "completion_tokens": 565,
+    "total_tokens": 24142,
+    "prompt_tokens_details": {
+      "text_tokens": 18710,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "cached_tokens": 18709
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 4867,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "num_sources_used": 0
+  },
+  "system_fingerprint": "fp_b22f89568e"
+}

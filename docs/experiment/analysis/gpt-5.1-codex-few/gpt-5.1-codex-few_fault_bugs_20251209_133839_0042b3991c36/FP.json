@@ -1,0 +1,9 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 117,
+    "end_line": 131,
+    "error_description": "save() logs the supplied password in plaintext (\"user with name ... and password ...\"), leaking credentials to application logs.",
+    "confidence": 0.77
+  }
+]

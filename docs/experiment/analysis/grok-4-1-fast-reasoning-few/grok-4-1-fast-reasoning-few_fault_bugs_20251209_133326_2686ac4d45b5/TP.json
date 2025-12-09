@@ -1,0 +1,102 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "error_description": "Native SQL query uses direct string concatenation of user input 'username', creating SQL injection vulnerability",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E013",
+    "similarity_score": 0.8632,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "error_description": "Missing @PreAuthorize annotation on delete method, allowing any authenticated user to delete any user account",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E015",
+    "similarity_score": 0.7646,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "error_description": "getById uses findById().get() instead of orElseThrow, risking unhandled NoSuchElementException instead of proper 404",
+    "confidence": 0.85,
+    "semantically_correct_detected": "E012",
+    "similarity_score": 0.7139,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 182,
+    "error_description": "checkLogin uses .get() on Optional<User>, throwing NoSuchElementException if user not found and enabling username enumeration",
+    "confidence": 0.95,
+    "semantically_correct_detected": "E010",
+    "similarity_score": 0.711,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 166,
+    "end_line": 172,
+    "error_description": "Missing userRepository.delete(existingUserEntity) call, causing delete operation to fail silently with data loss",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E002",
+    "similarity_score": 0.7035,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 72,
+    "end_line": 82,
+    "error_description": "listAll loads all users into memory with findAll() instead of findAll(pageable), causing performance bottleneck and incorrect pagination",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E004",
+    "similarity_score": 0.6067,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 87,
+    "error_description": "Missing addressRepository.save(addressEntity) call before returning response, causing data loss as new address is never persisted to database",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E003",
+    "similarity_score": 0.6035,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 52,
+    "end_line": 52,
+    "error_description": "Missing @Validated(Update.class) on update method's AddressRequest parameter, skipping validation on PATCH requests",
+    "confidence": 0.9,
+    "semantically_correct_detected": "E009",
+    "similarity_score": 0.5933,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "error_description": "Password update expression double-encodes new password with passwordEncoder.encode(passwordEncoder.encode(dto.password())), corrupting the hash",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E001",
+    "similarity_score": 0.5648,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 44,
+    "error_description": "@PostMapping consumes='text/plain' incompatible with @RequestBody AddressRequest expecting JSON, causing deserialization failure",
+    "confidence": 0.95,
+    "semantically_correct_detected": "E007",
+    "similarity_score": 0.5566,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  }
+]

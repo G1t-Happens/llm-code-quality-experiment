@@ -1,0 +1,36 @@
+{
+  "id": "b13b32df-909c-0ec9-1beb-303e2dad6957",
+  "object": "chat.completion",
+  "created": 1765283606,
+  "model": "grok-4-1-fast-reasoning",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": " {\"bugs\":[{\"filename\":\"src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":86,\"end_line\":87,\"error_description\":\"Missing addressRepository.save(addressEntity) call before returning response, causing data loss as new address is never persisted to database\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":166,\"end_line\":172,\"error_description\":\"Missing userRepository.delete(existingUserEntity) call, causing delete operation to fail silently with data loss\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":102,\"end_line\":103,\"error_description\":\"Native SQL query uses direct string concatenation of user input 'username', creating SQL injection vulnerability\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/mapper/UserMapper.java\",\"start_line\":55,\"end_line\":55,\"error_description\":\"Password update expression double-encodes new password with passwordEncoder.encode(passwordEncoder.encode(dto.password())), corrupting the hash\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":72,\"end_line\":82,\"error_description\":\"listAll loads all users into memory with findAll() instead of findAll(pageable), causing performance bottleneck and incorrect pagination\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/UserController.java\",\"start_line\":59,\"end_line\":62,\"error_description\":\"Missing @PreAuthorize annotation on delete method, allowing any authenticated user to delete any user account\",\"confidence\":1.0},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":44,\"end_line\":44,\"error_description\":\"@PostMapping consumes='text/plain' incompatible with @RequestBody AddressRequest expecting JSON, causing deserialization failure\",\"confidence\":0.95},{\"filename\":\"src/main/java/com/llmquality/baseline/controller/AddressController.java\",\"start_line\":52,\"end_line\":52,\"error_description\":\"Missing @Validated(Update.class) on update method's AddressRequest parameter, skipping validation on PATCH requests\",\"confidence\":0.9},{\"filename\":\"src/main/java/com/llmquality/baseline/service/UserServiceImpl.java\",\"start_line\":181,\"end_line\":182,\"error_description\":\"checkLogin uses .get() on Optional<User>, throwing NoSuchElementException if user not found and enabling username enumeration\",\"confidence\":0.95},{\"filename\":\"src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java\",\"start_line\":67,\"end_line\":67,\"error_description\":\"getById uses findById().get() instead of orElseThrow, risking unhandled NoSuchElementException instead of proper 404\",\"confidence\":0.85}]}",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 18710,
+    "completion_tokens": 600,
+    "total_tokens": 24927,
+    "prompt_tokens_details": {
+      "text_tokens": 18710,
+      "audio_tokens": 0,
+      "image_tokens": 0,
+      "cached_tokens": 18709
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 5617,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "num_sources_used": 0
+  },
+  "system_fingerprint": "fp_b22f89568e"
+}

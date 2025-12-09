@@ -1,0 +1,11 @@
+{
+  "TP": 9,
+  "FP": 1,
+  "FN": 6,
+  "Precision": 0.9,
+  "Recall": 0.6,
+  "F1": 0.72,
+  "run_name": "grok-4-1-fast-reasoning-few_fault_bugs_20251209_133539_2686ac4d45b5",
+  "total_predictions": 10,
+  "total_ground_truth": 15
+}

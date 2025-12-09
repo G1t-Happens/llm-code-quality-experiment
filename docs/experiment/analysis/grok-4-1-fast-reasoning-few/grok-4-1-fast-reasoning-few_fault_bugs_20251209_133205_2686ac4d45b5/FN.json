@@ -1,0 +1,41 @@
+[
+  {
+    "id": "E008",
+    "filename": "UserController.java",
+    "start_line": 49,
+    "end_line": 49,
+    "method_start": 47,
+    "method_end": 51,
+    "iso_category": "Reliability",
+    "error_description": "The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",
+    "injection_method": "manual",
+    "severity": "high",
+    "basename": "UserController.java"
+  },
+  {
+    "id": "E011",
+    "filename": "SecurityConfig.java",
+    "start_line": 108,
+    "end_line": 109,
+    "method_start": 107,
+    "method_end": 110,
+    "iso_category": "Reliability",
+    "error_description": "Removing all validation in createSecretKey causes the entire Spring Boot application to fail to start (throwing an uncaught exception during context initialization) whenever jwt.secret is missing, empty, malformed, or too short",
+    "injection_method": "manual",
+    "severity": "critical",
+    "basename": "SecurityConfig.java"
+  },
+  {
+    "id": "E014",
+    "filename": "UserServiceImpl.java",
+    "start_line": 118,
+    "end_line": 118,
+    "method_start": 115,
+    "method_end": 132,
+    "iso_category": "Security",
+    "error_description": "Logs include user passwords in plaintext, potentially exposing them in logs accessible to operators or attackers",
+    "injection_method": "manual",
+    "severity": "critical",
+    "basename": "UserServiceImpl.java"
+  }
+]

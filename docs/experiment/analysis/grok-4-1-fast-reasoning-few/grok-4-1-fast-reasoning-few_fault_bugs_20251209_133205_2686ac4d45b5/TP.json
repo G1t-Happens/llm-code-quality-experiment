@@ -1,0 +1,122 @@
+[
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 102,
+    "end_line": 103,
+    "error_description": "SQL injection vulnerability in getByUsername due to direct string concatenation of unescaped username into native SQL query",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E013",
+    "similarity_score": 0.8979,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 59,
+    "end_line": 62,
+    "error_description": "Missing @PreAuthorize annotation on delete method, allowing any authenticated user to delete any user via guessed ID",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E015",
+    "similarity_score": 0.7048,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 181,
+    "end_line": 181,
+    "error_description": "Unsafe userRepository.findByUsername(username).get() in checkLogin; crashes with NoSuchElementException on non-existent user instead of returning UnauthorizedException; prevents timing attack mitigation",
+    "confidence": 0.9,
+    "semantically_correct_detected": "E010",
+    "similarity_score": 0.652,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 67,
+    "end_line": 67,
+    "error_description": "Unsafe addressRepository.findById(addressId).get() without existence check; throws NoSuchElementException if address not found before ownership enforcement",
+    "confidence": 0.9,
+    "semantically_correct_detected": "E012",
+    "similarity_score": 0.6366,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 172,
+    "end_line": 172,
+    "error_description": "Missing userRepository.delete() call in delete method; logs deletion but does not actually delete the user, causing silent failure",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E002",
+    "similarity_score": 0.6352,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 74,
+    "end_line": 82,
+    "error_description": "listAll fetches all users with userRepository.findAll() ignoring Pageable parameters, breaking pagination and sorting; should use findAll(pageable)",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E004",
+    "similarity_score": 0.6286,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/AddressServiceImpl.java",
+    "start_line": 86,
+    "end_line": 89,
+    "error_description": "Missing addressRepository.save() call in save method; entity is mapped and response generated from unsaved entity with null ID, leading to data loss",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E003",
+    "similarity_score": 0.61,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 125,
+    "end_line": 125,
+    "error_description": "Creates new local BCryptPasswordEncoder() in save instead of using injected bean, potential for configuration inconsistency",
+    "confidence": 0.7,
+    "semantically_correct_detected": "E005",
+    "similarity_score": 0.5474,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 152,
+    "end_line": 152,
+    "error_description": "Creates new local BCryptPasswordEncoder() in update instead of using injected bean, potential for configuration inconsistency",
+    "confidence": 0.7,
+    "semantically_correct_detected": "E006",
+    "similarity_score": 0.4977,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/mapper/UserMapper.java",
+    "start_line": 55,
+    "end_line": 55,
+    "error_description": "Double password hashing in updateUserEntityFromUserRequest mapping expression (passwordEncoder.encode(passwordEncoder.encode(...))), corrupting existing password hashes on update",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E001",
+    "similarity_score": 0.4871,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 44,
+    "end_line": 44,
+    "error_description": "@PostMapping(consumes=\"text/plain\") on create prevents standard application/json deserialization of AddressRequest record",
+    "confidence": 0.85,
+    "semantically_correct_detected": "E007",
+    "similarity_score": 0.4566,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
+    "start_line": 52,
+    "end_line": 52,
+    "error_description": "Missing @Validated(Update.class) on update method parameter, unlike create; skips Update validation groups, allowing whitespace-only fields due to @Pattern(groups=Update.class)",
+    "confidence": 0.95,
+    "semantically_correct_detected": "E009",
+    "similarity_score": 0.3269,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  }
+]
