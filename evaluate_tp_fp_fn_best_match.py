@@ -59,8 +59,8 @@ def extract_model_name(path: Path) -> str:
 def extract_run_folder_name(path: Path) -> str:
     return path.stem
 
-def has_overlap(a_start, a_end, b_start, b_end):
-    return not (a_end < b_start or a_start > b_end)
+def has_overlap(a_start, a_end, b_start, b_end, tolerance=2):
+    return not (a_end + tolerance < b_start or a_start - tolerance > b_end)
 
 # METRIKEN HELPER
 def compute_metrics(tp, fp, fn):
@@ -120,7 +120,7 @@ for json_path in tqdm(fault_files, desc="Matching pro Run"):
             try:
                 gt_start = int(row["start_line"])
                 gt_end = int(row["end_line"])
-                if has_overlap(pred_start, pred_end, gt_start, gt_end):
+                if has_overlap(pred_start, pred_end, gt_start, gt_end, tolerance=2):
                     valid_gt_idxs.append(gt_idx)
             except:
                 valid_gt_idxs.append(gt_idx)
