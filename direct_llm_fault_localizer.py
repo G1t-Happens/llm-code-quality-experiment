@@ -18,7 +18,8 @@ from openai import OpenAI
 BASE_DIR = Path(__file__).parent.resolve()
 
 CODE_FILE = BASE_DIR / "docs" / "experiment" / "code_under_test" / "extracted_code.txt"
-SYSTEM_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_fault.txt"
+SYSTEM_PROMPT_FAULT_FILE_ZERO = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_fault_zero.txt"
+SYSTEM_PROMPT_FAULT_FILE_FEW = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_fault_few.txt"
 SYSTEM_PROMPT_TEST_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "system_prompt_test.txt"
 USER_PROMPT_FAULT_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_fault.txt"
 USER_PROMPT_TEST_FILE = BASE_DIR / "docs" / "experiment" / "llm_config" / "user_prompt_test.txt"
@@ -36,6 +37,15 @@ code_content = CODE_FILE.read_text(encoding="utf-8")
 CODE_MD5 = hashlib.md5(code_content.encode("utf-8")).hexdigest()
 
 # ----------------------------- LLM Konfiguration aus .env -----------------------------
+
+PROMPT = os.getenv("PROMPT")
+if PROMPT == "zero":
+    SYSTEM_PROMPT_FAULT_FILE = SYSTEM_PROMPT_FAULT_FILE_ZERO
+elif PROMPT == "few":
+    SYSTEM_PROMPT_FAULT_FILE = SYSTEM_PROMPT_FAULT_FILE_FEW
+else:
+    raise ValueError(f"Unbekannter PROMPT '{PROMPT}' in .env. Erwartet: 'zero' oder 'few'.")
+
 PROVIDER = os.getenv("PROVIDER", "grok").lower()
 TEMPERATURE = os.getenv("TEMPERATURE")
 if TEMPERATURE is not None:
@@ -424,7 +434,7 @@ def run_fault_localization(code: str):
                     "filename": obj.get("filename") or obj.get("file") or "unknown.java",
                     "start_line": int(obj.get("start_line", obj.get("line", 1))),
                     "end_line": int(obj.get("end_line", obj.get("start_line", obj.get("line", 1)))),
-                    "severity": str(obj.get("severity", "medium")).lower(),
+                    "confidence": float(obj.get("sconfidence")),
                     "error_description": obj.get("error_description") or obj.get("description") or "No description"
                 })
             except Exception:
@@ -456,6 +466,7 @@ def run_fault_localization(code: str):
     metadata = {
         "provider": PROVIDER,
         "model": MODEL,
+        "prompt": PROMPT,
         "temperature": TEMPERATURE,
         "top_p": TOP_P,
         "max_tokens": MAX_TOKENS,
