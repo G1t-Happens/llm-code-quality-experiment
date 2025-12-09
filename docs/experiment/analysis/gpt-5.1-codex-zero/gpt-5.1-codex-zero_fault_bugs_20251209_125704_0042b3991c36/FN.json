@@ -63,18 +63,5 @@
     "injection_method": "manual",
     "severity": "critical",
     "basename": "SecurityConfig.java"
-  },
-  {
-    "id": "E013",
-    "filename": "UserServiceImpl.java",
-    "start_line": 102,
-    "end_line": 103,
-    "method_start": 98,
-    "method_end": 113,
-    "iso_category": "Security",
-    "error_description": "Username parameter is concatenated directly into SQL, allowing an attacker to retrieve data via SQL injections",
-    "injection_method": "manual",
-    "severity": "critical",
-    "basename": "UserServiceImpl.java"
   }
 ]

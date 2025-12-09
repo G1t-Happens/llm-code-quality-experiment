@@ -1,9 +1,1 @@
-[
-  {
-    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
-    "start_line": 47,
-    "end_line": 47,
-    "error_description": "Missing @Valid or @Validated on @RequestBody UserRequest in create method, bypassing input validation",
-    "confidence": 1.0
-  }
-]
+[]

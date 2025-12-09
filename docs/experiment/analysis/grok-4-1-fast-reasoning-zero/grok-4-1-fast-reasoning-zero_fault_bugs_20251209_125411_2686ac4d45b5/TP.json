@@ -31,6 +31,16 @@
   },
   {
     "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 182,
+    "end_line": 184,
+    "error_description": "Incorrect handling of non-existent user in login: .get() on Optional throws NoSuchElementException instead of using .orElse(null) for dummy hash comparison, breaking timing attack protection and consistent 401 response.",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E010",
+    "similarity_score": 0.6976,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
     "start_line": 75,
     "end_line": 82,
     "error_description": "Pagination ignored: userRepository.findAll() fetches ALL users into memory without applying Pageable, then PageImpl uses full list as page content, causing incorrect results and performance degradation.",

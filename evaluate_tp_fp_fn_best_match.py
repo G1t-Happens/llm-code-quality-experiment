@@ -123,9 +123,7 @@ for json_path in tqdm(fault_files, desc="Matching pro Run"):
                 if has_overlap(pred_start, pred_end, gt_start, gt_end, tolerance=2):
                     valid_gt_idxs.append(gt_idx)
             except:
-                valid_gt_idxs.append(gt_idx)
-        if not valid_gt_idxs:
-            continue
+                continue
 
         # Semantischer Score berechnen
         pred_emb = model.encode(pred_desc, convert_to_tensor=True)
@@ -143,20 +141,20 @@ for json_path in tqdm(fault_files, desc="Matching pro Run"):
 
     # Greedy 1:1 Matching -> Filename + Overlap + best semantic score = TP
     run_candidates.sort(key=lambda x: x["similarity"], reverse=True)
+    tp_list, fp_list = [], []
     assigned_gts = set()
     used_predictions = set()
-    tp_list, fp_list = [], []
 
     for cand in run_candidates:
-        if cand["gt_id"] in assigned_gts or cand["pred_id"] in used_predictions:
-            fp_list.append(cand["entry"])
-            used_predictions.add(cand["pred_id"])
+        pred_id = cand["pred_id"]
+        gt_id = cand["gt_id"]
+        if gt_id in assigned_gts or pred_id in used_predictions:
             continue
-        assigned_gts.add(cand["gt_id"])
-        used_predictions.add(cand["pred_id"])
+        assigned_gts.add(gt_id)
+        used_predictions.add(pred_id)
         tp_entry = cand["entry"].copy()
         tp_entry.update({
-            "semantically_correct_detected": cand["gt_id"],
+            "semantically_correct_detected": gt_id,
             "similarity_score": round(cand["similarity"], 4),
             "matching_method": "per_run_basename_overlap_best_semantic"
         })

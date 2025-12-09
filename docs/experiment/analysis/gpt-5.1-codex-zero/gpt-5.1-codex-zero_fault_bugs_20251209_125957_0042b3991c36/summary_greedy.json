@@ -1,10 +1,10 @@
 {
-  "TP": 11,
-  "FP": 1,
-  "FN": 4,
-  "Precision": 0.9167,
-  "Recall": 0.7333,
-  "F1": 0.8148,
+  "TP": 12,
+  "FP": 0,
+  "FN": 3,
+  "Precision": 1.0,
+  "Recall": 0.8,
+  "F1": 0.8889,
   "run_name": "gpt-5.1-codex-zero_fault_bugs_20251209_125957_0042b3991c36",
   "total_predictions": 12,
   "total_ground_truth": 15

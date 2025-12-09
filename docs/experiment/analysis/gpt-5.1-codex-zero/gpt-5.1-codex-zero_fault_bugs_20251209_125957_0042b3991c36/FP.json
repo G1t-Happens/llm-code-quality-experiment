@@ -1,9 +1,1 @@
-[
-  {
-    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
-    "start_line": 120,
-    "end_line": 120,
-    "error_description": "The save method logs the raw password in plaintext at debug level, leaking sensitive credentials into log files.",
-    "confidence": 0.69
-  }
-]
+[]

@@ -81,6 +81,16 @@
   },
   {
     "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 120,
+    "end_line": 120,
+    "error_description": "The save method logs the raw password in plaintext at debug level, leaking sensitive credentials into log files.",
+    "confidence": 0.69,
+    "semantically_correct_detected": "E014",
+    "similarity_score": 0.5647,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
     "start_line": 72,
     "end_line": 80,
     "error_description": "listAll ignores the supplied Pageable by loading the entire user table with userRepository.findAll() and wrapping it in a PageImpl, so pagination and limits have no effect and large datasets will be fully loaded into memory.",

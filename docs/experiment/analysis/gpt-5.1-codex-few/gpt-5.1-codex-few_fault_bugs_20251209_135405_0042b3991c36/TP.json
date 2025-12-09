@@ -70,6 +70,16 @@
     "matching_method": "per_run_basename_overlap_best_semantic"
   },
   {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 161,
+    "end_line": 170,
+    "error_description": "delete() loads the user but never calls userRepository.delete(...), so the method returns successfully without removing anything from the database.",
+    "confidence": 0.79,
+    "semantically_correct_detected": "E002",
+    "similarity_score": 0.6013,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
     "filename": "src/main/java/com/llmquality/baseline/controller/AddressController.java",
     "start_line": 44,
     "end_line": 48,

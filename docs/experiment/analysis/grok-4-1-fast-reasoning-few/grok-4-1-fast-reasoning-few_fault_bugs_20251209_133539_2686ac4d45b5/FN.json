@@ -26,19 +26,6 @@
     "basename": "UserServiceImpl.java"
   },
   {
-    "id": "E008",
-    "filename": "UserController.java",
-    "start_line": 49,
-    "end_line": 49,
-    "method_start": 47,
-    "method_end": 51,
-    "iso_category": "Reliability",
-    "error_description": "The create() endpoint does not validate the UserRequest DTO. Invalid input (e.g., missing required fields) can lead to a 500 Internal Server Error instead of a clear client-facing error",
-    "injection_method": "manual",
-    "severity": "high",
-    "basename": "UserController.java"
-  },
-  {
     "id": "E009",
     "filename": "AddressController.java",
     "start_line": 52,

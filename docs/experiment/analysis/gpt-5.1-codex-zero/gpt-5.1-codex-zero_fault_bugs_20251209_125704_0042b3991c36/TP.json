@@ -21,6 +21,16 @@
   },
   {
     "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
+    "start_line": 105,
+    "end_line": 107,
+    "error_description": "getByUsername builds a native SQL string via string concatenation of the username, enabling SQL injection; a crafted username can alter the WHERE clause or manipulate the query.",
+    "confidence": 0.82,
+    "semantically_correct_detected": "E013",
+    "similarity_score": 0.7348,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
+    "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
     "start_line": 176,
     "end_line": 189,
     "error_description": "checkLogin dereferences userRepository.findByUsername(...).get(); when the username is unknown it throws NoSuchElementException (500) before reaching the intended UnauthorizedException and dummy-hash timing protection.",

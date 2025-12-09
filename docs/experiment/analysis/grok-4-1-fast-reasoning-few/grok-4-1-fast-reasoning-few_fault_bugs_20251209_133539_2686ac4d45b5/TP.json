@@ -60,6 +60,16 @@
     "matching_method": "per_run_basename_overlap_best_semantic"
   },
   {
+    "filename": "src/main/java/com/llmquality/baseline/controller/UserController.java",
+    "start_line": 47,
+    "end_line": 47,
+    "error_description": "Missing @Valid or @Validated on @RequestBody UserRequest in create method, bypassing input validation",
+    "confidence": 1.0,
+    "semantically_correct_detected": "E008",
+    "similarity_score": 0.5887,
+    "matching_method": "per_run_basename_overlap_best_semantic"
+  },
+  {
     "filename": "src/main/java/com/llmquality/baseline/service/UserServiceImpl.java",
     "start_line": 181,
     "end_line": 182,

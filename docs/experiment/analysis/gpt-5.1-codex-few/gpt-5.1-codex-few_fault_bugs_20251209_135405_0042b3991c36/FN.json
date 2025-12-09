@@ -13,19 +13,6 @@
     "basename": "UserMapper.java"
   },
   {
-    "id": "E002",
-    "filename": "UserServiceImpl.java",
-    "start_line": 171,
-    "end_line": 172,
-    "method_start": 161,
-    "method_end": 173,
-    "iso_category": "Functional",
-    "error_description": "Missing delete call in the repository/data access layer",
-    "injection_method": "manual",
-    "severity": "critical",
-    "basename": "UserServiceImpl.java"
-  },
-  {
     "id": "E005",
     "filename": "UserServiceImpl.java",
     "start_line": 125,

@@ -8,8 +8,8 @@
   "Recall@3": 0.2,
   "Precision@5": 0.8,
   "Recall@5": 0.2667,
-  "Precision@7": 0.7143,
-  "Recall@7": 0.3333,
-  "Precision@10": 0.8,
-  "Recall@10": 0.5333
+  "Precision@7": 0.8571,
+  "Recall@7": 0.4,
+  "Precision@10": 0.9,
+  "Recall@10": 0.6
 }

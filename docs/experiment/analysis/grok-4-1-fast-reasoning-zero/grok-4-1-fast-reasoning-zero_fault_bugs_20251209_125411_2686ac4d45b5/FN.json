@@ -52,19 +52,6 @@
     "basename": "AddressController.java"
   },
   {
-    "id": "E010",
-    "filename": "UserServiceImpl.java",
-    "start_line": 181,
-    "end_line": 181,
-    "method_start": 175,
-    "method_end": 194,
-    "iso_category": "Reliability",
-    "error_description": "Calling .get() on findByUsername() causes a NoSuchElementException (HTTP 500) on every login attempt with a non-existent username instead of returning the intended HTTP 401 Unauthorized",
-    "injection_method": "manual",
-    "severity": "critical",
-    "basename": "UserServiceImpl.java"
-  },
-  {
     "id": "E011",
     "filename": "SecurityConfig.java",
     "start_line": 108,
