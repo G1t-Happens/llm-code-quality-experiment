@@ -85,13 +85,13 @@ ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 file_suffix = f"{ts}_{run_hash}"
 
 # ----------------------------- Pydantic Models -----------------------------
-SeverityLevel = Literal["critical", "high", "medium", "low"]
 
 class SeededBug(BaseModel):
     filename: str = Field(..., description="Filename relative to the project root")
     start_line: int = Field(..., ge=1, description="Line number of first affected line (1-based)")
     end_line: int = Field(..., ge=1, description="Line number of last affected line (inclusive, 1-based)")
     error_description: str = Field(..., min_length=10, description="Short description of the error")
+    confidence: float = Field(..., ge=0.0, le=1.0,description="Confidence score between 0 and 1 assigned by the model, reflecting likelihood that this is a true fault")
 
     model_config = {"extra": "forbid"}  # Hilft bei Validierung, aber Schema braucht explizit additionalProperties
 
